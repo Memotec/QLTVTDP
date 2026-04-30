@@ -29,38 +29,57 @@
         input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; transition: 0.2s; }
         input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1); }
 
-        /* Thanh công cụ: Tìm kiếm & Nút bấm */
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; gap: 15px; }
-        .search-container { flex-grow: 1; position: relative; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; gap: 15px; flex-wrap: wrap; }
+        .search-container { flex-grow: 1; position: relative; min-width: 250px; }
         .search-container input { padding-left: 35px; background: #fff; }
         .search-container::before { content: '🔍'; position: absolute; left: 12px; top: 10px; font-size: 14px; }
 
-        .actions { display: flex; gap: 10px; }
-        button { padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; color: white; transition: 0.2s; font-size: 13px; white-space: nowrap; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        button { padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; color: white; transition: 0.2s; font-size: 13px; white-space: nowrap; }
         .btn-add { background: var(--primary); }
         .btn-print { background: #0f172a; }
         .btn-excel { background: #10b981; }
+        .btn-table { background: #6366f1; }
 
-        /* Bảng dữ liệu */
-        .table-wrapper { background: white; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden; }
+        /* Bảng dữ liệu giao diện */
+        .table-wrapper { background: white; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: left; }
         th { background: #f8fafc; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
         .editable { color: var(--primary); font-weight: 500; cursor: pointer; }
-        .editable:empty::after { content: "Nhấp để nhập..."; color: #cbd5e1; font-style: italic; font-weight: 400; }
         tr:hover { background-color: #fcfdfe; }
 
-        /* Nhãn in (55mm x 20mm) */
-        #printArea { display: none; }
+        /* Vùng In Bảng Tổng Hợp */
+        #summaryTableArea { display: none; }
+        .print-signature { margin-top: 30px; display: flex; justify-content: flex-end; text-align: center; }
+
+        /* MEDIA QUERIES CHO IN ẤN */
         @media print {
             .no-print { display: none !important; }
             body { background: white; padding: 0; margin: 0; }
-            @page { size: A4; margin: 10mm 5mm; }
-            #printArea { display: grid; grid-template-columns: repeat(3, 62mm); gap: 2mm; justify-content: center; padding-top: 5mm; }
+            
+            /* Cấu hình in nhãn dán */
+            #printArea.active { 
+                display: grid !important; 
+                grid-template-columns: repeat(3, 62mm); 
+                gap: 2mm; 
+                justify-content: center; 
+                padding: 10mm 0;
+            }
             .label-item { width: 55mm; height: 20mm; border: 0.1pt solid #000; padding: 2mm; display: flex; flex-direction: column; justify-content: center; page-break-inside: avoid; }
             .label-title { font-size: 6pt; font-weight: 800; text-transform: uppercase; border-bottom: 0.4pt solid #000; margin-bottom: 1mm; padding-bottom: 0.5mm; text-align: center; }
-            .label-info { font-size: 7.5pt; line-height: 1.4; color: #000; }
+            .label-info { font-size: 7.5pt; line-height: 1.4; }
             .label-info b { display: inline-block; width: 11mm; }
+
+            /* Cấu hình in bảng tổng hợp */
+            #summaryTableArea.active { 
+                display: block !important; 
+                padding: 20mm; 
+            }
+            #summaryTableArea h1 { text-align: center; font-size: 18pt; margin-bottom: 10mm; text-transform: uppercase; }
+            .full-table { width: 100%; border-collapse: collapse; margin-top: 5mm; }
+            .full-table th, .full-table td { border: 1px solid black; padding: 8px; font-size: 11pt; }
+            .full-table th { background: #eee !important; }
         }
     </style>
 </head>
@@ -78,9 +97,9 @@
     <div class="card">
         <div class="form-grid">
             <div class="form-group"><label>Tên Thiết Bị</label><input type="text" id="inName" value="PANASONIC KX-TS500"></div>
-            <div class="form-group"><label>Mã CCDC</label><input type="text" id="inCode" placeholder="Nhập mã số..."></div>
-            <div class="form-group"><label>Số S/N</label><input type="text" id="inSN" placeholder="Để trống..."></div>
-            <div class="form-group"><label>Vị Trí</label><input type="text" id="inLoc" placeholder="Để trống..."></div>
+            <div class="form-group"><label>Mã CCDC</label><input type="text" id="inCode" placeholder="Mã quản lý..."></div>
+            <div class="form-group"><label>Số S/N</label><input type="text" id="inSN" placeholder="..."></div>
+            <div class="form-group"><label>Vị Trí</label><input type="text" id="inLoc" placeholder="..."></div>
         </div>
         
         <div class="toolbar">
@@ -88,9 +107,10 @@
                 <input type="text" id="searchInput" onkeyup="render()" placeholder="Tìm kiếm nhanh...">
             </div>
             <div class="actions">
-                <button class="btn-excel" onclick="exportCSV()">Xuất Excel</button>
-                <button class="btn-print" onclick="window.print()">In Tem (55x20mm)</button>
-                <button class="btn-add" onclick="addItem()">+ Thêm Mới</button>
+                <button class="btn-excel" onclick="exportCSV()">📁 Excel</button>
+                <button class="btn-table" onclick="printSummary()">📄 Xuất Bảng</button>
+                <button class="btn-print" onclick="printLabels()">🏷️ In Tem</button>
+                <button class="btn-add" onclick="addItem()">+ Thêm</button>
             </div>
         </div>
     </div>
@@ -112,7 +132,33 @@
     </div>
 </div>
 
+<!-- Vùng In Nhãn -->
 <div id="printArea"></div>
+
+<!-- Vùng In Bảng Tổng Hợp -->
+<div id="summaryTableArea">
+    <h1>Thống Kê Sử Dụng Điện Thoại Chuyển Đổi ATCCHCM</h1>
+    <table class="full-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên Thiết Bị / Model</th>
+                <th>Mã CCDC</th>
+                <th>Số Serial Number (S/N)</th>
+                <th>Vị Trí Lắp Đặt</th>
+            </tr>
+        </thead>
+        <tbody id="summaryTableBody"></tbody>
+    </table>
+    <div class="print-signature">
+        <div>
+            <p><i>Ngày......tháng......năm 2026</i></p>
+            <p style="margin-top: 5px; font-weight: bold;">Người Lập Biểu</p>
+            <br><br><br>
+            <p>Trần Văn Trường</p>
+        </div>
+    </div>
+</div>
 
 <script>
     const PASS_KEY = "123456";
@@ -125,19 +171,17 @@
         return items;
     };
 
-    let inventory = JSON.parse(localStorage.getItem('asset_final_v6')) || getBaseData();
+    let inventory = JSON.parse(localStorage.getItem('asset_atcc_v7')) || getBaseData();
 
     function addItem() {
         const name = document.getElementById('inName').value;
         const code = document.getElementById('inCode').value;
         const sn = document.getElementById('inSN').value;
         const loc = document.getElementById('inLoc').value;
-        if(!name || !code) return alert("Vui lòng nhập Tên và Mã CCDC!");
+        if(!name || !code) return alert("Vui lòng nhập Tên và Mã!");
         inventory.push({ id: Date.now(), name, code, sn, loc });
         save();
         document.getElementById('inCode').value = '';
-        document.getElementById('inSN').value = '';
-        document.getElementById('inLoc').value = '';
     }
 
     function editField(idx, field) {
@@ -146,26 +190,40 @@
     }
 
     function deleteItem(id) {
-        const pw = prompt("Vui lòng nhập Password để xóa:");
+        const pw = prompt("Nhập Password để xóa:");
         if (pw === PASS_KEY) {
             inventory = inventory.filter(i => i.id !== id);
             save();
-        } else if (pw !== null) {
-            alert("Sai Password!");
-        }
+        } else if (pw !== null) alert("Sai Password!");
     }
 
     function save() {
-        localStorage.setItem('asset_final_v6', JSON.stringify(inventory));
+        localStorage.setItem('asset_atcc_v7', JSON.stringify(inventory));
         render();
+    }
+
+    // In nhãn dán (55x20mm)
+    function printLabels() {
+        document.getElementById('summaryTableArea').classList.remove('active');
+        document.getElementById('printArea').classList.add('active');
+        window.print();
+    }
+
+    // In bảng tổng hợp (A4)
+    function printSummary() {
+        document.getElementById('printArea').classList.remove('active');
+        document.getElementById('summaryTableArea').classList.add('active');
+        window.print();
     }
 
     function render() {
         const tbody = document.getElementById('tableBody');
+        const summaryBody = document.getElementById('summaryTableBody');
         const printArea = document.getElementById('printArea');
         const query = document.getElementById('searchInput').value.toLowerCase();
         
         tbody.innerHTML = ''; 
+        summaryBody.innerHTML = '';
         printArea.innerHTML = '';
 
         const filtered = inventory.filter(item => 
@@ -177,6 +235,8 @@
 
         filtered.forEach((item, idx) => {
             const actualIdx = inventory.indexOf(item);
+            
+            // 1. Bảng Dashboard
             tbody.innerHTML += `
                 <tr>
                     <td>${idx+1}</td>
@@ -184,9 +244,20 @@
                     <td>${item.code}</td>
                     <td class="editable" onclick="editField(${actualIdx}, 'sn')">${item.sn}</td>
                     <td class="editable" onclick="editField(${actualIdx}, 'loc')">${item.loc}</td>
-                    <td style="text-align: center;"><button onclick="deleteItem(${item.id})" style="background:none; color:var(--danger); font-size:18px; padding:0;">&times;</button></td>
+                    <td style="text-align: center;"><button onclick="deleteItem(${item.id})" style="background:none; color:var(--danger); font-size:18px;">&times;</button></td>
                 </tr>`;
             
+            // 2. Bảng Tổng Hợp khi in
+            summaryBody.innerHTML += `
+                <tr>
+                    <td style="text-align:center">${idx+1}</td>
+                    <td>${item.name}</td>
+                    <td>${item.code}</td>
+                    <td>${item.sn}</td>
+                    <td>${item.loc}</td>
+                </tr>`;
+
+            // 3. Nhãn in dán máy
             printArea.innerHTML += `
                 <div class="label-item">
                     <div class="label-title">${item.name}</div>
