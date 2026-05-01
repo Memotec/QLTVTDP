@@ -74,6 +74,28 @@
 </div>
 
 <script>
+    // Hàm này đặt cùng chỗ với các hàm addItem(), render()...
+async function syncFromCloud() {
+    if(!confirm("Bạn muốn tải dữ liệu mới nhất từ Google Sheets về máy này?")) return;
+
+    try {
+        // Sử dụng phương thức GET để lấy dữ liệu từ Apps Script
+        const response = await fetch(URL_APPS_SCRIPT);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            inventory = data; // Cập nhật danh sách hiện tại bằng dữ liệu từ Cloud
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); // Lưu vào máy
+            render(); // Vẽ lại bảng
+            alert("Đã đồng bộ thành công " + data.length + " thiết bị!");
+        } else {
+            alert("Không tìm thấy dữ liệu trên Cloud.");
+        }
+    } catch (error) {
+        console.error("Lỗi:", error);
+        alert("Không thể kết nối với Google Sheets. Hãy kiểm tra lại URL Apps Script.");
+    }
+}
     // Tên kho lưu trữ cố định
     const MASTER_KEY = 'atcc_master_db';
     const OLD_KEYS = ['atcc_v9_db', 'atcc_v10_db', 'atcc_db', 'atcc_permanent_database'];
