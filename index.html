@@ -112,12 +112,12 @@
 <script>
     const STORAGE_KEY = 'atcc_inventory_v5';
     const PASS_KEY = "123456";
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbz3g8qLp38h2DYVp6Y5FCsur1h-TsEwJ5Y6_D3oVtTu8M_rpZD1tviNG3tcu3ex-LLu/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyWn5gWgpcwc6tmT62AJuWlydslJcsWjb8nSRmKMxFDtW2pA4HIbyljgkkbfVuBv_v5/exec";
 
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
     function saveAll() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory))
         render();
         if (!URL_APPS_SCRIPT.includes("DÁN_URL")) {
             fetch(URL_APPS_SCRIPT, { method: "POST", mode: "no-cors", body: JSON.stringify(inventory) });
