@@ -4,25 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QUẢN LÝ THIẾT BỊ CNS/ATM - TRẦN VĂN TRƯỜNG</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; }
+        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --danger: #ef4444; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
-        .no-print { max-width: 1200px; margin: 0 auto; }
-        .card { background: white; border-radius: 10px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
+        .no-print { max-width: 1250px; margin: 0 auto; }
+        .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
         .full { grid-column: span 2; }
-        label { font-size: 11px; font-weight: bold; color: #64748b; }
-        input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 4px; }
-        .actions { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
-        button { padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; color: white; }
+        label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; margin-top: 4px; outline: none; }
+        .actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 20px; }
+        button { padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; transition: 0.2s; }
         .btn-add { background: var(--p); }
+        .btn-sync { background: #6366f1; }
+        .btn-excel { background: #10b981; }
         .btn-label { background: #f59e0b; } 
         .btn-print { background: #0f172a; }
         
-        table { width: 100%; border-collapse: collapse; background: white; margin-top: 10px; }
-        th, td { padding: 10px; border: 1px solid #e2e8f0; text-align: left; font-size: 13px; }
-        th { background: #f8fafc; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+        thead th { padding: 12px; color: #64748b; font-size: 13px; text-transform: uppercase; }
+        tbody tr { background: white; }
+        tbody td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 14px; }
 
         #labelArea { display: none; }
 
@@ -30,50 +34,48 @@
             @page { size: A4; margin: 10mm; }
             .no-print { display: none !important; }
             
-            /* Cấu hình in nhãn trên A4 */
+            /* Cấu hình in nhiều nhãn 55x30mm trên A4 */
             body.printing-labels #labelArea { 
                 display: grid !important; 
-                grid-template-columns: repeat(3, 55mm); /* 3 cột nhãn */
-                gap: 2mm; /* Khoảng cách giữa các nhãn */
+                grid-template-columns: repeat(3, 55mm); 
+                gap: 2mm; 
                 justify-content: center;
             }
             .label-box { 
                 width: 55mm; 
                 height: 30mm; 
-                border: 0.2pt solid #ccc; /* Đường kẻ mờ để dễ cắt */
-                padding: 2mm;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
+                border: 0.5pt solid #000; 
+                padding: 1.5mm; 
+                display: flex; 
+                justify-content: space-between;
+                align-items: center;
                 overflow: hidden;
                 background: #fff;
                 page-break-inside: avoid;
             }
-            .label-box div {
-                font-size: 7.5pt;
-                line-height: 1.2;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                font-weight: bold;
+            .label-text { 
+                font-size: 6.5pt; 
+                line-height: 1.2; 
+                font-weight: bold; 
+                flex: 1; 
                 text-transform: uppercase;
+                text-align: left;
             }
-            .label-header {
-                border-bottom: 0.5pt solid #000;
-                margin-bottom: 2px;
-                font-size: 8pt !important;
-                text-align: center;
-            }
-
-            /* Cấu hình in báo cáo */
-            body.printing-report #printArea { display: block !important; }
+            .label-qr-wrap { width: 22mm; height: 22mm; margin-left: 1mm; }
+            .label-qr-wrap img { width: 100%; height: 100%; }
         }
     </style>
 </head>
 <body>
 
 <div class="no-print">
-    <h2 style="margin-bottom: 15px;">Hệ thống Quản lý Thiết bị - Đội Thông Tin</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="color: var(--p);">QUẢN LÝ THIẾT BỊ CNS/ATM</h2>
+        <div style="font-size: 12px; background: #fff; padding: 5px 12px; border-radius: 20px; border: 1px solid #ddd;">
+            KTV: <b>Trần Văn Trường</b>
+        </div>
+    </div>
+
     <div class="card">
         <div class="form-grid">
             <div class="full"><label>Tên thiết bị</label><input type="text" id="inName"></div>
@@ -81,100 +83,123 @@
             <div><label>Mã Kho</label><input type="text" id="inWarehouse"></div>
             <div><label>P/N</label><input type="text" id="inPN"></div>
             <div><label>S/N</label><input type="text" id="inSN"></div>
-            <div class="full"><label>Vị trí lắp đặt</label><input type="text" id="inLoc"></div>
+            <div class="full"><label>Vị trí</label><input type="text" id="inLoc"></div>
         </div>
         <div class="actions">
-            <button class="btn-add" onclick="addItem()">Thêm Thiết Bị</button>
-            <button class="btn-label" onclick="printLabels()">In Nhãn Dán (A4)</button>
-            <button class="btn-print" onclick="window.print()">In Báo Cáo</button>
+            <button class="btn-add" onclick="addItem()">➕ Thêm</button>
+            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ</button>
+            <button class="btn-excel" onclick="exportCSV()">📁 Excel</button>
+            <button class="btn-label" onclick="printLabels()">🏷️ In Nhãn (55x30)</button>
+            <button class="btn-print" onclick="window.print()">📄 Báo cáo</button>
         </div>
     </div>
 
-    <table id="mainTable">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm..." style="width:100%; padding:14px; border-radius:8px; border:1px solid #cbd5e1; margin-bottom: 15px;">
+
+    <table>
         <thead>
             <tr>
-                <th>Thiết bị</th><th>Mã CCDC</th><th>Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th><th>Xóa</th>
+                <th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th><th>QR</th><th>Xóa</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="mainTable"></tbody>
     </table>
 </div>
 
-<!-- KHU VỰC IN NHÃN -->
 <div id="labelArea"></div>
 
 <script>
-    const STORAGE_KEY = 'vattu_cns_truong';
+    const STORAGE_KEY = 'atcc_inventory_v5';
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbz3g8qLp38h2DYVp6Y5FCsur1h-TsEwJ5Y6_D3oVtTu8M_rpZD1tviNG3tcu3ex-LLu/exec"; 
+    const PASS_KEY = "123456";
+
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
     function addItem() {
-        const item = {
-            id: Date.now(),
-            name: document.getElementById('inName').value,
-            code: document.getElementById('inCode').value,
-            warehouse: document.getElementById('inWarehouse').value,
-            pn: document.getElementById('inPN').value,
-            sn: document.getElementById('inSN').value,
-            loc: document.getElementById('inLoc').value
-        };
-        if(!item.name || !item.code) return alert("Vui lòng nhập Tên và Mã CCDC");
-        inventory.push(item);
-        save();
-        clearFields();
-    }
-
-    function save() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
-        render();
-    }
-
-    function clearFields() {
+        const name = document.getElementById('inName').value;
+        const code = document.getElementById('inCode').value;
+        const warehouse = document.getElementById('inWarehouse').value;
+        const pn = document.getElementById('inPN').value;
+        const sn = document.getElementById('inSN').value;
+        const loc = document.getElementById('inLoc').value;
+        if(!code || !name) return alert("Nhập Tên và Mã CCDC!");
+        inventory.push({ id: Date.now(), name, code, warehouse, pn, sn, loc });
+        saveLocal();
         ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
     }
 
-    function render() {
-        const tbody = document.querySelector('#mainTable tbody');
-        const lArea = document.getElementById('labelArea');
-        tbody.innerHTML = '';
-        lArea.innerHTML = '';
-
-        inventory.forEach(item => {
-            // Render bảng hiển thị
-            tbody.innerHTML += `
-                <tr>
-                    <td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td>
-                    <td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td>
-                    <td><button onclick="deleteItem(${item.id})" style="background:red; padding:4px 8px;">X</button></td>
-                </tr>`;
-
-            // Render nhãn dán (Layout 55x30mm)
-            lArea.innerHTML += `
-                <div class="label-box">
-                    <div class="label-header">THIẾT BỊ CNS/ATM</div>
-                    <div>TÊN: ${item.name}</div>
-                    <div>CCDC: ${item.code}</div>
-                    <div>KHO: ${item.warehouse || '-'}</div>
-                    <div>P/N: ${item.pn || '-'}</div>
-                    <div>S/N: ${item.sn || '-'}</div>
-                    <div>VỊ TRÍ: ${item.loc || '-'}</div>
-                </div>`;
-        });
+    function saveLocal() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+        render();
+        if (!URL_APPS_SCRIPT.includes("DÁN_URL")) {
+            fetch(URL_APPS_SCRIPT, { method: "POST", mode: "no-cors", body: JSON.stringify(inventory) });
+        }
     }
 
-    function deleteItem(id) {
-        if(confirm('Xóa thiết bị này?')) {
-            inventory = inventory.filter(i => i.id !== id);
-            save();
-        }
+    function render() {
+        const tbody = document.getElementById('mainTable');
+        const lArea = document.getElementById('labelArea');
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        
+        tbody.innerHTML = ''; lArea.innerHTML = '';
+        const filtered = inventory.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(q)));
+
+        filtered.forEach((item, idx) => {
+            const qrId = `qr-${item.id}`;
+            const qrIdL = `qr-l-${item.id}`;
+
+            tbody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td><td><div id="${qrId}"></div></td><td><span onclick="deleteItem(${item.id})" style="cursor:pointer;color:red">🗑️</span></td></tr>`;
+
+            lArea.innerHTML += `
+                <div class="label-box">
+                    <div class="label-text">
+                        TB: ${item.name}<br>
+                        CCDC: ${item.code}<br>
+                        KHO: ${item.warehouse || '-'}<br>
+                        P/N: ${item.pn || '-'}<br>
+                        S/N: ${item.sn || '-'}<br>
+                        VT: ${item.loc || '-'}
+                    </div>
+                    <div id="${qrIdL}" class="label-qr-wrap"></div>
+                </div>`;
+
+            setTimeout(() => {
+                const txt = `Thiết bị: ${item.name}\nMã CCDC: ${item.code}\nMã kho: ${item.warehouse}\nP/N: ${item.pn}\nS/N: ${item.sn}\nVị trí: ${item.loc}`;
+                if(document.getElementById(qrId)) new QRCode(document.getElementById(qrId), { text: txt, width: 60, height: 60 });
+                if(document.getElementById(qrIdL)) new QRCode(document.getElementById(qrIdL), { text: txt, width: 85, height: 85 });
+            }, 300);
+        });
     }
 
     function printLabels() {
         document.body.className = "printing-labels";
         window.print();
-        // Reset sau khi in xong để quay lại giao diện web
         setTimeout(() => { document.body.className = ""; }, 1000);
     }
 
+    function deleteItem(id) {
+        if(!confirm(`Xóa?`)) return;
+        if(prompt("Mật mã:") !== PASS_KEY) return;
+        inventory = inventory.filter(i => i.id !== id);
+        saveLocal();
+    }
+
+    async function syncFromCloud() {
+        if (URL_APPS_SCRIPT.includes("DÁN_URL")) return alert("Cần URL!");
+        try {
+            const res = await fetch(URL_APPS_SCRIPT);
+            const data = await res.json();
+            if (data) { inventory = data; render(); }
+        } catch(e) { alert("Lỗi kết nối!"); }
+    }
+
+    function exportCSV() {
+        let csv = "\ufeffSTT,Thiết bị,Mã CCDC,Kho,P/N,S/N,Vị trí\n";
+        inventory.forEach((i, idx) => csv += `${idx+1},${i.name},${i.code},${i.warehouse},${i.pn},${i.sn},${i.loc}\n`);
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        link.download = `ThietBi_CNS.csv`; link.click();
+    }
     render();
 </script>
 </body>
