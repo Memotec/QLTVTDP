@@ -21,7 +21,8 @@
         input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 4px; outline: none; }
         
         .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; }
-        button { padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; }
+        button { padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; transition: opacity 0.2s; }
+        button:active { opacity: 0.7; }
         .btn-add { background: var(--p); }
         .btn-sync { background: #6366f1; }
         .btn-excel { background: #10b981; }
@@ -29,14 +30,14 @@
         .btn-print { background: #0f172a; }
         .btn-logout { background: #64748b; margin-top: 10px; width: 100%; }
 
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         thead { display: none; }
         tbody tr { display: block; background: white; border-radius: 10px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
         tbody td { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; align-items: center; }
-        tbody td::before { content: attr(data-label); font-weight: 700; color: #64748b; font-size: 12px; flex: 1; text-align: left; }
+        tbody td::before { content: attr(data-label); font-weight: 700; color: #64748b; font-size: 11px; flex: 1; text-align: left; }
         
         .admin-only { display: none; }
-        .editable { cursor: pointer; color: var(--p); text-decoration: underline dotted; }
+        .editable { cursor: pointer; color: var(--p); text-decoration: underline dotted; font-weight: 500; }
         .qr-container { background: #fff; padding: 5px; border: 1px solid #eee; display: inline-block; }
 
         @media (min-width: 768px) {
@@ -58,7 +59,7 @@
             #printTable th, #printTable td { border: 1px solid #000; padding: 6px; font-size: 11px; text-align: center; }
             body.printing-labels #labelArea { display: grid !important; grid-template-columns: repeat(3, 55mm); gap: 2mm; justify-content: center; padding: 10mm 0; }
             .label-box { width: 55mm; height: 30mm; border: 0.5pt solid #000; padding: 1.5mm; display: flex; justify-content: space-between; align-items: center; page-break-inside: avoid; }
-            .label-text { font-size: 6.5pt; line-height: 1.2; font-weight: bold; flex: 1; text-transform: uppercase; }
+            .label-text { font-size: 6.5pt; line-height: 1.2; font-weight: bold; flex: 1; text-transform: uppercase; overflow: hidden; }
             .label-qr-wrap { width: 22mm; height: 22mm; }
             .label-qr-wrap img { width: 100% !important; height: auto !important; }
         }
@@ -66,22 +67,25 @@
 </head>
 <body>
 
+<!-- GIAO DIỆN ĐĂNG NHẬP -->
 <div id="loginOverlay">
     <div class="login-box">
         <h3 style="margin-bottom: 20px; color: var(--p);">ĐĂNG NHẬP HỆ THỐNG</h3>
-        <input type="text" id="user" placeholder="Tên đăng nhập">
+        <input type="text" id="user" placeholder="Tên đăng nhập (admin/guest)">
         <input type="password" id="pass" placeholder="Mật khẩu">
         <button class="btn-add" style="width: 100%; margin-top: 15px;" onclick="checkLogin()">Vào hệ thống</button>
-        <p id="loginError" style="color: var(--danger); font-size: 12px; margin-top: 10px; display: none;">Sai thông tin đăng nhập!</p>
+        <p id="loginError" style="color: var(--danger); font-size: 12px; margin-top: 10px; display: none;">Sai tài khoản hoặc mật khẩu!</p>
     </div>
 </div>
 
+<!-- ỨNG DỤNG CHÍNH -->
 <div class="no-print" id="mainApp">
     <div style="margin-bottom: 15px; text-align: center;">
-        <h2 style="color: var(--p); font-size: 18px;">QUẢN LÝ THIẾT BỊ CNS/ATM</h2>
-        <p style="font-size: 12px; color: #64748b;">Xin chào: <b id="displayUser"></b></p>
+        <h2 style="color: var(--p); font-size: 18px;">HỆ THỐNG QUẢN LÝ THIẾT BỊ CNS/ATM</h2>
+        <p style="font-size: 12px; color: #64748b;">Kỹ thuật viên: <b id="displayUser"></b></p>
     </div>
 
+    <!-- KHU VỰC NHẬP LIỆU (CHỈ ADMIN) -->
     <div class="card admin-only" id="inputCard">
         <div class="form-grid">
             <div class="full"><label>Tên thiết bị / Model</label><input type="text" id="inName"></div>
@@ -96,9 +100,10 @@
         </div>
     </div>
 
+    <!-- KHU VỰC ĐIỀU KHIỂN -->
     <div class="card">
         <div class="actions">
-            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ</button>
+            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ Cloud</button>
             <button class="btn-excel" onclick="exportCSV()">📁 Xuất Excel</button>
             <button class="btn-label" onclick="printLabels()">🏷️ Nhãn dán</button>
             <button class="btn-print" onclick="printReport()">📄 In Báo Cáo</button>
@@ -106,8 +111,9 @@
         </div>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm nhanh..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px; font-size: 16px;">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh tên, mã, S/N..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px; font-size: 16px;">
 
+    <!-- BẢNG DỮ LIỆU -->
     <table>
         <thead>
             <tr>
@@ -118,53 +124,81 @@
     </table>
 </div>
 
+<!-- KHU VỰC IN ẤN -->
 <div id="printArea"><table id="printTable"><thead><tr><th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th></tr></thead><tbody id="printTableBody"></tbody></table></div>
 <div id="labelArea"></div>
 
 <script>
-    const STORAGE_KEY = 'atcc_inventory_v5';
+    // ==========================================
+    // CẤU HÌNH THÔNG TIN - ANH TRƯỜNG DÁN URL VÀO ĐÂY
+    // ==========================================
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxMVwtnslPnYTIkm3e7E6iwWGcy8r6eEKewO7av1MxMg4fSA18ESbElva1mzKjhkDVs/exec";
+    const STORAGE_KEY = 'atcc_inventory_v5_full';
+    
     let currentUser = null;
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
+    // Xử lý đăng nhập
     function checkLogin() {
-        const u = document.getElementById('user').value;
+        const u = document.getElementById('user').value.toLowerCase();
         const p = document.getElementById('pass').value;
         const error = document.getElementById('loginError');
 
-        if (u === 'admin' && p === 'admin') currentUser = 'admin';
-        else if (u === 'guest' && p === '123456') currentUser = 'guest';
-        else { error.style.display = 'block'; return; }
+        if (u === 'admin' && p === 'admin') {
+            currentUser = 'admin';
+        } else if (u === 'guest' && p === '123456') {
+            currentUser = 'guest';
+        } else {
+            error.style.display = 'block';
+            return;
+        }
 
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
-        document.getElementById('displayUser').innerText = currentUser.toUpperCase();
-        if (currentUser === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+        document.getElementById('displayUser').innerText = (u === 'admin' ? "TRẦN VĂN TRƯỜNG (ADMIN)" : "GUEST");
+        
+        if (currentUser === 'admin') {
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+        }
         render();
     }
 
-    function saveAll() {
+    // Lưu dữ liệu (Local + Cloud)
+    async function saveAll() {
         if (currentUser !== 'admin') return;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
         render();
+
+        if (URL_APPS_SCRIPT && !URL_APPS_SCRIPT.includes("DÁN_URL")) {
+            try {
+                await fetch(URL_APPS_SCRIPT, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(inventory)
+                });
+            } catch (e) { console.error("Cloud Error", e); }
+        }
     }
 
+    // Chỉnh sửa trực tiếp (Chỉ Admin)
     function editField(id, field, currentVal) {
         if (currentUser !== 'admin') return;
         const newVal = prompt("Sửa nội dung:", currentVal);
-        if (newVal !== null) { // Cho phép sửa thành rỗng
+        if (newVal !== null) {
             const index = inventory.findIndex(i => i.id === id);
             if (index !== -1) {
-                inventory[index][field] = newVal;
+                inventory[index][field] = newVal.trim() || "-";
                 saveAll();
             }
         }
     }
 
+    // Thêm mới (Không bắt buộc nhập hết)
     function addItem() {
         const name = document.getElementById('inName').value.trim();
         const code = document.getElementById('inCode').value.trim();
         
-        // CHỈ CẦN TÊN HOẶC MÃ CCDC LÀ CHO PHÉP LƯU
         if(!name && !code) return alert("Vui lòng nhập ít nhất Tên thiết bị hoặc Mã CCDC!");
 
         const item = {
@@ -179,9 +213,11 @@
         
         inventory.push(item);
         saveAll();
+        // Reset form
         ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
     }
 
+    // Hiển thị danh sách
     function render() {
         const tbody = document.getElementById('mainTable');
         const pBody = document.getElementById('printTableBody');
@@ -189,22 +225,27 @@
         const search = document.getElementById('searchInput').value.toLowerCase();
         
         tbody.innerHTML = ''; pBody.innerHTML = ''; lArea.innerHTML = '';
-        const filtered = inventory.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(search)));
+        
+        const filtered = inventory.filter(i => 
+            Object.values(i).some(v => String(v).toLowerCase().includes(search))
+        );
 
         filtered.forEach((item, idx) => {
-            const qrT = `qt-${item.id}`; const qrL = `ql-${item.id}`;
-            const editableClass = currentUser === 'admin' ? 'editable' : '';
+            const qrT = `qt-${item.id}`; 
+            const qrL = `ql-${item.id}`;
+            const isAdm = (currentUser === 'admin');
+            const edCls = isAdm ? 'editable' : '';
 
             tbody.innerHTML += `<tr>
                 <td data-label="STT">${idx+1}</td>
-                <td data-label="Thiết bị" class="${editableClass}" onclick="editField(${item.id}, 'name', '${item.name}')"><b>${item.name}</b></td>
-                <td data-label="Mã CCDC" class="${editableClass}" onclick="editField(${item.id}, 'code', '${item.code}')">${item.code}</td>
-                <td data-label="Mã Kho" class="${editableClass}" onclick="editField(${item.id}, 'warehouse', '${item.warehouse}')">${item.warehouse}</td>
-                <td data-label="P/N" class="${editableClass}" onclick="editField(${item.id}, 'pn', '${item.pn}')">${item.pn}</td>
-                <td data-label="S/N" class="${editableClass}" onclick="editField(${item.id}, 'sn', '${item.sn}')">${item.sn}</td>
-                <td data-label="Vị trí" class="${editableClass}" onclick="editField(${item.id}, 'loc', '${item.loc}')">${item.loc}</td>
+                <td data-label="Thiết bị" class="${edCls}" onclick="editField(${item.id}, 'name', '${item.name}')"><b>${item.name}</b></td>
+                <td data-label="Mã CCDC" class="${edCls}" onclick="editField(${item.id}, 'code', '${item.code}')">${item.code}</td>
+                <td data-label="Mã Kho" class="${edCls}" onclick="editField(${item.id}, 'warehouse', '${item.warehouse}')">${item.warehouse}</td>
+                <td data-label="P/N" class="${edCls}" onclick="editField(${item.id}, 'pn', '${item.pn}')">${item.pn}</td>
+                <td data-label="S/N" class="${edCls}" onclick="editField(${item.id}, 'sn', '${item.sn}')">${item.sn}</td>
+                <td data-label="Vị trí" class="${edCls}" onclick="editField(${item.id}, 'loc', '${item.loc}')">${item.loc}</td>
                 <td data-label="QR Code"><div id="${qrT}" class="qr-container"></div></td>
-                ${currentUser === 'admin' ? `<td data-label="Xóa"><button style="background:var(--danger); padding:5px 10px;" onclick="deleteItem(${item.id})">Xóa</button></td>` : ''}
+                ${isAdm ? `<td data-label="Xóa"><button style="background:var(--danger); padding:5px 10px;" onclick="deleteItem(${item.id})">Xóa</button></td>` : ''}
             </tr>`;
             
             pBody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
@@ -214,6 +255,7 @@
                 <div id="${qrL}" class="label-qr-wrap"></div>
             </div>`;
 
+            // Tạo QR Code (trễ một chút để DOM kịp nhận ID)
             setTimeout(() => {
                 const txt = `TB: ${item.name}\nCCDC: ${item.code}\nS/N: ${item.sn}\nVT: ${item.loc}`;
                 if(document.getElementById(qrT)) new QRCode(document.getElementById(qrT), { text: txt, width: 60, height: 60 });
@@ -223,15 +265,35 @@
     }
 
     function deleteItem(id) {
-        if(confirm("Xóa thiết bị này?")) { inventory = inventory.filter(i => i.id !== id); saveAll(); }
+        if(confirm("Anh có chắc chắn muốn xóa thiết bị này?")) {
+            inventory = inventory.filter(i => i.id !== id);
+            saveAll();
+        }
     }
 
     function exportCSV() {
-        let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,S/N,Vi Tri\n";
-        inventory.forEach((i, idx) => csv += `${idx+1},${i.name},${i.code},${i.sn},${i.loc}\n`);
+        let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,P/N,S/N,Vi Tri\n";
+        inventory.forEach((i, idx) => {
+            csv += `${idx+1},"${i.name}","${i.code}","${i.pn}","${i.sn}","${i.loc}"\n`;
+        });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `Du_lieu_CNS.csv`; link.click();
+        link.download = `Quan_Ly_CNS_ATM.csv`;
+        link.click();
+    }
+
+    async function syncFromCloud() {
+        if (!URL_APPS_SCRIPT || URL_APPS_SCRIPT.includes("DÁN_URL")) return alert("Vui lòng cấu hình URL Cloud trước!");
+        try {
+            const res = await fetch(URL_APPS_SCRIPT);
+            const data = await res.json();
+            if (data && Array.isArray(data)) {
+                inventory = data;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+                render();
+                alert("Đã đồng bộ dữ liệu mới nhất từ Cloud!");
+            }
+        } catch (e) { alert("Lỗi khi kết nối Cloud!"); }
     }
 
     function printReport() { document.body.className = "printing-report"; window.print(); }
