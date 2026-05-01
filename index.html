@@ -28,8 +28,7 @@
         tbody td { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; align-items: center; }
         tbody td::before { content: attr(data-label); font-weight: 700; color: #64748b; font-size: 12px; flex: 1; text-align: left; }
         
-        /* Hiệu ứng khi ô có thể chỉnh sửa */
-        .editable { cursor: pointer; color: var(--p); font-weight: 500; text-decoration: underline dotted; }
+        .editable { cursor: pointer; color: var(--p); text-decoration: underline dotted; }
         .qr-container { background: #fff; padding: 5px; border: 1px solid #eee; display: inline-block; }
 
         @media (min-width: 768px) {
@@ -76,15 +75,15 @@
         </div>
         
         <div class="actions">
-            <button class="btn-add" onclick="addItem()">➕ Thêm & Lưu Cloud</button>
-            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ Cloud</button>
+            <button class="btn-add" onclick="addItem()">➕ Thêm mới</button>
+            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ</button>
             <button class="btn-excel" onclick="exportCSV()">📁 Xuất Excel</button>
-            <button class="btn-label" onclick="printLabels()">🏷️ Xuất nhãn dán</button>
+            <button class="btn-label" onclick="printLabels()">🏷️ Nhãn dán</button>
             <button class="btn-print" onclick="printReport()">📄 In Báo Cáo</button>
         </div>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm nhanh thiết bị..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px; font-size: 16px;">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm nhanh..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px; font-size: 16px;">
 
     <table>
         <thead>
@@ -97,38 +96,36 @@
 </div>
 
 <div id="printArea">
-    <div style="text-align: center; margin-bottom: 20px;">
-        <p>TRUNG TÂM BẢO ĐẢM KỸ THUẬT - ĐỘI THÔNG TIN</p>
-        <br><h2>DANH MỤC THIẾT BỊ CNS/ATM</h2><p id="printDate"></p>
-    </div>
     <table id="printTable">
-        <thead><tr><th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>Mã Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th></tr></thead>
+        <thead><tr><th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th></tr></thead>
         <tbody id="printTableBody"></tbody>
     </table>
 </div>
-
 <div id="labelArea"></div>
 
 <script>
     const STORAGE_KEY = 'atcc_inventory_v5';
     const PASS_KEY = "123456";
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbyWn5gWgpcwc6tmT62AJuWlydslJcsWjb8nSRmKMxFDtW2pA4HIbyljgkkbfVuBv_v5/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbz3g8qLp38h2DYVp6Y5FCsur1h-TsEwJ5Y6_D3oVtTu8M_rpZD1tviNG3tcu3ex-LLu/exec";
 
+    // Khởi tạo dữ liệu
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
     function saveAll() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory))
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
         render();
+        // Sao lưu lên Cloud nếu có URL
         if (!URL_APPS_SCRIPT.includes("DÁN_URL")) {
             fetch(URL_APPS_SCRIPT, { method: "POST", mode: "no-cors", body: JSON.stringify(inventory) });
         }
     }
 
+    // TÍNH NĂNG CHỈNH SỬA CÓ PASSWORD 123456
     function editField(id, field, currentVal) {
-        const pass = prompt("Nhập mật khẩu để thay đổi nội dung:");
+        const pass = prompt("Nhập mật khẩu để thay đổi nội dung (123456):");
         if (pass === PASS_KEY) {
             const newVal = prompt("Nhập nội dung mới:", currentVal);
-            if (newVal !== null) {
+            if (newVal !== null && newVal.trim() !== "") {
                 const index = inventory.findIndex(i => i.id === id);
                 if (index !== -1) {
                     inventory[index][field] = newVal;
@@ -150,7 +147,7 @@
             sn: document.getElementById('inSN').value,
             loc: document.getElementById('inLoc').value
         };
-        if(!item.code || !item.name) return alert("Thiếu thông tin!");
+        if(!item.code || !item.name) return alert("Vui lòng nhập Tên và Mã CCDC!");
         inventory.push(item);
         saveAll();
         ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
@@ -177,7 +174,7 @@
                 <td data-label="S/N" class="editable" onclick="editField(${item.id}, 'sn', '${item.sn}')">${item.sn || '-'}</td>
                 <td data-label="Vị trí" class="editable" onclick="editField(${item.id}, 'loc', '${item.loc}')">${item.loc || '-'}</td>
                 <td data-label="QR Code"><div id="${qrT}" class="qr-container"></div></td>
-                <td data-label="Hành động"><button style="background:var(--danger); padding:5px 10px;" onclick="deleteItem(${item.id})">Xóa</button></td>
+                <td data-label="Xóa"><button style="background:var(--danger); padding:5px 10px;" onclick="deleteItem(${item.id})">Xóa</button></td>
             </tr>`;
             
             pBody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
@@ -193,14 +190,13 @@
                 if(document.getElementById(qrL)) new QRCode(document.getElementById(qrL), { text: txt, width: 80, height: 80 });
             }, 100);
         });
-        document.getElementById('printDate').innerText = "Ngày in: " + new Date().toLocaleDateString('vi-VN');
     }
 
     function printReport() { document.body.className = "printing-report"; window.print(); }
     function printLabels() { document.body.className = "printing-labels"; window.print(); }
     
     function deleteItem(id) {
-        if(confirm("Xóa thiết bị này?") && prompt("Mật khẩu:") === PASS_KEY) {
+        if(confirm("Xóa thiết bị này?") && prompt("Mật khẩu bảo vệ:") === PASS_KEY) {
             inventory = inventory.filter(i => i.id !== id);
             saveAll();
         }
@@ -211,7 +207,7 @@
         inventory.forEach((i, idx) => csv += `${idx+1},${i.name},${i.code},${i.sn},${i.loc}\n`);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `Du_lieu_CNS.csv`; link.click();
+        link.download = `Vat_Tu_CNS.csv`; link.click();
     }
 
     async function syncFromCloud() {
@@ -219,8 +215,8 @@
         try {
             const res = await fetch(URL_APPS_SCRIPT);
             const data = await res.json();
-            if (data) { inventory = data; render(); }
-        } catch (e) { alert("Lỗi đồng bộ!"); }
+            if (data) { inventory = data; render(); alert("Đã cập nhật từ Cloud!"); }
+        } catch (e) { alert("Lỗi kết nối!"); }
     }
     render();
 </script>
