@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QUẢN LÝ THIẾT BỊ CNS/ATM - TRẦN VĂN TRƯỜNG</title>
+    <title>(center>QUẢN LÝ THIẾT BỊ CNS/ATM </center></title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --danger: #ef4444; }
@@ -85,7 +85,7 @@
         </div>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm nhanh thiết bị, mã hoặc vị trí..." style="width:100%; padding:14px; border-radius:8px; border:1px solid #cbd5e1; margin-bottom: 15px;">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm nhanh..." style="width:100%; padding:14px; border-radius:8px; border:1px solid #cbd5e1; margin-bottom: 15px;">
 
     <table>
         <thead>
@@ -128,13 +128,13 @@
         <tbody id="printTableBody"></tbody>
     </table>
     <div class="sig-section">
-        <div style="text-align: center; width: 40%;"><b>PHỤ TRÁCH ĐƠN VỊ</b><br><i>(Ký, ghi rõ họ tên)</i></div>
-        <div style="text-align: center; width: 40%;"><b>NGƯỜI LẬP BIỂU</b><br><i>(Ký, ghi rõ họ tên)</i><br><br><br><br><b>TRẦN VĂN TRƯỜNG</b></div>
+        <div style="text-align: center; width: 40%;"><b>PHỤ TRÁCH ĐƠN VỊ</b></div>
+        <div style="text-align: center; width: 40%;"><b>NGƯỜI LẬP BIỂU</b><br><br><br><br><b>TRẦN VĂN TRƯỜNG</b></div>
     </div>
 </div>
 
 <script>
-    const STORAGE_KEY = 'atcc_cns_v5_full';
+    const STORAGE_KEY = 'atcc_inventory_v5';
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbz3g8qLp38h2DYVp6Y5FCsur1h-TsEwJ5Y6_D3oVtTu8M_rpZD1tviNG3tcu3ex-LLu/exec"; 
     const PASS_KEY = "123456";
 
@@ -160,12 +160,8 @@
         if(!code || !name) return alert("Vui lòng nhập Tên và Mã CCDC!");
         inventory.push({ id: Date.now(), name, code, warehouse, pn, sn, loc });
         saveAll();
-        document.getElementById('inName').value = '';
-        document.getElementById('inCode').value = '';
-        document.getElementById('inWarehouse').value = '';
-        document.getElementById('inPN').value = '';
-        document.getElementById('inSN').value = '';
-        document.getElementById('inLoc').value = '';
+        // Clear input sau khi thêm
+        ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
     }
 
     async function syncFromCloud() {
@@ -179,7 +175,7 @@
                 render();
                 alert("Đồng bộ hoàn tất!");
             }
-        } catch (e) { alert("Lỗi kết nối hoặc URL không đúng!"); }
+        } catch (e) { alert("Lỗi kết nối Cloud!"); }
     }
 
     function render() {
@@ -207,7 +203,7 @@
             
             pBody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
 
-            // Vẽ QR Code với đầy đủ 6 thông số
+            // CẬP NHẬT: Quét QR hiển thị 6 thông số tương ứng
             setTimeout(() => {
                 const el = document.getElementById(qrId);
                 if(el && typeof QRCode !== 'undefined') {
@@ -229,14 +225,14 @@
                 }
             }, 250);
         });
-        document.getElementById('printDate').innerText = "Ngày báo cáo: " + new Date().toLocaleDateString('vi-VN');
+        document.getElementById('printDate').innerText = "Ngày in: " + new Date().toLocaleDateString('vi-VN');
     }
 
     function deleteItem(id) {
-        const item = inventory.find(i => i.id === id);
-        if(!confirm(`Xác nhận xóa: ${item.name}?`)) return;
-        if(prompt("Nhập mật khẩu xác nhận xóa:") !== PASS_KEY) return alert("Mật khẩu không đúng!");
+        if(!confirm(`Xác nhận xóa?`)) return;
+        if(prompt("Nhập mật khẩu xóa:") !== PASS_KEY) return alert("Sai mật khẩu!");
         
+        const item = inventory.find(i => i.id === id);
         if (!URL_APPS_SCRIPT.includes("DÁN_URL")) {
             fetch(URL_APPS_SCRIPT, {
                 method: "POST", mode: "no-cors",
@@ -252,7 +248,7 @@
         inventory.forEach((i, idx) => csv += `${idx+1},${i.name},${i.code},${i.warehouse},${i.pn},${i.sn},${i.loc}\n`);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `Bao_cao_Tai_san_CNS.csv`;
+        link.download = `Bao_cao_CNS.csv`;
         link.click();
     }
     render();
