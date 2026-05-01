@@ -10,14 +10,10 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--txt); padding: 10px; }
         .no-print { max-width: 1250px; margin: 0 auto; }
-        
-        /* Tối ưu Card nhập liệu trên Mobile */
         .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
         .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
         label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 4px; outline: none; -webkit-appearance: none; }
-        
-        /* Tối ưu Nút bấm trên Mobile */
+        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 4px; outline: none; }
         .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; }
         button { padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; }
         .btn-add { background: var(--p); }
@@ -26,17 +22,16 @@
         .btn-label { background: #f59e0b; }
         .btn-print { background: #0f172a; }
         
-        /* Tối ưu Danh sách dạng Card trên Mobile */
         table { width: 100%; border-collapse: collapse; }
-        thead { display: none; } /* Ẩn tiêu đề bảng trên mobile */
-        tbody tr { display: block; background: white; border-radius: 10px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 15px; position: relative; }
-        tbody td { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; align-items: center; text-align: right; }
-        tbody td:last-child { border: none; }
-        tbody td::before { content: attr(data-label); font-weight: 700; color: #64748b; font-size: 12px; text-align: left; flex: 1; }
+        thead { display: none; }
+        tbody tr { display: block; background: white; border-radius: 10px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
+        tbody td { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; align-items: center; }
+        tbody td::before { content: attr(data-label); font-weight: 700; color: #64748b; font-size: 12px; flex: 1; text-align: left; }
         
+        /* Hiệu ứng khi ô có thể chỉnh sửa */
+        .editable { cursor: pointer; color: var(--p); font-weight: 500; text-decoration: underline dotted; }
         .qr-container { background: #fff; padding: 5px; border: 1px solid #eee; display: inline-block; }
 
-        /* Giao diện trên Desktop (Máy tính) */
         @media (min-width: 768px) {
             body { padding: 20px; }
             .form-grid { grid-template-columns: repeat(6, 1fr); }
@@ -49,7 +44,6 @@
         }
 
         #printArea, #labelArea { display: none; }
-
         @media print {
             .no-print { display: none !important; }
             body.printing-report #printArea { display: block !important; }
@@ -130,6 +124,22 @@
         }
     }
 
+    function editField(id, field, currentVal) {
+        const pass = prompt("Nhập mật khẩu để thay đổi nội dung:");
+        if (pass === PASS_KEY) {
+            const newVal = prompt("Nhập nội dung mới:", currentVal);
+            if (newVal !== null) {
+                const index = inventory.findIndex(i => i.id === id);
+                if (index !== -1) {
+                    inventory[index][field] = newVal;
+                    saveAll();
+                }
+            }
+        } else if (pass !== null) {
+            alert("Sai mật khẩu!");
+        }
+    }
+
     function addItem() {
         const item = {
             id: Date.now(),
@@ -160,12 +170,12 @@
 
             tbody.innerHTML += `<tr>
                 <td data-label="STT">${idx+1}</td>
-                <td data-label="Thiết bị"><b>${item.name}</b></td>
-                <td data-label="Mã CCDC">${item.code}</td>
-                <td data-label="Mã Kho">${item.warehouse || '-'}</td>
-                <td data-label="P/N">${item.pn || '-'}</td>
-                <td data-label="S/N">${item.sn || '-'}</td>
-                <td data-label="Vị trí">${item.loc || '-'}</td>
+                <td data-label="Thiết bị" class="editable" onclick="editField(${item.id}, 'name', '${item.name}')"><b>${item.name}</b></td>
+                <td data-label="Mã CCDC" class="editable" onclick="editField(${item.id}, 'code', '${item.code}')">${item.code}</td>
+                <td data-label="Mã Kho" class="editable" onclick="editField(${item.id}, 'warehouse', '${item.warehouse}')">${item.warehouse || '-'}</td>
+                <td data-label="P/N" class="editable" onclick="editField(${item.id}, 'pn', '${item.pn}')">${item.pn || '-'}</td>
+                <td data-label="S/N" class="editable" onclick="editField(${item.id}, 'sn', '${item.sn}')">${item.sn || '-'}</td>
+                <td data-label="Vị trí" class="editable" onclick="editField(${item.id}, 'loc', '${item.loc}')">${item.loc || '-'}</td>
                 <td data-label="QR Code"><div id="${qrT}" class="qr-container"></div></td>
                 <td data-label="Hành động"><button style="background:var(--danger); padding:5px 10px;" onclick="deleteItem(${item.id})">Xóa</button></td>
             </tr>`;
