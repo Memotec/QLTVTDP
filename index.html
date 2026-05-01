@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QUẢN LÝ THIẾT BỊ - ATCCHCM</title>
-    <!-- Thư viện tạo QR -->
+    <title>QUẢN LÝ THIẾT BỊ CNS/ATM</title>
+    <!-- Thư viện QR đặt ở Head để load trước -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; }
+        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --danger: #ef4444; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
-        .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 20px; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
+        .card { background: white; border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .full { grid-column: span 2; }
         label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 4px; }
+        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 4px; outline: none; }
+        input:focus { border-color: var(--p); }
         .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         button { padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; transition: 0.2s; }
         .btn-add { grid-column: span 2; background: var(--p); }
@@ -25,11 +26,11 @@
         table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
         thead { display: none; }
         tbody tr { display: block; background: white; border-radius: 10px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 10px; position: relative; }
-        tbody td { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; align-items: center; }
+        tbody td { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; align-items: center; }
         tbody td:last-child { border: none; }
         tbody td::before { content: attr(data-label); font-weight: 700; color: #94a3b8; font-size: 11px; }
         
-        .qr-box img { border: 2px solid #fff; border-radius: 4px; width: 60px; height: 60px; }
+        .qr-container { display: flex; justify-content: center; background: #fff; padding: 5px; border-radius: 4px; }
 
         @media (min-width: 768px) {
             .form-grid { grid-template-columns: repeat(4, 1fr); }
@@ -46,7 +47,7 @@
             .no-print { display: none !important; } 
             #printArea { display: block !important; padding: 20px; }
             table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+            th, td { border: 1px solid #000; padding: 10px; text-align: center; }
         }
         #printArea { display: none; }
     </style>
@@ -55,16 +56,18 @@
 
 <div class="no-print">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2>ATCCHCM - QUẢN LÝ</h2>
-        <small>Xin chào, <b>Trần Văn Trường</b></small>
+        <h2 style="color: var(--p);">THỐNG KÊ THIẾT BỊ ATCC</h2>
+        <div style="font-size: 12px; background: #fff; padding: 5px 12px; border-radius: 20px; border: 1px solid #ddd;">
+            Kỹ thuật viên: <b>Trần Văn Trường</b>
+        </div>
     </div>
 
     <div class="card">
         <div class="form-grid">
-            <div class="full"><label>Thiết bị</label><input type="text" id="inName" value="PANASONIC KX-TS500"></div>
-            <div><label>Mã CCDC</label><input type="text" id="inCode" placeholder="..."></div>
-            <div><label>Số S/N</label><input type="text" id="inSN" placeholder="..."></div>
-            <div class="full"><label>Vị trí</label><input type="text" id="inLoc" placeholder="..."></div>
+            <div class="full"><label>Tên thiết bị / Model</label><input type="text" id="inName" value="PANASONIC KX-TS500"></div>
+            <div><label>Mã CCDC</label><input type="text" id="inCode" placeholder="Nhập mã..."></div>
+            <div><label>Số Serial (S/N)</label><input type="text" id="inSN" placeholder="..."></div>
+            <div class="full"><label>Vị trí lắp đặt</label><input type="text" id="inLoc" placeholder="..."></div>
         </div>
         
         <div class="actions">
@@ -75,46 +78,46 @@
         </div>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm nhanh theo tên, mã hoặc vị trí..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #ddd; margin-bottom: 10px;">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm nhanh thiết bị, mã hoặc vị trí..." style="width:100%; padding:14px; border-radius:8px; border:1px solid #cbd5e1; margin-bottom: 10px;">
 
     <table>
         <thead>
             <tr>
-                <th>STT</th>
+                <th style="width: 50px;">STT</th>
                 <th>Thiết bị</th>
                 <th>Mã CCDC</th>
                 <th>S/N</th>
                 <th>Vị trí</th>
-                <th>Mã QR</th>
-                <th>Xóa</th>
+                <th style="width: 80px;">Mã QR</th>
+                <th style="width: 50px;">Xóa</th>
             </tr>
         </thead>
         <tbody id="mainTable"></tbody>
     </table>
 </div>
 
-<!-- Vùng In -->
 <div id="printArea">
-    <h2 style="text-align: center;">DANH MỤC THIẾT BỊ ĐIỆN THOẠI - ATCCHCM</h2>
-    <p id="printDate" style="text-align: right; font-style: italic;"></p>
-    <table id="printTable" style="margin-top: 20px;"></table>
+    <h2 style="text-align: center;">DANH MỤC QUẢN LÝ THIẾT BỊ ATCCHCM</h2>
+    <p id="printDate" style="text-align: right; font-style: italic; margin: 10px 0;"></p>
+    <table id="printTable"></table>
 </div>
 
 <script>
-    const STORAGE_KEY = 'atcc_qr_master_v1';
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbwtDwOUKSSBcRuHvu573-5ofTxKwt7nTXwQW0JY0ehZ7xv_EYWEpJCJiJgSItSHNYEp/exec"; 
+    const STORAGE_KEY = 'atcc_master_final_v2';
+    // --- THAY LINK APPS SCRIPT CỦA ANH VÀO ĐÂY ---
+    const URL_APPS_SCRIPT = "DÁN_URL_WEB_APP_CỦA_ANH_VÀO_ĐÂY"; 
     const PASS_KEY = "123456";
 
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-    // Lưu dữ liệu
-    async function save() {
+    // Lưu và đồng bộ
+    async function saveAll() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
         render();
         if (URL_APPS_SCRIPT.includes("DÁN_URL")) return;
         try {
             await fetch(URL_APPS_SCRIPT, { method: "POST", mode: "no-cors", body: JSON.stringify(inventory) });
-        } catch (e) { console.error("Cloud Error", e); }
+        } catch (e) { console.error("Lỗi Cloud:", e); }
     }
 
     // Thêm mới
@@ -123,17 +126,19 @@
         const code = document.getElementById('inCode').value;
         const sn = document.getElementById('inSN').value;
         const loc = document.getElementById('inLoc').value;
-        if(!code) return alert("Cần nhập mã CCDC!");
+        if(!code || !name) return alert("Vui lòng nhập Tên và Mã CCDC!");
         
         inventory.push({ id: Date.now(), name, code, sn, loc });
-        save();
+        saveAll();
         document.getElementById('inCode').value = '';
         document.getElementById('inSN').value = '';
     }
 
-    // Đồng bộ từ Cloud
+    // Đồng bộ từ Sheets về Web
     async function syncFromCloud() {
-        if (URL_APPS_SCRIPT.includes("DÁN_URL")) return alert("Chưa có URL Apps Script!");
+        if (URL_APPS_SCRIPT.includes("DÁN_URL")) return alert("Chưa cấu hình URL!");
+        const btn = document.querySelector('.btn-sync');
+        btn.innerText = "Đang tải...";
         try {
             const res = await fetch(URL_APPS_SCRIPT);
             const data = await res.json();
@@ -141,18 +146,18 @@
                 inventory = data.map(d => ({...d, id: d.id || Date.now() + Math.random()}));
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
                 render();
-                alert("Đã đồng bộ xong!");
+                alert("Đồng bộ thành công!");
             }
-        } catch (e) { alert("Lỗi kết nối!"); }
+        } catch (e) { alert("Lỗi kết nối Cloud!"); }
+        finally { btn.innerText = "🔄 Đồng bộ từ Cloud"; }
     }
 
     // Xóa từng hàng
     async function deleteItem(id) {
         const item = inventory.find(i => i.id === id);
-        if(!item || !confirm(`Xóa hàng: ${item.name}?`)) return;
-        if(prompt("Mật khẩu xóa:") !== PASS_KEY) return alert("Sai mật khẩu!");
+        if(!item || !confirm(`Xác nhận xóa: ${item.name}?`)) return;
+        if(prompt("Nhập mật khẩu xóa:") !== PASS_KEY) return alert("Sai mật khẩu!");
 
-        // Xóa trên Cloud (đích danh mã CCDC)
         if (!URL_APPS_SCRIPT.includes("DÁN_URL")) {
             fetch(URL_APPS_SCRIPT, {
                 method: "POST", mode: "no-cors",
@@ -165,14 +170,14 @@
         render();
     }
 
-    // Render bảng & QR
+    // Hiển thị bảng & QR
     function render() {
         const tbody = document.getElementById('mainTable');
-        const q = document.getElementById('searchInput').value.toLowerCase();
+        const search = document.getElementById('searchInput').value.toLowerCase();
         tbody.innerHTML = '';
         
         const filtered = inventory.filter(i => 
-            i.name.toLowerCase().includes(q) || i.code.toLowerCase().includes(q) || i.loc.toLowerCase().includes(q)
+            Object.values(i).some(v => String(v).toLowerCase().includes(search))
         );
 
         filtered.forEach((item, idx) => {
@@ -184,22 +189,26 @@
                     <td data-label="Mã">${item.code}</td>
                     <td data-label="S/N">${item.sn || '-'}</td>
                     <td data-label="Vị trí">${item.loc || '-'}</td>
-                    <td data-label="Mã QR"><div id="${qrId}" class="qr-box"></div></td>
-                    <td data-label="Xóa"><span style="cursor:pointer" onclick="deleteItem(${item.id})">🗑️</span></td>
+                    <td data-label="Mã QR"><div id="${qrId}" class="qr-container"></div></td>
+                    <td data-label="Xóa"><span style="cursor:pointer; color:var(--danger)" onclick="deleteItem(${item.id})">🗑️</span></td>
                 </tr>
             `;
 
-            // Nội dung QR
-            const qrText = `Tên: ${item.name}\nMã: ${item.code}\nSN: ${item.sn}\nVT: ${item.loc}`;
+            // Vẽ QR (Đảm bảo div đã tồn tại)
             setTimeout(() => {
-                new QRCode(document.getElementById(qrId), { text: qrText, width: 60, height: 60 });
-            }, 50);
+                const el = document.getElementById(qrId);
+                if(el) {
+                    el.innerHTML = "";
+                    const txt = `TB: ${item.name}\nMa: ${item.code}\nSN: ${item.sn}\nVT: ${item.loc}`;
+                    new QRCode(el, { text: txt, width: 60, height: 60, correctLevel: QRCode.CorrectLevel.H });
+                }
+            }, 100);
         });
 
-        // Cập nhật vùng in
+        // Vùng In Báo Cáo
         const pTable = document.getElementById('printTable');
-        document.getElementById('printDate').innerText = "Ngày in: " + new Date().toLocaleDateString('vi-VN');
-        pTable.innerHTML = `<tr><th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>S/N</th><th>Vị trí</th></tr>`;
+        document.getElementById('printDate').innerText = "Ngày in báo cáo: " + new Date().toLocaleDateString('vi-VN');
+        pTable.innerHTML = `<tr><th>STT</th><th>Thiết bị / Model</th><th>Mã CCDC</th><th>Số S/N</th><th>Vị trí lắp đặt</th></tr>`;
         filtered.forEach((i, idx) => {
             pTable.innerHTML += `<tr><td>${idx+1}</td><td>${i.name}</td><td>${i.code}</td><td>${i.sn}</td><td>${i.loc}</td></tr>`;
         });
@@ -210,10 +219,11 @@
         inventory.forEach((i, idx) => csv += `${idx+1},${i.name},${i.code},${i.sn},${i.loc}\n`);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-        link.download = "ThietBi_ATCC.csv";
+        link.download = `ATCC_Devices_${new Date().getTime()}.csv`;
         link.click();
     }
 
+    // Chạy lần đầu
     render();
 </script>
 </body>
