@@ -21,8 +21,8 @@
         .btn-add { grid-column: span 2; background: var(--p); }
         .btn-sync { background: #6366f1; }
         .btn-excel { background: #10b981; }
-        .btn-label { background: #f59e0b; } /* Màu vàng cam cho nút nhãn dán */
-        .btn-print { background: #0f172a; }
+        .btn-label { background: #f59e0b; } 
+        .btn-print { background: #0f172a; grid-column: span 2; }
         
         table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
         thead { display: none; }
@@ -41,41 +41,39 @@
             tbody tr { display: table-row; }
             tbody td { display: table-cell; border-bottom: 1px solid #e2e8f0; padding: 12px; text-align: center; vertical-align: middle; }
             tbody td::before { display: none; }
-            .actions { grid-template-columns: repeat(4, 1fr); }
-            .btn-add { grid-column: span 1; }
+            .actions { grid-template-columns: repeat(5, 1fr); }
+            .btn-add, .btn-print { grid-column: auto; }
         }
 
-        /* PHẦN IN BÁO CÁO VÀ NHÃN DÁN */
         #printArea, #labelArea { display: none; }
 
         @media print {
             .no-print { display: none !important; }
             
-            /* Style cho Báo cáo A4 */
-            body.printing-report #printArea { display: block !important; padding: 0; background: #fff; }
-            
-            /* Style cho Nhãn dán */
-            body.printing-labels #labelArea { 
-                display: grid !important; 
-                grid-template-columns: repeat(3, 1fr); 
-                gap: 10px; 
-                padding: 10px;
-            }
-            .label-item { 
-                border: 1px solid #000; 
-                padding: 5px; 
-                display: flex; 
-                align-items: center; 
-                height: 120px; 
-                overflow: hidden;
-                page-break-inside: avoid;
-            }
-            .label-info { flex: 1; font-size: 10px; line-height: 1.2; font-weight: bold; }
-            .label-qr { width: 70px; height: 70px; }
-
+            /* In Báo Cáo */
+            body.printing-report #printArea { display: block !important; }
             #printTable { width: 100%; border-collapse: collapse; }
             #printTable th, #printTable td { border: 1px solid #000; padding: 6px; font-size: 11px; text-align: center; }
-            .sig-section { display: flex; justify-content: space-between; margin-top: 30px; }
+            
+            /* In Nhãn Dán */
+            body.printing-labels #labelArea { 
+                display: grid !important; 
+                grid-template-columns: repeat(2, 1fr); 
+                gap: 15px; 
+                padding: 10px;
+            }
+            .label-box { 
+                border: 1.5px solid #000; 
+                padding: 8px; 
+                display: flex; 
+                justify-content: space-between;
+                align-items: center;
+                height: 140px; 
+                page-break-inside: avoid;
+            }
+            .label-text { font-size: 10px; line-height: 1.4; font-weight: bold; flex: 1; }
+            .label-qr-wrap { width: 85px; height: 85px; margin-left: 5px; }
+            .label-title { border-bottom: 1px solid #000; margin-bottom: 4px; font-size: 11px; }
         }
     </style>
 </head>
@@ -83,9 +81,9 @@
 
 <div class="no-print">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: var(--p);">THỐNG KÊ THIẾT BỊ CNS/ATM</h2>
+        <h2 style="color: var(--p);">QUẢN LÝ THIẾT BỊ CNS/ATM</h2>
         <div style="font-size: 12px; background: #fff; padding: 5px 12px; border-radius: 20px; border: 1px solid #ddd;">
-            Kỹ thuật viên: <b>Trần Văn Trường</b>
+            KTV: <b>Trần Văn Trường</b>
         </div>
     </div>
 
@@ -98,29 +96,28 @@
             <div><label>S/N</label><input type="text" id="inSN" placeholder="..."></div>
             <div class="full"><label>Vị trí lắp đặt</label><input type="text" id="inLoc" placeholder="..."></div>
         </div>
-        
         <div class="actions">
-            <button class="btn-add" onclick="addItem()">➕ Thêm mới</button>
-            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ Cloud</button>
-            <button class="btn-excel" onclick="exportCSV()">📁 Xuất Excel</button>
-            <button class="btn-label" onclick="printLabels()">🖨️ Xuất nhãn dán</button>
-            <button class="btn-print" onclick="printReport()">📄 In Báo Cáo</button>
+            <button class="btn-add" onclick="addItem()">➕ Thêm</button>
+            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ</button>
+            <button class="btn-excel" onclick="exportCSV()">📁 Excel</button>
+            <button class="btn-label" onclick="printLabels()">🏷️ In Nhãn</button>
+            <button class="btn-print" onclick="printReport()">📄 Báo cáo</button>
         </div>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm nhanh..." style="width:100%; padding:14px; border-radius:8px; border:1px solid #cbd5e1; margin-bottom: 15px;">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm..." style="width:100%; padding:14px; border-radius:8px; border:1px solid #cbd5e1; margin-bottom: 15px;">
 
     <table>
         <thead>
             <tr>
                 <th style="width: 40px;">STT</th>
-                <th>Thiết bị / Model</th>
+                <th>Thiết bị</th>
                 <th>Mã CCDC</th>
                 <th>Mã Kho</th>
                 <th>P/N</th>
                 <th>S/N</th>
                 <th>Vị trí</th>
-                <th style="width: 100px;">QR Code</th>
+                <th style="width: 100px;">QR</th>
                 <th style="width: 50px;">Xóa</th>
             </tr>
         </thead>
@@ -128,35 +125,21 @@
     </table>
 </div>
 
-<!-- KHU VỰC IN BÁO CÁO -->
 <div id="printArea">
     <div style="text-align: center; margin-bottom: 20px;">
-        <p style="font-weight: bold;">TRUNG TÂM BẢO ĐẢM KỸ THUẬT - ĐỘI THÔNG TIN</p>
-        <br>
-        <h2>DANH MỤC QUẢN LÝ THIẾT BỊ CNS/ATM</h2>
-        <p id="printDate" style="font-style: italic;"></p>
+        <h3>DANH MỤC QUẢN LÝ THIẾT BỊ CNS/ATM</h3>
+        <p id="printDate"></p>
     </div>
     <table id="printTable">
         <thead>
             <tr>
-                <th>STT</th>
-                <th>Thiết bị</th>
-                <th>Mã CCDC</th>
-                <th>Mã Kho</th>
-                <th>P/N</th>
-                <th>S/N</th>
-                <th>Vị trí</th>
+                <th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>Mã Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th>
             </tr>
         </thead>
         <tbody id="printTableBody"></tbody>
     </table>
-    <div class="sig-section">
-        <div style="text-align: center; width: 40%;"><b>PHỤ TRÁCH ĐƠN VỊ</b></div>
-        <div style="text-align: center; width: 40%;"><b>NGƯỜI LẬP BIỂU</b><br><br><br><br><b>TRẦN VĂN TRƯỜNG</b></div>
-    </div>
 </div>
 
-<!-- KHU VỰC IN NHÃN DÁN (LABEL) -->
 <div id="labelArea"></div>
 
 <script>
@@ -170,9 +153,7 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
         render();
         if (URL_APPS_SCRIPT.includes("DÁN_URL")) return;
-        try {
-            await fetch(URL_APPS_SCRIPT, { method: "POST", mode: "no-cors", body: JSON.stringify(inventory) });
-        } catch (e) { console.error(e); }
+        try { await fetch(URL_APPS_SCRIPT, { method: "POST", mode: "no-cors", body: JSON.stringify(inventory) }); } catch (e) {}
     }
 
     function addItem() {
@@ -182,7 +163,6 @@
         const pn = document.getElementById('inPN').value;
         const sn = document.getElementById('inSN').value;
         const loc = document.getElementById('inLoc').value;
-        
         if(!code || !name) return alert("Vui lòng nhập Tên và Mã CCDC!");
         inventory.push({ id: Date.now(), name, code, warehouse, pn, sn, loc });
         saveAll();
@@ -211,49 +191,37 @@
                     <td data-label="P/N">${item.pn || '-'}</td>
                     <td data-label="S/N">${item.sn || '-'}</td>
                     <td data-label="Vị trí">${item.loc || '-'}</td>
-                    <td data-label="QR Code"><div id="${qrId}" class="qr-container"></div></td>
-                    <td data-label="Xóa"><span style="cursor:pointer; color:var(--danger);" onclick="deleteItem(${item.id})">🗑️</span></td>
+                    <td data-label="QR"><div id="${qrId}" class="qr-container"></div></td>
+                    <td><span style="cursor:pointer; color:var(--danger);" onclick="deleteItem(${item.id})">🗑️</span></td>
                 </tr>`;
             
             pBody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
 
-            // Tạo khung nhãn dán cho phần in nhãn
             lArea.innerHTML += `
-                <div class="label-item">
-                    <div class="label-info">
-                        Tên: ${item.name}<br>
+                <div class="label-box">
+                    <div class="label-text">
+                        <div class="label-title">THIẾT BỊ CNS/ATM</div>
+                        TB: ${item.name}<br>
                         CCDC: ${item.code}<br>
+                        KHO: ${item.warehouse || '-'}<br>
                         P/N: ${item.pn || '-'}<br>
-                        S/N: ${item.sn || '-'}
+                        S/N: ${item.sn || '-'}<br>
+                        VỊ TRÍ: ${item.loc || '-'}
                     </div>
-                    <div id="${qrIdLabel}" class="label-qr"></div>
+                    <div id="${qrIdLabel}" class="label-qr-wrap"></div>
                 </div>`;
 
             setTimeout(() => {
                 const content = `Thiết bị: ${item.name}\nMã CCDC: ${item.code}\nMã kho: ${item.warehouse || '-'}\nP/N: ${item.pn || '-'}\nS/N: ${item.sn || '-'}\nVị trí: ${item.loc || '-'}`;
-                
-                // Vẽ QR cho bảng web
-                if(document.getElementById(qrId)) {
-                    new QRCode(document.getElementById(qrId), { text: content, width: 80, height: 80, correctLevel: QRCode.CorrectLevel.H });
-                }
-                // Vẽ QR cho nhãn dán
-                if(document.getElementById(qrIdLabel)) {
-                    new QRCode(document.getElementById(qrIdLabel), { text: content, width: 65, height: 65, correctLevel: QRCode.CorrectLevel.H });
-                }
+                if(document.getElementById(qrId)) new QRCode(document.getElementById(qrId), { text: content, width: 80, height: 80 });
+                if(document.getElementById(qrIdLabel)) new QRCode(document.getElementById(qrIdLabel), { text: content, width: 85, height: 85 });
             }, 300);
         });
         document.getElementById('printDate').innerText = "Ngày: " + new Date().toLocaleDateString('vi-VN');
     }
 
-    function printReport() {
-        document.body.className = "printing-report";
-        window.print();
-    }
-
-    function printLabels() {
-        document.body.className = "printing-labels";
-        window.print();
-    }
+    function printReport() { document.body.className = "printing-report"; window.print(); }
+    function printLabels() { document.body.className = "printing-labels"; window.print(); }
 
     function deleteItem(id) {
         if(!confirm(`Xác nhận xóa?`)) return;
@@ -267,8 +235,7 @@
         inventory.forEach((i, idx) => csv += `${idx+1},${i.name},${i.code},${i.warehouse},${i.pn},${i.sn},${i.loc}\n`);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `Bao_cao_CNS.csv`;
-        link.click();
+        link.download = `Bao_cao_CNS.csv`; link.click();
     }
 
     async function syncFromCloud() {
@@ -276,15 +243,9 @@
         try {
             const res = await fetch(URL_APPS_SCRIPT);
             const data = await res.json();
-            if (data) {
-                inventory = data.map(d => ({...d, id: d.id || Date.now()+Math.random()}));
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
-                render();
-                alert("Đồng bộ hoàn tất!");
-            }
-        } catch (e) { alert("Lỗi kết nối Cloud!"); }
+            if (data) { inventory = data.map(d => ({...d, id: d.id || Date.now()+Math.random()})); render(); alert("Xong!"); }
+        } catch (e) { alert("Lỗi kết nối!"); }
     }
-
     render();
 </script>
 </body>
