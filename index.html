@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THỐNG KÊ ĐIỆN THOẠI ATCCHCM</title>
+    <title>QUẢN LÝ THIẾT BỊ ATCCHCM</title>
     <style>
         :root {
             --primary: #4338ca;
@@ -11,103 +11,93 @@
             --card: #ffffff;
             --text: #1e293b;
             --danger: #ef4444;
-            --success: #10b981;
             --edit: #f59e0b;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 15px; }
-        .container { max-width: 1150px; margin: 0 auto; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 15px; }
+        
+        /* Header */
+        .header-top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; text-align: center; }
+        .contact-box { background: var(--card); padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 13px; }
 
-        /* Header & Cards */
-        .header-top { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
-        .header-top h2 { font-size: 1.1rem; color: #1e1b4b; text-transform: uppercase; text-align: center; }
-        .contact-box { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 14px; text-align: center; }
+        /* Form Nhập liệu */
+        .card { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .form-group:nth-child(1) { grid-column: span 2; }
+        label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 4px; }
 
-        .card { background: var(--card); border-radius: 12px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 20px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-group:nth-child(1), .form-group:nth-child(2) { grid-column: span 2; }
-        .form-group label { display: block; font-size: 10px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; outline: none; }
-
-        .toolbar { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
-        button { padding: 12px 10px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 13px; }
+        /* Nút bấm */
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        button { padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; }
         .btn-add { grid-column: span 2; background: var(--primary); }
-        .btn-excel { background: var(--success); }
-        .btn-report { background: #6366f1; }
+        .btn-excel { background: #10b981; }
         .btn-print { background: #0f172a; }
 
-        /* Table & Responsive */
+        /* Giao diện Bảng/Card Mobile */
+        .table-wrapper { margin-top: 10px; }
         table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
-        thead { display: none; }
-        tbody tr { display: block; background: white; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
-        tbody td { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        tbody td::before { content: attr(data-label); font-weight: 700; color: #64748b; font-size: 11px; text-transform: uppercase; }
+        thead { display: none; } /* Ẩn tiêu đề trên mobile */
         
-        .btn-group-row { display: flex; gap: 10px; }
-        .btn-edit-small { background: var(--edit); padding: 5px 12px; }
-        .btn-delete-small { background: var(--danger); padding: 5px 12px; }
+        tbody tr { display: block; background: white; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 12px; position: relative; }
+        tbody td { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        tbody td:last-child { border: none; }
+        tbody td::before { content: attr(data-label); font-weight: 700; color: #64748b; font-size: 12px; }
+        
+        /* Hiệu ứng chỉnh sửa */
+        .editable { color: var(--primary); font-weight: 600; text-decoration: underline dotted; cursor: pointer; }
+        .delete-icon { color: var(--danger); font-weight: bold; font-size: 18px; }
 
-        /* MODAL CHỈNH SỬA */
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; padding: 15px; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        .modal-header { font-weight: bold; font-size: 18px; margin-bottom: 15px; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .modal-footer { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-footer button { flex: 1; }
-
+        /* Desktop */
         @media (min-width: 768px) {
-            .header-top { flex-direction: row; justify-content: space-between; }
+            .header-top { flex-direction: row; justify-content: space-between; text-align: left; }
             .form-grid { grid-template-columns: repeat(4, 1fr); }
-            .form-group:nth-child(1), .form-group:nth-child(2) { grid-column: auto; }
-            .toolbar { flex-direction: row; }
-            .actions { display: flex; width: auto; }
+            .form-group:nth-child(1) { grid-column: auto; }
             thead { display: table-header-group; }
-            thead th { padding: 12px; font-size: 11px; color: #64748b; text-align: left; background: #f8fafc; }
-            tbody tr { display: table-row; background: white; }
+            thead th { text-align: left; padding: 12px; color: #64748b; font-size: 12px; }
+            tbody tr { display: table-row; }
             tbody td { display: table-cell; padding: 12px; border-bottom: 1px solid #e2e8f0; }
             tbody td::before { display: none; }
+            .actions { display: flex; width: auto; }
+            .btn-add { width: 150px; }
         }
-
-        #printLabelsArea, #printReportArea { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container no-print">
     <div class="header-top">
-        <h2>Thống kê sử dụng điện thoại ATCCHCM</h2>
+        <h2 style="font-size: 18px;">THỐNG KÊ ĐIỆN THOẠI ATCCHCM</h2>
         <div class="contact-box">Phụ trách: <b>Trần Văn Trường</b></div>
     </div>
 
     <div class="card">
         <div class="form-grid">
             <div class="form-group"><label>Thiết bị</label><input type="text" id="inName" value="PANASONIC KX-TS500"></div>
-            <div class="form-group"><label>Mã CCDC</label><input type="text" id="inCode"></div>
-            <div class="form-group"><label>Số S/N</label><input type="text" id="inSN"></div>
-            <div class="form-group"><label>Vị trí</label><input type="text" id="inLoc"></div>
+            <div class="form-group"><label>Mã CCDC</label><input type="text" id="inCode" placeholder="Nhập mã..."></div>
+            <div class="form-group"><label>Số S/N</label><input type="text" id="inSN" placeholder="..."></div>
+            <div class="form-group"><label>Vị trí</label><input type="text" id="inLoc" placeholder="..."></div>
         </div>
-        <div class="toolbar">
-            <input type="text" id="searchInput" onkeyup="render()" placeholder="Tìm kiếm nhanh...">
-            <div class="actions">
-                <button class="btn-add" onclick="addItem()">+ Thêm Mới</button>
-                <button class="btn-excel" onclick="exportCSV()">📁 Excel</button>
-                <button class="btn-report" onclick="printReport()">📄 Bảng Biểu</button>
-                <button class="btn-print" onclick="printLabels()">🏷️ Tem</button>
-            </div>
+        <div class="actions">
+            <button class="btn-add" onclick="addItem()">+ THÊM MỚI</button>
+            <button class="btn-excel" onclick="exportCSV()">📁 XUẤT EXCEL</button>
+            <button class="btn-print" onclick="window.print()">📄 IN BẢNG</button>
         </div>
     </div>
 
-    <div id="tableBodyContainer">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh..." style="margin-bottom: 15px;">
+
+    <div class="table-wrapper">
         <table>
             <thead>
                 <tr>
                     <th>STT</th>
-                    <th>Thiết Bị</th>
+                    <th>Thiết bị</th>
                     <th>Mã CCDC</th>
-                    <th>Số S/N</th>
-                    <th>Vị Trí</th>
-                    <th>Thao Tác</th>
+                    <th>S/N</th>
+                    <th>Vị trí</th>
+                    <th>Xóa</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -115,128 +105,105 @@
     </div>
 </div>
 
-<!-- MODAL CHỈNH SỬA -->
-<div id="editModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">Chỉnh sửa thông tin</div>
-        <input type="hidden" id="editIndex">
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-            <div class="form-group"><label>Tên Thiết Bị</label><input type="text" id="editName"></div>
-            <div class="form-group"><label>Mã CCDC</label><input type="text" id="editCode"></div>
-            <div class="form-group"><label>Số S/N</label><input type="text" id="editSN"></div>
-            <div class="form-group"><label>Vị Trí</label><input type="text" id="editLoc"></div>
-        </div>
-        <div class="modal-footer">
-            <button onclick="closeModal()" style="background: #94a3b8;">Hủy</button>
-            <button onclick="saveEdit()" style="background: var(--primary);">Lưu thay đổi</button>
-        </div>
-    </div>
-</div>
-
-<div id="printLabelsArea"></div>
-<div id="printReportArea">
-    <table border="1" style="width:100%; border-collapse: collapse;">
-        <thead><tr><th>STT</th><th>Thiết Bị</th><th>Mã CCDC</th><th>S/N</th><th>Vị Trí</th></tr></thead>
-        <tbody id="reportTableBody"></tbody>
-    </table>
-</div>
-
 <script>
+    // KHÓA LƯU TRỮ CỐ ĐỊNH - KHÔNG THAY ĐỔI
+    const STORAGE_KEY = 'ATCC_MASTER_STORAGE';
     const PASS_KEY = "123456";
-    let inventory = JSON.parse(localStorage.getItem('atcc_v10_db')) || [];
 
-    function save() {
-        localStorage.setItem('atcc_v10_db', JSON.stringify(inventory));
+    // 1. Lấy dữ liệu từ bộ nhớ
+    let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    // 2. Lưu dữ liệu
+    function saveAndRender() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
         render();
     }
 
+    // 3. Thêm mới
     function addItem() {
         const name = document.getElementById('inName').value;
         const code = document.getElementById('inCode').value;
         const sn = document.getElementById('inSN').value;
         const loc = document.getElementById('inLoc').value;
+
         if(!name || !code) return alert("Vui lòng nhập Tên và Mã!");
+
         inventory.push({ id: Date.now(), name, code, sn, loc });
-        save();
+        saveAndRender();
+        
+        // Reset ô nhập mã
         document.getElementById('inCode').value = '';
+        document.getElementById('inSN').value = '';
     }
 
-    // --- TÍNH NĂNG CHỈNH SỬA MỚI ---
-    function openEdit(id) {
+    // 4. CHỈNH SỬA TRỰC TIẾP
+    function editField(id, field) {
         const item = inventory.find(i => i.id === id);
-        const idx = inventory.findIndex(i => i.id === id);
-        document.getElementById('editIndex').value = idx;
-        document.getElementById('editName').value = item.name;
-        document.getElementById('editCode').value = item.code;
-        document.getElementById('editSN').value = item.sn;
-        document.getElementById('editLoc').value = item.loc;
-        document.getElementById('editModal').style.display = 'flex';
-    }
-
-    function closeModal() {
-        document.getElementById('editModal').style.display = 'none';
-    }
-
-    function saveEdit() {
-        const idx = document.getElementById('editIndex').value;
-        inventory[idx].name = document.getElementById('editName').value;
-        inventory[idx].code = document.getElementById('editCode').value;
-        inventory[idx].sn = document.getElementById('editSN').value;
-        inventory[idx].loc = document.getElementById('editLoc').value;
-        save();
-        closeModal();
-    }
-
-    function deleteItem(id) {
-        if (confirm("Xác nhận xóa?")) {
-            const pw = prompt("Nhập mật khẩu xóa:");
-            if (pw === PASS_KEY) {
-                inventory = inventory.filter(i => i.id !== id);
-                save();
-            } else if (pw !== null) alert("Sai mật khẩu!");
+        const newValue = prompt(`Cập nhật ${field.toUpperCase()}:`, item[field]);
+        
+        if (newValue !== null) {
+            item[field] = newValue;
+            saveAndRender();
         }
     }
 
+    // 5. Xóa
+    function deleteItem(id) {
+        if(confirm("Xóa thiết bị này?")) {
+            const pw = prompt("Nhập mật khẩu để xóa:");
+            if(pw === PASS_KEY) {
+                inventory = inventory.filter(i => i.id !== id);
+                saveAndRender();
+            } else {
+                alert("Sai mật khẩu!");
+            }
+        }
+    }
+
+    // 6. Hiển thị
     function render() {
         const tbody = document.getElementById('tableBody');
         const query = document.getElementById('searchInput').value.toLowerCase();
         tbody.innerHTML = '';
 
         const filtered = inventory.filter(item => 
-            Object.values(item).some(val => String(val).toLowerCase().includes(query))
+            item.name.toLowerCase().includes(query) || 
+            item.code.toLowerCase().includes(query) ||
+            item.sn.toLowerCase().includes(query) ||
+            item.loc.toLowerCase().includes(query)
         );
 
         filtered.forEach((item, idx) => {
-            tbody.innerHTML += `<tr>
-                <td data-label="STT">${idx+1}</td>
-                <td data-label="Thiết bị"><b>${item.name}</b></td>
-                <td data-label="Mã CCDC">${item.code}</td>
-                <td data-label="S/N">${item.sn || '-'}</td>
-                <td data-label="Vị trí">${item.loc || '-'}</td>
-                <td data-label="Thao tác">
-                    <div class="btn-group-row">
-                        <button class="btn-edit-small" onclick="openEdit(${item.id})">✏️ Sửa</button>
-                        <button class="btn-delete-small" onclick="deleteItem(${item.id})">🗑️ Xóa</button>
-                    </div>
-                </td>
-            </tr>`;
+            tbody.innerHTML += `
+                <tr>
+                    <td data-label="STT">${idx + 1}</td>
+                    <td data-label="Thiết bị" class="editable" onclick="editField(${item.id}, 'name')"><b>${item.name}</b></td>
+                    <td data-label="Mã CCDC" class="editable" onclick="editField(${item.id}, 'code')">${item.code}</td>
+                    <td data-label="Số S/N" class="editable" onclick="editField(${item.id}, 'sn')">${item.sn || '...'}</td>
+                    <td data-label="Vị trí" class="editable" onclick="editField(${item.id}, 'loc')">${item.loc || '...'}</td>
+                    <td data-label="Thao tác" style="text-align: right;">
+                        <span class="delete-icon" onclick="deleteItem(${item.id})">🗑️</span>
+                    </td>
+                </tr>
+            `;
         });
     }
 
-    // Các hàm phụ trợ (Excel/Print) giữ nguyên logic từ phiên bản trước
-    function printReport() { /* ...logic cũ... */ window.print(); }
-    function printLabels() { /* ...logic cũ... */ window.print(); }
+    // 7. Xuất Excel (CSV)
     function exportCSV() {
-        let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,S/N,Vi Tri\n";
-        inventory.forEach((i, idx) => csv += `${idx+1},${i.name},${i.code},${i.sn},${i.loc}\n`);
+        let csv = "\ufeffSTT,Ten Thiet Bi,Ma CCDC,Serial,Vi Tri\n";
+        inventory.forEach((item, idx) => {
+            csv += `${idx+1},${item.name},${item.code},${item.sn},${item.loc}\n`;
+        });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "ThongKe_DienThoai.csv";
+        link.download = `ThongKe_ATCC_${new Date().toLocaleDateString()}.csv`;
         link.click();
     }
 
     render();
 </script>
+
 </body>
 </html>
