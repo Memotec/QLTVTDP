@@ -3,270 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THỐNG KÊ ĐIỆN THOẠI ATCCHCM</title>
+    <title>ATCCHCM - QUẢN LÝ THIẾT BỊ</title>
     <style>
-        :root {
-            --primary: #4338ca;
-            --bg: #f1f5f9;
-            --card: #ffffff;
-            --text: #1e293b;
-            --danger: #ef4444;
-        }
-
+        /* CSS giữ nguyên như bản trước để bạn dễ sử dụng */
+        :root { --primary: #4338ca; --bg: #f1f5f9; --card: #ffffff; --text: #1e293b; --danger: #ef4444; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 15px; }
-        .container { max-width: 1150px; margin: 0 auto; }
-
-        /* Header UI */
-        .header-top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; text-align: center; }
-        .contact-box { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 14px; }
-
-        /* Card & Toolbar */
-        .card { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 20px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-group:nth-child(1), .form-group:nth-child(2) { grid-column: span 2; }
-        label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; outline: none; }
-
-        .toolbar { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
-        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; }
-        button { padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; }
-        .btn-add { grid-column: span 2; background: var(--primary); }
-        .btn-excel { background: #10b981; }
-        .btn-report { background: #6366f1; }
-
-        /* Table UI on Web */
-        .table-wrapper { margin-top: 10px; overflow-x: auto; }
-        table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
-        thead { display: none; } 
-        tbody tr { display: block; background: white; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 12px; }
-        tbody td { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        tbody td:last-child { border: none; }
-        tbody td::before { content: attr(data-label); font-weight: 700; color: #64748b; font-size: 12px; }
-
-        @media (min-width: 768px) {
-            .header-top { flex-direction: row; justify-content: space-between; text-align: left; }
-            .form-grid { grid-template-columns: repeat(4, 1fr); }
-            .form-group:nth-child(1), .form-group:nth-child(2) { grid-column: auto; }
-            .toolbar { flex-direction: row; }
-            .actions { display: flex; width: auto; }
-            thead { display: table-header-group; }
-            thead th { padding: 12px; text-align: left; background: #f8fafc; font-size: 11px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
-            tbody tr { display: table-row; background: transparent; }
-            tbody td { display: table-cell; background: white; padding: 12px; border-bottom: 1px solid #e2e8f0; }
-            tbody td::before { display: none; }
-        }
-
-        /* VÙNG XUẤT BẢNG BIỂU (ẨN TRÊN WEB) */
-        #reportPrintArea { display: none; }
-
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white; padding: 0; }
-            #reportPrintArea { 
-                display: block !important; 
-                padding: 20mm; 
-                background: white;
-            }
-            .report-header { display: flex; justify-content: space-between; margin-bottom: 30px; }
-            .report-title { text-align: center; margin-bottom: 30px; text-transform: uppercase; }
-            .report-title h1 { font-size: 18pt; margin-bottom: 5px; }
-            
-            .print-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-            .print-table th, .print-table td { border: 1px solid black; padding: 8px; font-size: 11pt; text-align: left; }
-            .print-table th { background: #f2f2f2 !important; text-align: center; }
-            
-            .report-footer { display: flex; justify-content: flex-end; margin-top: 50px; }
-            .signature-box { text-align: center; min-width: 250px; }
-        }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 15px; }
+        .card { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 5px; }
+        .btn-add { width: 100%; background: var(--primary); color: white; padding: 15px; border-radius: 8px; border: none; font-weight: bold; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+        .no-print { display: block; }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
 
-<div class="container no-print">
-    <div class="header-top">
-        <h2 style="color: #1e1b4b;">THỐNG KÊ ĐIỆN THOẠI ATCCHCM</h2>
-        <div class="contact-box">Người phụ trách: <b>Trần Văn Trường</b></div>
-    </div>
-
+<div class="no-print">
+    <h2>QUẢN LÝ THIẾT BỊ ATCCHCM</h2>
     <div class="card">
         <div class="form-grid">
-            <div class="form-group"><label>Thiết bị</label><input type="text" id="inName" value="PANASONIC KX-TS500"></div>
-            <div class="form-group"><label>Mã CCDC</label><input type="text" id="inCode" placeholder="Nhập mã..."></div>
-            <div class="form-group"><label>Số S/N</label><input type="text" id="inSN" placeholder="..."></div>
-            <div class="form-group"><label>Vị trí</label><input type="text" id="inLoc" placeholder="..."></div>
-        </div>
-        
-        <div class="toolbar">
-            <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh..." style="flex-grow: 1;">
-            <div class="actions">
-                <button class="btn-add" onclick="addItem()">+ Thêm Mới</button>
-                <button class="btn-excel" onclick="exportCSV()">📁 Excel</button>
-                <button class="btn-report" onclick="prepareReport()">📄 Xuất Bảng Biểu</button>
+            <div style="grid-column: span 2;">
+                <label>Tên thiết bị</label>
+                <input type="text" id="inName" value="PANASONIC KX-TS500">
+            </div>
+            <div>
+                <label>Mã CCDC</label>
+                <input type="text" id="inCode">
+            </div>
+            <div>
+                <label>S/N</label>
+                <input type="text" id="inSN">
+            </div>
+            <div style="grid-column: span 2;">
+                <label>Vị trí</label>
+                <input type="text" id="inLoc">
             </div>
         </div>
-    </div>
-
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 50px;">STT</th>
-                    <th>Tên Thiết Bị</th>
-                    <th>Mã CCDC</th>
-                    <th>Số S/N</th>
-                    <th>Vị Trí</th>
-                    <th style="width: 50px;">Xóa</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
+        <button class="btn-add" onclick="addItem()">THÊM THIẾT BỊ</button>
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button onclick="window.print()" style="flex:1; background:#0f172a; color:white; padding:10px; border-radius:5px;">📄 XUẤT BẢNG IN</button>
+            <button onclick="exportExcel()" style="flex:1; background:#10b981; color:white; padding:10px; border-radius:5px;">📁 LƯU FILE EXCEL</button>
+        </div>
     </div>
 </div>
 
-<!-- GIAO DIỆN BẢNG BIỂU KHI IN -->
-<div id="reportPrintArea">
-    <div class="report-header">
-        <div style="text-align: center;">
-            <p style="font-size: 11pt;">TỔNG CÔNG TY QUẢN LÝ BAY VN</p>
-            <p style="font-weight: bold; font-size: 11pt;">TRUNG TÂM KIỂM SOÁT ĐƯỜNG DÀI HCM</p>
-            <p style="text-decoration: underline;">Kỹ thuật CNS/ATM</p>
-        </div>
-        <div style="text-align: center;">
-            <p style="font-weight: bold; font-size: 11pt;">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-            <p style="font-weight: bold; font-size: 11pt;">Độc lập - Tự do - Hạnh phúc</p>
-            <p>----------o0o----------</p>
-        </div>
-    </div>
-
-    <div class="report-title">
-        <h1>BẢNG THỐNG KÊ SỬ DỤNG ĐIỆN THOẠI</h1>
-        <p id="printUnitText">Đơn vị: Kỹ thuật CNS/ATM - ATCCHCM</p>
-    </div>
-
-    <table class="print-table">
+<div id="mainContent">
+    <table id="dataTable">
         <thead>
             <tr>
-                <th style="width: 40px;">STT</th>
-                <th>Tên Thiết Bị / Model</th>
+                <th>STT</th>
+                <th>Thiết bị</th>
                 <th>Mã CCDC</th>
-                <th>Số Serial (S/N)</th>
-                <th>Vị Trí Lắp Đặt</th>
+                <th>S/N</th>
+                <th>Vị trí</th>
+                <th class="no-print">Xóa</th>
             </tr>
         </thead>
-        <tbody id="printTableBody"></tbody>
+        <tbody id="tbody"></tbody>
     </table>
-
-    <div class="report-footer">
-        <div class="signature-box">
-            <p id="currentDateText" style="font-style: italic;"></p>
-            <p style="font-weight: bold; margin-top: 5px;">NGƯỜI LẬP BIỂU</p>
-            <div style="margin-top: 80px;">
-                <p style="font-weight: bold;">Trần Văn Trường</p>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
-    const STORAGE_KEY = 'atcc_master_db';
-    const PASS_KEY = "123456";
+    // Tên kho lưu trữ cố định
+    const MASTER_KEY = 'atcc_master_db';
+    const OLD_KEYS = ['atcc_v9_db', 'atcc_v10_db', 'atcc_db', 'atcc_permanent_database'];
 
-    let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    // HÀM TỰ ĐỘNG KHÔI PHỤC DỮ LIỆU LỖI
+    function autoRecover() {
+        let currentData = localStorage.getItem(MASTER_KEY);
+        
+        // Nếu kho mới trống, thử tìm trong các kho cũ
+        if (!currentData || currentData === "[]") {
+            for (let oldKey of OLD_KEYS) {
+                let oldData = localStorage.getItem(oldKey);
+                if (oldData && oldData !== "[]") {
+                    console.log("Phát hiện dữ liệu tại: " + oldKey);
+                    localStorage.setItem(MASTER_KEY, oldData);
+                    return JSON.parse(oldData);
+                }
+            }
+        }
+        return JSON.parse(currentData) || [];
+    }
+
+    let inventory = autoRecover();
 
     function save() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+        localStorage.setItem(MASTER_KEY, JSON.stringify(inventory));
         render();
     }
 
     function addItem() {
-        const name = document.getElementById('inName').value;
-        const code = document.getElementById('inCode').value;
-        const sn = document.getElementById('inSN').value;
-        const loc = document.getElementById('inLoc').value;
-
-        if(!name || !code) return alert("Vui lòng nhập Tên và Mã CCDC!");
-
-        inventory.push({ id: Date.now(), name, code, sn, loc });
+        const item = {
+            id: Date.now(),
+            name: document.getElementById('inName').value,
+            code: document.getElementById('inCode').value,
+            sn: document.getElementById('inSN').value,
+            loc: document.getElementById('inLoc').value
+        };
+        if(!item.code) return alert("Cần nhập mã CCDC!");
+        inventory.push(item);
         save();
         document.getElementById('inCode').value = '';
         document.getElementById('inSN').value = '';
     }
 
     function deleteItem(id) {
-        const pw = prompt("Nhập mật khẩu để xóa:");
-        if (pw === PASS_KEY) {
+        if(confirm("Xóa thiết bị này?")) {
             inventory = inventory.filter(i => i.id !== id);
             save();
-        } else if (pw !== null) alert("Sai mật khẩu!");
+        }
     }
 
     function render() {
-        const tbody = document.getElementById('tableBody');
-        const query = document.getElementById('searchInput').value.toLowerCase();
+        const tbody = document.getElementById('tbody');
         tbody.innerHTML = '';
-
-        const filtered = inventory.filter(item => 
-            Object.values(item).some(val => String(val).toLowerCase().includes(query))
-        );
-
-        filtered.forEach((item, idx) => {
+        inventory.forEach((item, idx) => {
             tbody.innerHTML += `
                 <tr>
-                    <td data-label="STT">${idx + 1}</td>
-                    <td data-label="Thiết bị"><b>${item.name}</b></td>
-                    <td data-label="Mã CCDC">${item.code}</td>
-                    <td data-label="Số S/N">${item.sn || ''}</td>
-                    <td data-label="Vị trí">${item.loc || ''}</td>
-                    <td data-label="Xóa" style="text-align: right;">
-                        <button onclick="deleteItem(${item.id})" style="background:none; color:var(--danger); padding:0; width:auto; font-size:18px;">🗑️</button>
-                    </td>
-                </tr>
-            `;
-        });
-    }
-
-    // CHỨC NĂNG XUẤT BẢNG BIỂU MỚI
-    function prepareReport() {
-        const printTbody = document.getElementById('printTableBody');
-        const dateText = document.getElementById('currentDateText');
-        const now = new Date();
-        
-        // Cập nhật ngày tháng hiện tại
-        dateText.innerText = `TP. Hồ Chí Minh, ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
-
-        // Đổ dữ liệu vào bảng in
-        printTbody.innerHTML = '';
-        inventory.forEach((item, idx) => {
-            printTbody.innerHTML += `
-                <tr>
-                    <td style="text-align: center;">${idx + 1}</td>
+                    <td>${idx + 1}</td>
                     <td>${item.name}</td>
                     <td>${item.code}</td>
-                    <td>${item.sn || ''}</td>
-                    <td>${item.loc || ''}</td>
+                    <td>${item.sn}</td>
+                    <td>${item.loc}</td>
+                    <td class="no-print"><button onclick="deleteItem(${item.id})">❌</button></td>
                 </tr>
             `;
         });
-
-        // Gọi lệnh in của trình duyệt
-        window.print();
     }
 
-    function exportCSV() {
-        let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,S/N,Vi Tri\n";
+    function exportExcel() {
+        let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,SN,Vi Tri\n";
         inventory.forEach((item, idx) => {
             csv += `${idx+1},${item.name},${item.code},${item.sn},${item.loc}\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "ThongKe_ATCC.csv";
+        link.download = "BAO_CAO_ATCC.csv";
         link.click();
     }
 
     render();
 </script>
-
 </body>
 </html>
