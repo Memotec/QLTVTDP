@@ -20,7 +20,14 @@
     </style>
 </head>
 <body>
-
+<div class="actions">
+    <button class="btn-add" onclick="addItem()">+ Thêm Mới</button>
+    <!-- Thêm nút này vào -->
+    <button onclick="syncFromCloud()" style="background: #6366f1;">🔄 Đồng bộ từ Cloud</button> 
+    
+    <button class="btn-excel" onclick="exportCSV()">📁 Excel</button>
+    <button class="btn-report" onclick="prepareReport()">📄 Xuất Bảng Biểu</button>
+</div>
 <div class="no-print">
     <h2>QUẢN LÝ THIẾT BỊ ATCCHCM</h2>
     <div class="card">
@@ -92,8 +99,22 @@
     let inventory = autoRecover();
 
     function save() {
-        localStorage.setItem(MASTER_KEY, JSON.stringify(inventory));
-        render();
+        const URL_APPS_SCRIPT = https://script.google.com/macros/s/AKfycbz7o0_euAAq13CUq7-SaI0QlxnbrGwTpGjFPFh6Qm-d6zAP2sUP2SlGkOJWZBF6AV4/exec;
+
+function save() {
+    // 1. Vẫn lưu vào máy hiện tại để xem nhanh
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+    
+    // 2. Gửi dữ liệu lên Google Sheets để đồng bộ
+    fetch(URL_APPS_SCRIPT, {
+        method: "POST",
+        body: JSON.stringify(inventory)
+    })
+    .then(res => console.log("Đã đồng bộ lên Cloud"))
+    .catch(err => console.error("Lỗi đồng bộ:", err));
+
+    render();
+}
     }
 
     function addItem() {
