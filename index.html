@@ -48,26 +48,30 @@
             tbody td::before { display: none; }
         }
 
-        /* THIẾT KẾ IN BÁO CÁO SOP */
+        /* --- THIẾT KẾ IN BÁO CÁO SOP CHUẨN HÀNG/CỘT --- */
         #printArea, #labelArea { display: none; }
         @media print {
-            @page { size: A4; margin: 15mm; }
+            @page { size: A4 landscape; margin: 10mm; }
             body { background: white; padding: 0; }
             .no-print, #loginOverlay { display: none !important; }
             
             body.printing-report #printArea { display: block !important; color: black; }
-            .sop-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-            .sop-header .left { text-align: center; font-weight: bold; font-size: 12px; }
-            .sop-header .right { text-align: center; font-weight: bold; font-size: 12px; }
-            .sop-title { text-align: center; margin: 20px 0; }
-            .sop-title h1 { font-size: 18px; text-transform: uppercase; margin-bottom: 5px; }
+            .sop-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
+            .sop-header .left, .sop-header .right { text-align: center; font-weight: bold; font-size: 11pt; line-height: 1.4; }
+            .sop-title { text-align: center; margin: 15px 0; }
+            .sop-title h1 { font-size: 16pt; text-transform: uppercase; margin-bottom: 5px; }
             
-            #printTable { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            #printTable th, #printTable td { border: 1px solid black; padding: 8px; font-size: 11px; text-align: center; }
-            #printTable th { background: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+            #printTable { width: 100%; border-collapse: collapse; table-layout: fixed; }
+            #printTable th, #printTable td { border: 1px solid black; padding: 6px 3px; font-size: 9pt; text-align: center; word-wrap: break-word; }
+            #printTable th { background: #e5e7eb !important; -webkit-print-color-adjust: exact; text-transform: uppercase; font-weight: bold; }
+            
+            /* Độ rộng cột */
+            .col-stt { width: 35px; }
+            .col-name { width: auto; }
+            .col-data { width: 100px; }
 
-            .sop-footer { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; text-align: center; font-size: 12px; }
-            .footer-space { height: 80px; }
+            .sop-footer { margin-top: 25px; display: grid; grid-template-columns: 1fr 1fr; text-align: center; font-size: 11pt; }
+            .footer-space { height: 60px; }
 
             body.printing-labels #labelArea { display: grid !important; grid-template-columns: repeat(3, 55mm); gap: 2mm; justify-content: center; }
             .label-box { width: 55mm; height: 30mm; border: 0.5pt solid #000; padding: 1.5mm; display: flex; justify-content: space-between; align-items: center; page-break-inside: avoid; }
@@ -84,7 +88,6 @@
         <input type="text" id="user" placeholder="Tên đăng nhập">
         <input type="password" id="pass" placeholder="Mật khẩu">
         <button class="btn-add" style="width: 100%; margin-top: 15px;" onclick="checkLogin()">Vào hệ thống</button>
-        <p id="loginError" style="color: var(--danger); font-size: 12px; margin-top: 10px; display: none;">Sai tài khoản!</p>
     </div>
 </div>
 
@@ -110,7 +113,7 @@
 
     <div class="card">
         <div class="actions">
-            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ</button>
+            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ Cloud</button>
             <button class="btn-excel" onclick="exportCSV()">📁 Xuất Excel</button>
             <button class="btn-label" onclick="printLabels()">🏷️ Nhãn dán</button>
             <button class="btn-print" onclick="printReport()">📄 In Báo Cáo SOP</button>
@@ -118,65 +121,42 @@
         </div>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm nhanh..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px;">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px;">
 
     <table>
         <thead>
-            <tr>
-                <th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th><th>QR</th><th class="admin-only">Xóa</th>
-            </tr>
+            <tr><th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th><th>QR</th><th class="admin-only">Xóa</th></tr>
         </thead>
         <tbody id="mainTable"></tbody>
     </table>
 </div>
 
-<!-- KHU VỰC IN BÁO CÁO SOP -->
 <div id="printArea">
     <div class="sop-header">
-        <div class="left">
-            TRUNG TÂM BẢO ĐẢM KỸ THUẬT<br>
-            ĐỘI THÔNG TIN<br>
-            -------
-        </div>
-        <div class="right">
-            CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>
-            Độc lập - Tự do - Hạnh phúc<br>
-            -------
-        </div>
+        <div class="left">TRUNG TÂM BẢO ĐẢM KỸ THUẬT<br>ĐỘI THÔNG TIN<br>-------</div>
+        <div class="right">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc<br>-------</div>
     </div>
-
     <div class="sop-title">
-        <h1>BÁO CÁO THỐNG KÊ CHI TIẾT THIẾT BỊ CNS/ATM</h1>
+        <h1>BÁO CÁO KIỂM KÊ THIẾT BỊ HÀNG KHÔNG</h1>
         <p id="printDate"></p>
     </div>
-
     <table id="printTable">
         <thead>
             <tr>
-                <th>STT</th>
-                <th>TÊN THIẾT BỊ / MODEL</th>
-                <th>MÁ CCDC</th>
-                <th>KHO</th>
-                <th>P/N</th>
-                <th>S/N</th>
-                <th>VỊ TRÍ LẮP ĐẶT</th>
+                <th class="col-stt">STT</th>
+                <th class="col-name">Tên Thiết Bị / Model</th>
+                <th class="col-data">Mã CCDC</th>
+                <th class="col-data">Mã Kho</th>
+                <th class="col-data">P/N</th>
+                <th class="col-data">S/N</th>
+                <th class="col-data">Vị Trí Lắp Đặt</th>
             </tr>
         </thead>
         <tbody id="printTableBody"></tbody>
     </table>
-
     <div class="sop-footer">
-        <div>
-            <b>NGƯỜI LẬP BIỂU</b><br>
-            <i>(Ký và ghi rõ họ tên)</i>
-            <div class="footer-space"></div>
-            <b id="footerUser"></b>
-        </div>
-        <div>
-            <b>LÃNH ĐẠO ĐƠN VỊ</b><br>
-            <i>(Ký tên và đóng dấu)</i>
-            <div class="footer-space"></div>
-        </div>
+        <div><b>NGƯỜI LẬP BIỂU</b><br><i>(Ký và ghi rõ họ tên)</i><div class="footer-space"></div><b id="footerUser"></b></div>
+        <div><b>LÃNH ĐẠO ĐƠN VỊ</b><br><i>(Ký tên và đóng dấu)</i><div class="footer-space"></div></div>
     </div>
 </div>
 
@@ -184,7 +164,7 @@
 
 <script>
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbz3g8qLp38h2DYVp6Y5FCsur1h-TsEwJ5Y6_D3oVtTu8M_rpZD1tviNG3tcu3ex-LLu/exec";
-    const STORAGE_KEY = 'atcc_inventory_v5_sop';
+    const STORAGE_KEY = 'atcc_inventory_final';
     let currentUser = null;
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
@@ -193,14 +173,13 @@
         const p = document.getElementById('pass').value;
         if (u === 'admin' && p === 'admin') currentUser = 'admin';
         else if (u === 'guest' && p === '123456') currentUser = 'guest';
-        else return alert("Sai tài khoản!");
+        else return alert("Sai thông tin!");
 
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
         const name = (u === 'admin' ? "Trần Văn Trường" : "Khách");
         document.getElementById('displayUser').innerText = name;
         document.getElementById('footerUser').innerText = name;
-        
         if (currentUser === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
         render();
     }
@@ -214,7 +193,7 @@
     function addItem() {
         const name = document.getElementById('inName').value.trim();
         const code = document.getElementById('inCode').value.trim();
-        if(!name && !code) return alert("Cần ít nhất Tên hoặc Mã!");
+        if(!name && !code) return alert("Cần nhập Tên hoặc Mã!");
 
         inventory.push({
             id: Date.now(),
@@ -279,9 +258,7 @@
         }
     }
 
-    function deleteItem(id) {
-        if(confirm("Xóa?")) { inventory = inventory.filter(i => i.id !== id); saveAll(); }
-    }
+    function deleteItem(id) { if(confirm("Xóa?")) { inventory = inventory.filter(i => i.id !== id); saveAll(); } }
 
     function printReport() {
         const now = new Date();
@@ -293,11 +270,11 @@
     function printLabels() { document.body.className = "printing-labels"; window.print(); }
 
     function exportCSV() {
-        let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,S/N,Vi Tri\n";
-        inventory.forEach((i, idx) => csv += `${idx+1},${i.name},${i.code},${i.sn},${i.loc}\n`);
+        let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,Kho,P/N,S/N,Vi Tri\n";
+        inventory.forEach((i, idx) => csv += `${idx+1},${i.name},${i.code},${i.warehouse},${i.pn},${i.sn},${i.loc}\n`);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `Du_lieu_CNS.csv`; link.click();
+        link.download = `Quan_Ly_CNS.csv`; link.click();
     }
 
     async function syncFromCloud() {
