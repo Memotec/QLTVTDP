@@ -3,84 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CNS/ATM SMART MANAGEMENT V27</title>
+    <title>QUẢN LÝ THIẾT BỊ CNS/ATM - ĐỘI THÔNG TIN</title>
     
-    <!-- Thư viện -->
     <script src="https://cdn.jsdelivr.net/npm/kjua@0.9.0/dist/kjua.min.js"></script>
     <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <style>
-        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --edit: #0ea5e9; --danger: #ef4444; --success: #10b981; }
+        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --word: #2b579a; --edit: #0ea5e9; --danger: #ef4444; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--txt); }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--txt); padding: 10px; }
         
-        /* Giao diện chính */
-        .container { max-width: 1200px; margin: 0 auto; padding: 15px; display: none; }
-        .card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        /* Login */
+        #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 350px; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
+
+        .container { max-width: 1400px; margin: 0 auto; display: none; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #e2e8f0; }
         
-        /* Input & Table */
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
-        #searchInput { border: 2px solid var(--p); font-size: 16px; margin-bottom: 10px; }
-        .table-res { overflow-x: auto; border-radius: 8px; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; background: white; min-width: 800px; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-        th { background: #f8fafc; font-size: 12px; text-transform: uppercase; color: #64748b; }
+        /* Search & Form */
+        input#searchInput { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid var(--p); margin-bottom: 15px; font-size: 16px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .full { grid-column: 1 / -1; }
+        label { font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; }
+        .form-grid input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 4px; }
 
         /* Buttons */
         .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
-        button { padding: 10px 15px; border-radius: 6px; border: none; color: white; font-weight: 600; cursor: pointer; font-size: 13px; }
-        .btn-p { background: var(--p); }
-        .btn-qr { background: var(--success); }
-        .btn-label { background: #f59e0b; }
+        button { padding: 10px 15px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 13px; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
 
-        /* Pop-up Thông tin khi Scan */
-        #qrPopup { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
-        .popup-content { background: white; width: 100%; max-width: 400px; border-radius: 16px; overflow: hidden; animation: slideUp 0.3s ease-out; }
-        .popup-header { background: var(--p); color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        /* Table */
+        .table-wrap { overflow-x: auto; background: white; border-radius: 10px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { background: #f8fafc; padding: 12px; font-size: 12px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 14px; }
 
-        /* In ấn */
+        /* Print Settings */
         #printLabelArea, #printQrOnlyArea { display: none; }
         @media print {
             .no-print { display: none !important; }
             body.printing-labels #printLabelArea { display: grid !important; grid-template-columns: repeat(3, 62mm); gap: 2mm; padding: 5mm; }
             body.printing-qrs #printQrOnlyArea { display: grid !important; grid-template-columns: repeat(6, 30mm); gap: 5mm; padding: 10mm; }
-            .label-item { width: 62mm; height: 35mm; border: 1pt solid #000; padding: 2mm; display: flex; flex-direction: column; page-break-inside: avoid; }
+            .label-item { width: 62mm; height: 35mm; border: 0.5pt solid #000; padding: 2mm; display: flex; flex-direction: column; page-break-inside: avoid; }
             .qr-only-item { width: 30mm; text-align: center; border: 0.5pt dashed #ccc; padding: 2mm; page-break-inside: avoid; }
         }
     </style>
 </head>
 <body>
 
-<!-- ĐĂNG NHẬP -->
-<div id="loginOverlay" style="position:fixed; inset:0; background:#e2e8f0; display:flex; align-items:center; justify-content:center; z-index:9999;">
-    <div style="background:white; padding:40px; border-radius:20px; width:90%; max-width:350px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
-        <h2 style="color:var(--p)">HỆ THỐNG CNS</h2>
-        <p style="font-size:12px; color:#64748b; margin-bottom:20px;">Đội Thông tin - TT BĐKT HCM</p>
-        <input type="text" id="user" placeholder="Tên đăng nhập" style="margin-bottom:10px;">
-        <input type="password" id="pass" placeholder="Mật khẩu" style="margin-bottom:15px;">
-        <button onclick="checkLogin()" class="btn-p" style="width:100%; padding:15px;">VÀO HỆ THỐNG</button>
+<div id="loginOverlay">
+    <div class="login-box">
+        <h2 style="color: var(--p); margin-bottom: 20px;">CNS/ATM MANAGEMENT</h2>
+        <input type="text" id="user" placeholder="Tài khoản">
+        <input type="password" id="pass" placeholder="Mật khẩu">
+        <button onclick="checkLogin()" style="background:var(--p); width:100%; padding:14px;">ĐĂNG NHẬP</button>
     </div>
 </div>
 
-<!-- APP CHÍNH -->
 <div class="container no-print" id="mainApp">
-    <div class="card">
-        <input type="text" id="searchInput" oninput="render()" placeholder="🔍 Nhập Tên, S/N hoặc P/N để tìm...">
+    <!-- Form Admin -->
+    <div class="card" id="adminArea" style="display:none;">
+        <div class="form-grid">
+            <input type="hidden" id="editIndex" value="-1">
+            <div class="full"><label>Tên thiết bị</label><input type="text" id="inName"></div>
+            <div><label>P/N</label><input type="text" id="inPN"></div>
+            <div><label>S/N</label><input type="text" id="inSN"></div>
+            <div><label>Mã CCDC</label><input type="text" id="inCode"></div>
+            <div><label>Kho</label><input type="text" id="inWarehouse"></div>
+            <div><label>SL</label><input type="number" id="inQty" value="1"></div>
+            <div class="full"><label>Vị trí</label><input type="text" id="inLoc"></div>
+        </div>
         <div class="btn-group">
-            <button class="btn-p" onclick="syncCloud()">🔄 Đồng bộ Cloud</button>
-            <button class="btn-label" onclick="doPrint('labels')">🏷️ In Nhãn Dán</button>
-            <button class="btn-qr" onclick="doPrint('qrs')">📱 In Mã QR Scan</button>
-            <button style="background:#475569" onclick="location.href=window.location.pathname">🔒 Thoát</button>
+            <button id="btnAdd" style="background:var(--p); flex:2" onclick="addItem()">➕ Thêm mới</button>
+            <button id="btnUpdate" style="background:var(--edit); flex:2; display:none;" onclick="updateItem()">💾 Lưu thay đổi</button>
+            <button style="background:#94a3b8" onclick="clearForm()">Làm mới</button>
         </div>
     </div>
 
-    <div class="table-res">
+    <!-- Công cụ -->
+    <div class="card">
+        <input type="text" id="searchInput" oninput="render()" placeholder="🔍 Tìm nhanh Tên, S/N hoặc P/N...">
+        <div class="btn-group">
+            <button style="background:#22c55e" onclick="syncCloud()">🔄 Đồng bộ Cloud</button>
+            <button style="background:var(--word)" onclick="exportToWord()">📝 Xuất File Word</button>
+            <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN</button>
+            <button style="background:#10b981" onclick="doPrint('qrs')">📱 IN MÃ QR CODE</button>
+            <button style="background:#64748b" onclick="location.reload()">🔒 Thoát</button>
+        </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>STT</th><th>Thiết bị</th><th>S/N</th><th>Vị trí</th><th>Thao tác</th>
+                    <th>STT</th><th style="text-align:left">Tên thiết bị</th>
+                    <th>P/N</th><th>S/N</th><th>Mã CCDC</th><th>SL</th><th>Vị trí</th><th>Thao tác</th>
                 </tr>
             </thead>
             <tbody id="inventoryBody"></tbody>
@@ -88,124 +108,124 @@
     </div>
 </div>
 
-<!-- KHU VỰC IN -->
 <div id="printLabelArea"></div>
 <div id="printQrOnlyArea"></div>
 
 <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOhq-bmhvxGeFz1oCaXoiJRJTpTtckexhNxSTNT4BmcuxtfEUENqHZrPNpxTD_xuXJ/exec"; // Quan trọng để QR hoạt động
-    let inventory = JSON.parse(localStorage.getItem('cns_data_v27')) || [];
-    let currentUser = null;
-
-    // 1. KIỂM TRA SCAN QR TỪ URL
-    window.onload = () => {
-        const params = new URLSearchParams(window.location.search);
-        const scanId = params.get('id');
-        if (scanId !== null) {
-            // Lưu ID chờ sau khi login
-            sessionStorage.setItem('pendingScan', scanId);
-        }
-    };
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOhq-bmhvxGeFz1oCaXoiJRJTpTtckexhNxSTNT4BmcuxtfEUENqHZrPNpxTD_xuXJ/exec";
+    let inventory = JSON.parse(localStorage.getItem('cns_data_v26')) || [];
+    let role = null;
 
     function checkLogin() {
         const u = document.getElementById('user').value.toLowerCase();
         const p = document.getElementById('pass').value;
         if ((u === 'admin' && p === 'admin') || (u === 'guest' && p === '123456')) {
-            currentUser = u;
+            role = u;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
+            if(role === 'admin') document.getElementById('adminArea').style.display = 'block';
             render();
-            
-            // Kiểm tra nếu có lệnh scan đang chờ
-            const pending = sessionStorage.getItem('pendingScan');
-            if (pending && inventory[pending]) {
-                showPopup(pending);
-                sessionStorage.removeItem('pendingScan');
-            }
-        } else alert("Sai mật khẩu!");
+        } else alert("Sai thông tin!");
     }
 
-    // 2. HIỂN THỊ POPUP THÔNG TIN KHI SCAN
-    function showPopup(idx) {
-        const item = inventory[idx];
-        const html = `
-            <div id="qrPopup">
-                <div class="popup-content">
-                    <div class="popup-header">
-                        <span> CHI TIẾT THIẾT BỊ </span>
-                        <span style="cursor:pointer" onclick="closePopup()">✕</span>
-                    </div>
-                    <div style="padding:20px; line-height:1.8">
-                        <b>Tên:</b> ${item.name}<br>
-                        <b>P/N:</b> ${item.pn}<br>
-                        <b>S/N:</b> <span style="color:red; font-weight:bold">${item.sn}</span><br>
-                        <b>Mã tài sản:</b> ${item.code}<br>
-                        <b>Vị trí hiện tại:</b> ${item.loc}<br>
-                        <hr style="margin:15px 0; border:0.5pt solid #eee">
-                        <button onclick="closePopup()" style="width:100%; background:#64748b; color:white; padding:10px; border-radius:8px;">Đóng</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', html);
-    }
-
-    function closePopup() { const p = document.getElementById('qrPopup'); if(p) p.remove(); }
-
-    // 3. RENDER VÀ TẠO QR LINK
     function render() {
         const tbody = document.getElementById('inventoryBody');
-        const labelArea = document.getElementById('printLabelArea');
-        const qrOnlyArea = document.getElementById('printQrOnlyArea');
-        const query = document.getElementById('searchInput').value.trim().toLowerCase();
+        const lblArea = document.getElementById('printLabelArea');
+        const qrArea = document.getElementById('printQrOnlyArea');
+        const q = document.getElementById('searchInput').value.trim().toLowerCase();
         
-        tbody.innerHTML = ''; labelArea.innerHTML = ''; qrOnlyArea.innerHTML = '';
+        tbody.innerHTML = ''; lblArea.innerHTML = ''; qrArea.innerHTML = '';
 
         inventory.forEach((item, idx) => {
-            if (query === "" || item.name.toLowerCase().includes(query) || item.sn.toLowerCase().includes(query)) {
-                // Bảng hiển thị
+            const match = item.name.toLowerCase().includes(q) || item.sn.toLowerCase().includes(q) || item.pn.toLowerCase().includes(q);
+            if (q === "" || match) {
+                // Table
                 tbody.innerHTML += `<tr>
                     <td>${idx+1}</td>
                     <td style="text-align:left"><b>${item.name}</b></td>
-                    <td>${item.sn}</td><td>${item.loc}</td>
-                    <td><button class="btn-p" onclick="showPopup(${idx})">Xem</button></td>
+                    <td>${item.pn}</td><td>${item.sn}</td><td>${item.code}</td>
+                    <td>${item.qty}</td><td>${item.loc}</td>
+                    <td><button style="background:var(--edit)" onclick="editItem(${idx})">Chọn</button></td>
                 </tr>`;
 
-                // Link Deep Scan: Trỏ về chính Web App + ID hàng
-                const currentLink = WEB_APP_URL || window.location.href.split('?')[0];
-                const deepLink = `${currentLink}?id=${idx}`;
-
-                // Tạo Nhãn (Label)
-                const labelId = `lbl-${idx}`;
-                labelArea.innerHTML += `
+                // Nhãn (Label)
+                const lid = `l-${idx}`;
+                lblArea.innerHTML += `
                     <div class="label-item">
-                        <div style="font-size:7pt; font-weight:bold; text-align:center; border-bottom:1px solid #000; margin-bottom:1mm">ĐỘI THÔNG TIN - TT BĐKT</div>
+                        <div style="font-size:7pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000">ĐỘI THÔNG TIN - TT BĐKT</div>
                         <div style="display:flex; align-items:center; flex:1">
-                            <div style="flex:2; font-size:7pt; line-height:1.2">
-                                <b>${item.name.substring(0,25)}</b><br>
-                                PN: ${item.pn}<br>SN: ${item.sn}<br>Mã: ${item.code}
+                            <div style="flex:2; font-size:7pt; line-height:1.3">
+                                <b>${item.name.substring(0,30)}</b><br>PN: ${item.pn}<br>SN: ${item.sn}<br>CCDC: ${item.code}
                             </div>
-                            <div style="flex:1" id="${labelId}"></div>
+                            <div style="flex:1" id="${lid}"></div>
                         </div>
                     </div>`;
 
-                // Tạo QR riêng lẻ (Chỉ QR + SN)
-                const qrOnlyId = `qronly-${idx}`;
-                qrOnlyArea.innerHTML += `
+                // QR riêng lẻ
+                const qid = `q-${idx}`;
+                qrArea.innerHTML += `
                     <div class="qr-only-item">
-                        <div id="${qrOnlyId}"></div>
+                        <div id="${qid}"></div>
                         <div style="font-size:7pt; font-weight:bold; margin-top:2px;">SN: ${item.sn}</div>
                     </div>`;
 
-                // Vẽ QR (Sử dụng Deep Link để quét là ra Pop-up)
                 setTimeout(() => {
-                    const el1 = document.getElementById(labelId);
-                    const el2 = document.getElementById(qrOnlyId);
-                    if(el1) el1.appendChild(kjua({render:'image', size:120, text: deepLink}));
-                    if(el2) el2.appendChild(kjua({render:'image', size:100, text: deepLink}));
+                    if(document.getElementById(lid)) document.getElementById(lid).appendChild(kjua({render:'image', size:120, text:item.sn}));
+                    if(document.getElementById(qid)) document.getElementById(qid).appendChild(kjua({render:'image', size:100, text:item.sn}));
                 }, 50);
             }
         });
+    }
+
+    // CRUD & Sync
+    function addItem() {
+        inventory.push({
+            name: document.getElementById('inName').value, pn: document.getElementById('inPN').value,
+            sn: document.getElementById('inSN').value, code: document.getElementById('inCode').value,
+            warehouse: document.getElementById('inWarehouse').value, qty: document.getElementById('inQty').value,
+            loc: document.getElementById('inLoc').value
+        });
+        save(); clearForm();
+    }
+
+    function editItem(idx) {
+        if(role !== 'admin') return alert("Chỉ Admin mới có quyền sửa!");
+        const item = inventory[idx];
+        document.getElementById('editIndex').value = idx;
+        document.getElementById('inName').value = item.name;
+        document.getElementById('inSN').value = item.sn;
+        document.getElementById('btnAdd').style.display = 'none';
+        document.getElementById('btnUpdate').style.display = 'block';
+        window.scrollTo(0,0);
+    }
+
+    function updateItem() {
+        const idx = document.getElementById('editIndex').value;
+        inventory[idx] = {
+            name: document.getElementById('inName').value, pn: document.getElementById('inPN').value,
+            sn: document.getElementById('inSN').value, code: document.getElementById('inCode').value,
+            warehouse: document.getElementById('inWarehouse').value, qty: document.getElementById('inQty').value,
+            loc: document.getElementById('inLoc').value
+        };
+        save(); clearForm();
+    }
+
+    async function save() {
+        localStorage.setItem('cns_data_v26', JSON.stringify(inventory));
+        render();
+        if(WEB_APP_URL && role === 'admin') {
+            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(inventory) });
+        }
+    }
+
+    function clearForm() { document.querySelectorAll('.form-grid input').forEach(i => i.value = i.id==='inQty'?'1':''); document.getElementById('btnAdd').style.display='block'; document.getElementById('btnUpdate').style.display='none'; }
+
+    async function syncCloud() {
+        try {
+            const r = await fetch(WEB_APP_URL);
+            inventory = await r.json();
+            save(); alert("Đã đồng bộ!");
+        } catch(e) { alert("Lỗi kết nối Cloud!"); }
     }
 
     function doPrint(type) {
@@ -213,14 +233,14 @@
         window.print();
     }
 
-    async function syncCloud() {
-        if(!WEB_APP_URL || WEB_APP_URL.includes("https://script.google.com/macros/s/AKfycbzOhq-bmhvxGeFz1oCaXoiJRJTpTtckexhNxSTNT4BmcuxtfEUENqHZrPNpxTD_xuXJ/exec")) return alert("Vui lòng dán link Apps Script vào mã nguồn!");
-        try {
-            const r = await fetch(WEB_APP_URL);
-            inventory = await r.json();
-            localStorage.setItem('cns_data_v27', JSON.stringify(inventory));
-            render(); alert("Đã cập nhật dữ liệu mới nhất!");
-        } catch(e) { alert("Lỗi kết nối!"); }
+    function exportToWord() {
+        const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, TextRun } = docx;
+        const rows = [new TableRow({ children: ["STT", "Thiết bị", "P/N", "S/N", "Mã CCDC", "Vị trí"].map(t => new TableCell({ children: [new Paragraph({ children: [new TextRun({text:t, bold:true})], alignment: AlignmentType.CENTER })], background:{fill:"E2E8F0"} })) })];
+        inventory.forEach((item, i) => {
+            rows.push(new TableRow({ children: [(i+1).toString(), item.name, item.pn, item.sn, item.code, item.loc].map(t => new TableCell({ children: [new Paragraph({text: t || ""})] })) }));
+        });
+        const doc = new Document({ sections: [{ children: [ new Paragraph({ children: [new TextRun({text:"DANH MỤC THIẾT BỊ CNS/ATM", bold:true, size:28})], alignment: AlignmentType.CENTER }), new Paragraph({text:"", break:1}), new Table({ width: {size:100, type:WidthType.PERCENTAGE}, rows }) ] }] });
+        Packer.toBlob(doc).then(blob => saveAs(blob, "Danh_muc_CNS.docx"));
     }
 </script>
 </body>
