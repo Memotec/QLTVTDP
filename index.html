@@ -12,7 +12,7 @@
     <style>
         :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --word: #2b579a; --edit: #0ea5e9; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 10px; color: var(--txt); }
         
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { background: white; padding: 35px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 350px; }
@@ -26,7 +26,8 @@
         input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-top: 4px; }
         
         .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; }
-        button { padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 13px; }
+        button { padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 13px; transition: 0.3s; }
+        button:hover { opacity: 0.8; }
         
         .admin-only { display: none; }
 
@@ -36,24 +37,24 @@
             .actions { grid-template-columns: repeat(6, 1fr); }
         }
 
-        /* --- CẤU HÌNH IN ẤN CHUYÊN NGHIỆP --- */
+        /* --- STYLE CHO CÁC VÙNG IN --- */
         #printArea, #labelArea, #repairFormArea { display: none; }
         
         @media print {
-            @page { size: A4 portrait; margin: 20mm 15mm 20mm 30mm; } /* Lề trái 30mm chuẩn đóng gáy */
             .no-print { display: none !important; }
-            body { background: white; font-family: "Times New Roman", Times, serif; color: black; padding: 0; }
-            
+            body { background: white; padding: 0; color: black; font-family: "Times New Roman", Times, serif; }
+
             /* 1. Báo cáo SOP */
+            @page { size: A4 portrait; margin: 20mm 15mm 20mm 30mm; }
             body.printing-report #printArea { display: block !important; }
             .rep-header { display: flex; justify-content: space-between; text-align: center; margin-bottom: 25px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-            table th, table td { border: 1px solid black; padding: 8px; font-size: 11pt; text-align: center; }
-            table th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+            .sop-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .sop-table th, .sop-table td { border: 1px solid black; padding: 6px; font-size: 10.5pt; text-align: center; }
+            .sop-table th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
 
-            /* 2. Phiếu sửa chữa */
+            /* 2. Phiếu sửa chữa / Sử dụng chuyên nghiệp */
             body.printing-repair #repairFormArea { display: block !important; }
-            .repair-card { border: 1.5pt solid black; padding: 15mm; min-height: 120mm; }
+            .repair-paper { padding: 10mm; line-height: 1.6; }
 
             /* 3. Nhãn dán 62x35mm */
             body.printing-labels #labelArea { 
@@ -61,16 +62,16 @@
                 grid-template-columns: repeat(3, 62mm); 
                 gap: 2mm; 
                 justify-content: center;
-                margin: 0;
+                padding-top: 10mm;
             }
             .label-box { 
                 width: 62mm; height: 35mm; border: 0.5pt solid #000; 
                 display: flex; flex-direction: column; padding: 1.5mm; overflow: hidden; page-break-inside: avoid;
             }
-            .unit-title { font-size: 6.5pt; font-weight: bold; border-bottom: 0.5pt solid #000; margin-bottom: 1.5mm; text-align: center; }
+            .label-unit { font-size: 6.5pt; font-weight: bold; border-bottom: 0.4pt solid #000; margin-bottom: 1.5mm; text-align: center; font-family: Arial; }
             .label-main { display: flex; flex: 1; align-items: center; }
-            .label-info { flex: 1.5; font-size: 6.8pt; line-height: 1.3; font-family: Arial, sans-serif; }
-            .info-item { display: flex; } .info-key { font-weight: bold; min-width: 12mm; }
+            .label-info { flex: 1.6; font-size: 6.8pt; line-height: 1.3; font-family: Arial; }
+            .info-row { display: flex; } .info-label { font-weight: bold; min-width: 12mm; }
             .label-qr { flex: 1; display: flex; justify-content: flex-end; }
             .label-qr img { width: 22mm; height: 22mm; }
         }
@@ -81,7 +82,7 @@
 <div id="loginOverlay">
     <div class="login-box">
         <h3 style="color: var(--p);">HỆ THỐNG CNS/ATM</h3>
-        <input type="text" id="user" placeholder="Tên đăng nhập">
+        <input type="text" id="user" placeholder="Tên đăng nhập (admin/guest)">
         <input type="password" id="pass" placeholder="Mật khẩu">
         <button onclick="checkLogin()" style="background:var(--p); width:100%; padding:12px;">ĐĂNG NHẬP</button>
     </div>
@@ -90,7 +91,7 @@
 <div class="no-print" id="mainApp">
     <!-- KHỐI NHẬP LIỆU ADMIN -->
     <div class="card admin-only">
-        <h4 style="color: var(--p); margin-bottom: 10px;">CẬP NHẬT THIẾT BỊ</h4>
+        <h4 style="color: var(--p); margin-bottom: 10px;">CẬP NHẬT THÔNG TIN THIẾT BỊ</h4>
         <div class="form-grid">
             <input type="hidden" id="editIndex" value="-1">
             <div class="full"><label>Tên thiết bị</label><input type="text" id="inName"></div>
@@ -98,7 +99,7 @@
             <div><label>S/N</label><input type="text" id="inSN"></div>
             <div><label>Mã CCDC</label><input type="text" id="inCode"></div>
             <div><label>Mã Kho</label><input type="text" id="inWarehouse"></div>
-            <div class="full"><label>Vị trí</label><input type="text" id="inLoc"></div>
+            <div class="full"><label>Vị trí lắp đặt</label><input type="text" id="inLoc"></div>
         </div>
         <button id="btnAdd" style="background:var(--p); margin-top:10px; width:100%" onclick="addItem()">➕ Thêm thiết bị</button>
         <button id="btnUpdate" style="background:var(--edit); margin-top:10px; width:100%; display:none;" onclick="updateItem()">💾 Lưu thay đổi</button>
@@ -109,21 +110,21 @@
         <div class="actions">
             <button style="background:#6366f1" onclick="syncFromCloud()">🔄 Đồng bộ Cloud</button>
             <button style="background:var(--word)" onclick="exportToWord()">📝 Xuất Word</button>
-            <button style="background:#f59e0b" onclick="printLabels()">🏷️ Nhãn dán</button>
+            <button style="background:#f59e0b" onclick="printLabels()">🏷️ In nhãn dán</button>
             <button style="background:#0f172a" onclick="printReport()">📄 Báo cáo SOP</button>
             <button style="background:#ef4444" onclick="printRepairForm()">🛠️ Phiếu sửa chữa</button>
-            <button style="background:#64748b" onclick="location.reload()">🔒 Thoát</button>
+            <button style="background:#64748b" onclick="location.reload()">🔒 Đăng xuất</button>
         </div>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm thiết bị..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; margin-bottom:15px;">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm theo tên hoặc S/N..." style="width:100%; padding:12px; border-radius:8px; border:1px solid #cbd5e1; margin-bottom:15px;">
 
     <div style="overflow-x:auto; background:white; border-radius:8px; border:1px solid #e2e8f0;">
         <table style="width:100%; border-collapse:collapse; min-width:1000px; text-align: center;">
             <thead style="background:#f8fafc;">
                 <tr>
                     <th>STT</th><th>Thiết bị</th><th>P/N</th><th>S/N</th><th>CCDC</th><th>Mã Kho</th><th>Vị trí</th>
-                    <th>Sửa/Phiếu</th><th class="admin-only">Xóa</th>
+                    <th>Chọn</th><th class="admin-only">Xóa</th>
                 </tr>
             </thead>
             <tbody id="inventoryBody"></tbody>
@@ -134,33 +135,57 @@
 <!-- VÙNG IN BÁO CÁO SOP -->
 <div id="printArea">
     <div class="rep-header">
-        <div style="font-weight:bold; font-size:11pt;">TỔNG CÔNG TY QUẢN LÝ BAY VIỆT NAM<br>TRUNG TÂM BẢO ĐẢM KỸ THUẬT<br><u>ĐỘI THÔNG TIN</u></div>
-        <div style="font-size:11pt;"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b><br><i id="dateStr">...</i></div>
+        <div style="font-weight:bold;">TỔNG CÔNG TY QUẢN LÝ BAY VIỆT NAM<br>TRUNG TÂM BẢO ĐẢM KỸ THUẬT<br><u>ĐỘI THÔNG TIN</u></div>
+        <div><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b><br><i id="dateStr">...</i></div>
     </div>
-    <h2 style="text-align:center; text-transform:uppercase; margin-bottom:20px;">BẢNG THỐNG KÊ THIẾT BỊ KỸ THUẬT</h2>
-    <table>
+    <h2 style="text-align:center; text-transform:uppercase; margin: 20px 0;">BẢNG THỐNG KÊ THIẾT BỊ KỸ THUẬT CNS/ATM</h2>
+    <table class="sop-table">
         <thead>
             <tr><th>STT</th><th>Tên thiết bị / Model</th><th>P/N</th><th>S/N</th><th>Mã CCDC</th><th>Mã Kho</th><th>Vị trí lắp đặt</th></tr>
         </thead>
         <tbody id="sopBody"></tbody>
     </table>
     <div style="margin-top:40px; display:grid; grid-template-columns:1fr 1fr 1fr; text-align:center;">
-        <div><b>NGƯỜI LẬP BIỂU</b><div style="height:70px"></div><b>Trần Văn Trường</b></div>
-        <div><b>ĐỘI TRƯỞNG</b><div style="height:70px"></div><b>........................</b></div>
-        <div><b>XÁC NHẬN ĐƠN VỊ</b><div style="height:70px"></div><b>........................</b></div>
+        <div><b>NGƯỜI LẬP BIỂU</b><div style="height:80px"></div><b>Trần Văn Trường</b></div>
+        <div><b>ĐỘI TRƯỞNG</b><div style="height:80px"></div><b>........................</b></div>
+        <div><b>XÁC NHẬN ĐƠN VỊ</b><div style="height:80px"></div><b>........................</b></div>
     </div>
 </div>
 
-<!-- VÙNG IN PHIẾU SỬA CHỮA -->
+<!-- VÙNG IN PHIẾU BÁO SỬ DỤNG / SỬA CHỮA -->
 <div id="repairFormArea">
-    <div class="repair-card">
-        <h3 style="text-align:center; text-decoration:underline; margin-bottom:20px;">PHIẾU BÁO SỬ DỤNG / SỬA CHỮA THIẾT BỊ</h3>
-        <p style="margin-bottom:10px;">Tên thiết bị: <b id="repName"></b></p>
-        <p style="margin-bottom:10px;">Số Serial (S/N): <b id="repSN"></b> | P/N: <b id="repPN"></b></p>
-        <p style="margin-bottom:10px;">Vị trí lắp đặt: <b id="repLoc"></b></p>
-        <p style="margin-top:20px;">Nội dung công việc: ............................................................................................</p>
-        <p>....................................................................................................................................</p>
-        <div style="margin-top:50px; text-align:right;"><b>NGƯỜI TRỰC TIẾP QUẢN LÝ</b></div>
+    <div class="repair-paper">
+        <div style="display: flex; justify-content: space-between; text-align: center; margin-bottom: 25px;">
+            <div>
+                <b>TỔNG CÔNG TY QUẢN LÝ BAY VN</b><br><b>TRUNG TÂM BĐKT - ĐỘI TT-TT</b><br>
+                <span style="border-bottom: 1px solid black; padding-bottom: 2px;">Số: ......../BC-TTTT</span>
+            </div>
+            <div>
+                <b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b><br>
+                <div style="border-bottom: 1px solid black; width: 160px; margin: 5px auto;"></div>
+            </div>
+        </div>
+        <h2 style="text-align: center; text-transform: uppercase; margin-bottom: 25px; font-size: 15pt;">PHIẾU BÁO SỬ DỤNG / SỬA CHỮA THIẾT BỊ</h2>
+        <div style="font-size: 12pt; line-height: 2;">
+            <p>1. Người báo cáo sử dụng: ..............................................................................................................</p>
+            <p>2. Đơn vị công tác: <b>Đội Thông tin - Trung tâm Bảo đảm kỹ thuật</b></p>
+            <p>3. Thời gian thực hiện: Ngày ...... tháng ...... năm 202...</p>
+            <div style="border: 1px solid black; padding: 15px; margin: 10px 0; border-radius: 5px; line-height: 1.8;">
+                <p><b>THÔNG TIN THIẾT BỊ:</b></p>
+                <p>- Tên thiết bị: <b id="repName" style="text-transform: uppercase;"></b></p>
+                <p>- Part Number (P/N): <b id="repPN"></b> &nbsp;&nbsp;&nbsp;&nbsp; Serial Number (S/N): <b id="repSN"></b></p>
+                <p>- Mã CCDC: <b id="repCode"></b> &nbsp;&nbsp;&nbsp;&nbsp; Mã Kho: <b id="repWH"></b> &nbsp;&nbsp;&nbsp;&nbsp; Vị trí: <b id="repLoc"></b></p>
+            </div>
+            <p><b>4. Nội dung sử dụng / Tình trạng hư hỏng:</b></p>
+            <p style="border-bottom: 1px dotted black;">....................................................................................................................................................................</p>
+            <p style="border-bottom: 1px dotted black;">....................................................................................................................................................................</p>
+            <p style="margin-top: 10px;"><b>5. Giải pháp thực hiện / Kết quả:</b></p>
+            <p style="border-bottom: 1px dotted black;">....................................................................................................................................................................</p>
+        </div>
+        <div style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; text-align: center;">
+            <div><b>NGƯỜI BÁO CÁO</b><br><i style="font-size: 10pt;">(Ký và ghi rõ họ tên)</i><div style="height: 80px;"></div><b>Trần Văn Trường</b></div>
+            <div><i>TP. Hồ Chí Minh, ngày ...... tháng ...... năm 202...</i><br><b>XÁC NHẬN CỦA LÃNH ĐẠO ĐỘI</b><br><i style="font-size: 10pt;">(Ký và ghi rõ họ tên)</i><div style="height: 80px;"></div><b>................................................</b></div>
+        </div>
     </div>
 </div>
 
@@ -168,9 +193,10 @@
 <div id="labelArea"></div>
 
 <script>
-    // --- KHAI BÁO URL ---
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzeLtgKbAowgUWWHwpxK4SvqlMHBbFA5aWT-YsO0334r3vR9zIUvr7XZ-O81EdFz3pZ/exec"; 
-    const STORAGE_KEY = 'cns_v19_restore';
+    // ==========================================
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzeLtgKbAowgUWWHwpxK4SvqlMHBbFA5aWT-YsO0334r3vR9zIUvr7XZ-O81EdFz3pZ/exec"; // Dán link Apps Script của anh vào đây
+    const STORAGE_KEY = 'cns_final_v20';
+    // ==========================================
 
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let currentUserRole = null;
@@ -201,37 +227,37 @@
 
         filtered.forEach((item, idx) => {
             const ridx = inventory.indexOf(item);
-            // Bảng chính
+            
+            // Bảng quản lý
             tbody.innerHTML += `<tr>
-                <td>${idx+1}</td>
-                <td style="text-align:left"><b>${item.name}</b></td>
+                <td>${idx+1}</td><td style="text-align:left"><b>${item.name}</b></td>
                 <td>${item.pn}</td><td>${item.sn}</td><td>${item.code}</td><td>${item.warehouse || ''}</td><td>${item.loc}</td>
                 <td><button onclick="selectItem(${ridx})" style="background:var(--edit); padding:4px 8px;">Chọn</button></td>
                 <td class="admin-only"><button onclick="deleteItem(${ridx})" style="background:#ef4444; padding:4px 8px;">X</button></td>
             </tr>`;
 
-            // Bảng SOP
+            // Bảng Báo cáo SOP
             sopBody.innerHTML += `<tr><td>${idx+1}</td><td style="text-align:left">${item.name}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.code}</td><td>${item.warehouse || ''}</td><td>${item.loc}</td></tr>`;
 
-            // Nhãn dán
+            // Nhãn dán 62x35
             const qrId = `qr-${idx}`;
             labels.innerHTML += `
                 <div class="label-box">
-                    <div class="unit-title">ĐƠN VỊ: ĐỘI TT-TT BĐKT</div>
+                    <div class="label-unit">ĐƠN VỊ: ĐỘI TT-TT BĐKT</div>
                     <div class="label-main">
                         <div class="label-info">
-                            <div class="info-item"><span class="info-key">Tên TB:</span><span>${item.name.substring(0, 20)}</span></div>
-                            <div class="info-item"><span class="info-key">P/N:</span><span>${item.pn}</span></div>
-                            <div class="info-item"><span class="info-key">S/N:</span><span>${item.sn}</span></div>
-                            <div class="info-item"><span class="info-key">CCDC:</span><span>${item.code}</span></div>
-                            <div class="info-item"><span class="info-key">Mã kho:</span><span>${item.warehouse || ''}</span></div>
+                            <div class="info-row"><span class="info-label">Tên TB:</span><span>${item.name.substring(0, 20)}</span></div>
+                            <div class="info-row"><span class="info-label">P/N:</span><span>${item.pn}</span></div>
+                            <div class="info-row"><span class="info-label">S/N:</span><span>${item.sn}</span></div>
+                            <div class="info-row"><span class="info-label">CCDC:</span><span>${item.code}</span></div>
+                            <div class="info-row"><span class="info-label">Kho:</span><span>${item.warehouse || ''}</span></div>
                         </div>
                         <div class="label-qr" id="${qrId}"></div>
                     </div>
                 </div>`;
             setTimeout(() => {
                 const el = document.getElementById(qrId);
-                if(el) el.appendChild(kjua({ render: 'image', size: 150, text: item.sn, fill: '#000', back: '#fff' }));
+                if(el) el.appendChild(kjua({ render: 'image', size: 160, text: item.sn, fill: '#000', back: '#fff' }));
             }, 50);
         });
     }
@@ -249,20 +275,23 @@
             document.getElementById('btnAdd').style.display = 'none';
             document.getElementById('btnUpdate').style.display = 'block';
         }
+        // Đẩy dữ liệu vào Phiếu
         document.getElementById('repName').innerText = item.name;
         document.getElementById('repSN').innerText = item.sn;
         document.getElementById('repPN').innerText = item.pn;
+        document.getElementById('repCode').innerText = item.code;
+        document.getElementById('repWH').innerText = item.warehouse || '';
         document.getElementById('repLoc').innerText = item.loc;
-        alert("Đã chọn: " + item.name);
+        alert("Đã chọn thiết bị: " + item.name);
     }
 
     function printLabels() { document.body.className = "printing-labels"; window.print(); }
     function printReport() { 
-        document.getElementById('dateStr').innerText = `Hồ Chí Minh, ngày ${new Date().getDate()} tháng ${new Date().getMonth()+1} năm ${new Date().getFullYear()}`;
+        document.getElementById('dateStr').innerText = `TP. Hồ Chí Minh, ngày ${new Date().getDate()} tháng ${new Date().getMonth()+1} năm ${new Date().getFullYear()}`;
         document.body.className = "printing-report"; window.print(); 
     }
     function printRepairForm() {
-        if(!document.getElementById('repName').innerText) return alert("Chọn một thiết bị trước!");
+        if(!document.getElementById('repName').innerText) return alert("Vui lòng 'Chọn' một thiết bị từ bảng trước khi in phiếu!");
         document.body.className = "printing-repair"; window.print();
     }
 
@@ -275,23 +304,20 @@
         inventory[idx] = { name: document.getElementById('inName').value, pn: document.getElementById('inPN').value, sn: document.getElementById('inSN').value, code: document.getElementById('inCode').value, warehouse: document.getElementById('inWarehouse').value, loc: document.getElementById('inLoc').value };
         saveData(); document.getElementById('btnAdd').style.display = 'block'; document.getElementById('btnUpdate').style.display = 'none'; clearForm();
     }
-    function deleteItem(idx) { if(confirm("Xóa?")) { inventory.splice(idx,1); saveData(); } }
+    function deleteItem(idx) { if(confirm("Xác nhận xóa thiết bị này khỏi danh sách?")) { inventory.splice(idx,1); saveData(); } }
     function clearForm() { ['inName','inPN','inSN','inCode','inWarehouse','inLoc'].forEach(id => document.getElementById(id).value = ''); }
     function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); render(); }
 
     async function syncFromCloud() {
-        if(!WEB_APP_URL) return alert("Chưa có URL!");
+        if(!WEB_APP_URL) return alert("Vui lòng cấu hình WEB_APP_URL trong mã nguồn!");
         try {
             const r = await fetch(WEB_APP_URL);
             const d = await r.json();
-            if(d) { inventory = d; saveData(); alert("Xong!"); }
-        } catch(e) { alert("Lỗi!"); }
+            if(d) { inventory = d; saveData(); alert("Đồng bộ Cloud thành công!"); }
+        } catch(e) { alert("Lỗi kết nối Cloud!"); }
     }
 
-    function exportToWord() {
-        // Logic docx tối giản
-        alert("Đang chuẩn bị file Word...");
-    }
+    function exportToWord() { alert("Đang chuẩn bị dữ liệu xuất Word..."); /* Logic docx giữ nguyên */ }
 </script>
 </body>
 </html>
