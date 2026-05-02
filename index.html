@@ -13,7 +13,7 @@
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
         
-        .no-print { max-width: 1250px; margin: 0 auto; display: none; }
+        .no-print { max-width: 1400px; margin: 0 auto; display: none; }
         .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
         .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
         label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
@@ -28,9 +28,10 @@
         .btn-print { background: #0f172a; }
         .btn-logout { background: #64748b; margin-top: 10px; width: 100%; }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-        th, td { padding: 12px; text-align: center; border: 1px solid #e2e8f0; font-size: 14px; }
-        th { background: #f8fafc; font-size: 11px; text-transform: uppercase; color: #64748b; }
+        .table-container { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+        th { background: #f8fafc; font-size: 11px; text-transform: uppercase; color: #64748b; border-right: 1px solid #e2e8f0; }
         
         .admin-only { display: none; }
         .qr-container { background: #fff; padding: 5px; border: 1px solid #eee; display: inline-block; }
@@ -89,28 +90,40 @@
             <div class="full"><label>Vị trí lắp đặt</label><input type="text" id="inLoc"></div>
         </div>
         <div class="actions">
-            <button id="btnAdd" class="btn-add" style="grid-column: span 5;" onclick="addItem()">➕ Thêm thiết bị & Ghi vào Sheet</button>
+            <button id="btnAdd" class="btn-add" style="grid-column: span 5;" onclick="addItem()">➕ Thêm & Ghi vào Sheet</button>
         </div>
     </div>
 
     <div class="card">
         <div class="actions">
-            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ từ Cloud</button>
+            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ Cloud</button>
             <button class="btn-excel" onclick="exportCSV()">📁 Xuất Excel</button>
             <button class="btn-label" onclick="printLabels()">🏷️ In Nhãn</button>
-            <button class="btn-print" onclick="printReport()">📄 Xuất Phiếu SOP</button>
+            <button class="btn-print" onclick="printReport()">📄 Xuất Báo Cáo</button>
             <button class="btn-logout" onclick="location.reload()">🔒 Đăng xuất</button>
         </div>
     </div>
 
     <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px;">
 
-    <table>
-        <thead>
-            <tr><th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>S/N</th><th>Vị trí</th><th>QR</th><th class="admin-only">Xóa</th></tr>
-        </thead>
-        <tbody id="mainTable"></tbody>
-    </table>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Thiết bị</th>
+                    <th>Mã CCDC</th>
+                    <th>Mã Kho</th>
+                    <th>P/N</th>
+                    <th>S/N</th>
+                    <th>Vị trí</th>
+                    <th>QR</th>
+                    <th class="admin-only">Xóa</th>
+                </tr>
+            </thead>
+            <tbody id="mainTable"></tbody>
+        </table>
+    </div>
 </div>
 
 <div id="printArea">
@@ -154,17 +167,15 @@
         const name = (u === 'admin' ? "Trần Văn Trường" : "Cán bộ trực");
         document.getElementById('displayUser').innerText = name;
         document.getElementById('footerUser').innerText = name;
-        if (currentUser === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell' || (el.style.display = 'block'));
+        if (currentUser === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = (el.tagName === 'TD' || el.tagName === 'TH') ? 'table-cell' : 'block');
         render();
     }
 
     async function addItem() {
         const name = document.getElementById('inName').value.trim();
         if(!name) return alert("Nhập tên thiết bị!");
-
         const btn = document.getElementById('btnAdd');
-        btn.innerText = "⌛ Đang ghi vào Sheet...";
-        btn.disabled = true;
+        btn.innerText = "⌛ Đang ghi..."; btn.disabled = true;
 
         const newItem = {
             name: name,
@@ -176,24 +187,13 @@
         };
 
         try {
-            // GỬI DỮ LIỆU LÊN GOOGLE SHEET (Cần hàm doPost trong Apps Script)
-            await fetch(URL_APPS_SCRIPT, {
-                method: 'POST',
-                mode: 'no-cors', // Quan trọng để tránh lỗi CORS khi dùng Apps Script
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newItem)
-            });
-
+            await fetch(URL_APPS_SCRIPT, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newItem) });
             inventory.push({ ...newItem, id: Date.now() });
             saveData();
             ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
-            alert("Đã thêm thành công và đang cập nhật lên Sheet!");
-        } catch (e) {
-            alert("Lỗi kết nối khi gửi dữ liệu!");
-        } finally {
-            btn.innerText = "➕ Thêm thiết bị & Ghi vào Sheet";
-            btn.disabled = false;
-        }
+            alert("Đã lưu thành công!");
+        } catch (e) { alert("Lỗi ghi dữ liệu!"); }
+        finally { btn.innerText = "➕ Thêm & Ghi vào Sheet"; btn.disabled = false; }
     }
 
     function render() {
@@ -206,13 +206,14 @@
         const filtered = inventory.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(search)));
 
         filtered.forEach((item, idx) => {
-            const qrId = `qr-${idx}`;
-            const qrLId = `qrl-${idx}`;
+            const qrId = `qr-${idx}`; const qrLId = `qrl-${idx}`;
             
             tbody.innerHTML += `<tr>
                 <td>${idx+1}</td>
                 <td><b>${item.name}</b></td>
                 <td>${item.code}</td>
+                <td>${item.warehouse}</td>
+                <td>${item.pn}</td>
                 <td>${item.sn}</td>
                 <td>${item.loc}</td>
                 <td><div id="${qrId}" class="qr-container"></div></td>
@@ -220,15 +221,15 @@
             </tr>`;
 
             pBody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
-
             lArea.innerHTML += `<div class="label-box"><div class="label-text">TB: ${item.name}<br>CCDC: ${item.code}<br>S/N: ${item.sn}<br>VT: ${item.loc}</div><div id="${qrLId}" class="label-qr-wrap"></div></div>`;
 
             setTimeout(() => {
-                const content = `TB: ${item.name}\nSN: ${item.sn}\nVT: ${item.loc}`;
-                new QRCode(document.getElementById(qrId), { text: content, width: 50, height: 50 });
+                const content = `TB: ${item.name} | SN: ${item.sn} | Loc: ${item.loc}`;
+                new QRCode(document.getElementById(qrId), { text: content, width: 45, height: 45 });
                 new QRCode(document.getElementById(qrLId), { text: content, width: 80, height: 80 });
             }, 50);
         });
+        if (currentUser === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = (el.tagName === 'TD' || el.tagName === 'TH') ? 'table-cell' : 'block');
     }
 
     function deleteItem(idx) { if(confirm("Xóa mục này?")) { inventory.splice(idx, 1); saveData(); } }
@@ -239,7 +240,7 @@
             const res = await fetch(URL_APPS_SCRIPT);
             const data = await res.json();
             if(data) { inventory = data; saveData(); alert("Đồng bộ thành công!"); }
-        } catch(e) { alert("Lỗi khi tải dữ liệu từ Cloud!"); }
+        } catch(e) { alert("Lỗi tải dữ liệu!"); }
     }
 
     function printReport() {
