@@ -6,35 +6,41 @@
     <title>QUẢN LÝ THIẾT BỊ CNS/ATM - TRẦN VĂN TRƯỜNG</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --danger: #ef4444; }
+        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --success: #10b981; --danger: #ef4444; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--txt); padding: 10px; }
         
+        /* Đăng nhập */
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
+        .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; text-align: center; }
         
         .no-print { max-width: 1400px; margin: 0 auto; display: none; }
         .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        
+        /* Form nhập liệu */
         .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
         label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
         input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 4px; outline: none; }
         
+        /* Nút bấm */
         .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; }
         button { padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 13px; transition: 0.2s; }
-        .btn-add { background: var(--p); }
+        .btn-add { background: var(--p); width: 100%; margin-top: 10px; }
         .btn-sync { background: #6366f1; }
-        .btn-excel { background: #10b981; }
+        .btn-excel { background: var(--success); }
         .btn-label { background: #f59e0b; }
         .btn-print { background: #0f172a; }
-        .btn-row-repair { background: #ec4899; padding: 5px 10px; font-size: 11px; }
+        .btn-logout { background: #64748b; }
+        .btn-row-repair { background: #ec4899; padding: 5px 8px; font-size: 11px; }
 
+        /* Bảng dữ liệu */
         .table-container { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
-        th { background: #f8fafc; font-size: 11px; text-transform: uppercase; color: #64748b; }
+        th { background: #f8fafc; font-size: 11px; text-transform: uppercase; color: #64748b; border-right: 1px solid #e2e8f0; }
         
         .admin-only { display: none; }
-        .qr-container { background: #fff; padding: 5px; border: 1px solid #eee; display: inline-block; }
+        .qr-table-wrap { background: #fff; padding: 5px; display: inline-block; border: 1px solid #eee; }
 
         @media (min-width: 768px) {
             .form-grid { grid-template-columns: repeat(6, 1fr); }
@@ -45,28 +51,27 @@
         /* --- PRINT STYLES --- */
         #printArea, #labelArea, #singleRepairArea { display: none; }
         @media print {
-            @page { size: A4 portrait; margin: 15mm; }
+            @page { size: A4 portrait; margin: 10mm; }
             .no-print, #loginOverlay { display: none !important; }
             body { background: white; padding: 0; color: black; }
             
             /* In Báo cáo SOP */
-            body.printing-report { width: 100%; }
             body.printing-report #printArea { display: block !important; }
-            .sop-header { display: flex; justify-content: space-between; margin-bottom: 20px; text-align: center; font-weight: bold; font-size: 10pt; }
+            .sop-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 10pt; text-align: center; }
             
-            /* In Phiếu báo SD thiết bị (Chuẩn SOP) */
-            body.printing-repair #singleRepairArea { display: block !important; }
-            .repair-paper { border: 1.5pt solid black; padding: 40px; height: 100%; position: relative; }
-            .repair-title-box { text-align: center; margin-bottom: 30px; border-bottom: 2px solid black; padding-bottom: 10px; }
-            .repair-title-box h2 { font-size: 18pt; margin-bottom: 5px; }
-            .repair-content { font-size: 12pt; line-height: 2; }
-            .dotted-line { border-bottom: 1px dotted black; flex-grow: 1; margin-left: 10px; }
-            .info-row { display: flex; align-items: baseline; margin-bottom: 15px; }
-            .repair-footer { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; text-align: center; }
-            .footer-sign { height: 100px; }
+            /* In Nhãn QR Kiểm kê */
+            body.printing-labels #labelArea { display: grid !important; grid-template-columns: repeat(3, 60mm); gap: 5mm; justify-content: center; }
+            .label-box { width: 60mm; height: 35mm; border: 0.5pt solid #000; padding: 3mm; display: flex; align-items: center; page-break-inside: avoid; }
+            .label-text { font-size: 7.5pt; line-height: 1.3; font-weight: bold; flex: 1; text-transform: uppercase; }
+            .label-qr-wrap { width: 22mm; height: 22mm; }
 
-            /* In Nhãn */
-            body.printing-labels #labelArea { display: grid !important; grid-template-columns: repeat(3, 60mm); gap: 5mm; }
+            /* In Phiếu báo SD chuyên nghiệp */
+            body.printing-repair #singleRepairArea { display: block !important; }
+            .repair-paper { border: 1.5pt solid black; padding: 30px; height: 100%; }
+            .repair-title { text-align: center; border-bottom: 2px solid black; margin-bottom: 20px; padding-bottom: 10px; }
+            .repair-row { display: flex; align-items: baseline; margin-bottom: 15px; font-size: 12pt; }
+            .dotted { border-bottom: 1px dotted black; flex: 1; margin-left: 10px; height: 18px; }
+            .repair-footer { display: grid; grid-template-columns: 1fr 1fr; text-align: center; margin-top: 40px; }
         }
     </style>
 </head>
@@ -74,14 +79,19 @@
 
 <div id="loginOverlay">
     <div class="login-box">
-        <h3>HỆ THỐNG QUẢN LÝ CNS/ATM</h3>
-        <input type="text" id="user" placeholder="Admin">
-        <input type="password" id="pass" placeholder="Mật khẩu">
-        <button class="btn-add" style="width: 100%; margin-top: 15px;" onclick="checkLogin()">Đăng nhập</button>
+        <h3 style="margin-bottom: 20px; color: var(--p);">HỆ THỐNG CNS/ATM</h3>
+        <input type="text" id="user" placeholder="Tên đăng nhập (admin)">
+        <input type="password" id="pass" placeholder="Mật khẩu (admin)" style="margin-top:10px;">
+        <button class="btn-add" onclick="checkLogin()">Đăng nhập</button>
     </div>
 </div>
 
 <div class="no-print" id="mainApp">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="color: var(--p);">QUẢN LÝ THIẾT BỊ CNS/ATM</h2>
+        <p>Đội Thông tin - Trung tâm BĐKT</p>
+    </div>
+
     <div class="card admin-only">
         <div class="form-grid">
             <div class="full"><label>Tên thiết bị / Model</label><input type="text" id="inName"></div>
@@ -91,20 +101,20 @@
             <div><label>S/N</label><input type="text" id="inSN"></div>
             <div class="full"><label>Vị trí lắp đặt</label><input type="text" id="inLoc"></div>
         </div>
-        <button id="btnAdd" class="btn-add" style="width:100%; margin-top:10px;" onclick="addItem()">➕ Thêm thiết bị & Ghi vào Sheet</button>
+        <button id="btnAdd" class="btn-add" onclick="addItem()">➕ Thêm thiết bị & Ghi vào Sheet</button>
     </div>
 
     <div class="card">
         <div class="actions">
-            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ</button>
+            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ Cloud</button>
             <button class="btn-excel" onclick="exportCSV()">📁 Xuất Excel</button>
-            <button class="btn-label" onclick="printLabels()">🏷️ In Nhãn</button>
+            <button class="btn-label" onclick="printLabels()">🏷️ In Nhãn QR Kiểm kê</button>
             <button class="btn-print" onclick="printReport()">📄 Báo cáo SOP</button>
             <button class="btn-logout" onclick="location.reload()">🔒 Đăng xuất</button>
         </div>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px;">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh theo Tên, S/N, Vị trí..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px;">
 
     <div class="table-container">
         <table>
@@ -126,14 +136,14 @@
     </div>
 </div>
 
-<!-- VÙNG IN BÁO CÁO SOP -->
+<!-- VÙNG IN BÁO CÁO -->
 <div id="printArea">
     <div class="sop-header">
-        <div>TRUNG TÂM BĐKT - ĐỘI THÔNG TIN</div>
-        <div>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+        <div>TỔNG CÔNG TY QUẢN LÝ BAY VN<br>TRUNG TÂM BĐKT - ĐỘI THÔNG TIN</div>
+        <div>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc</div>
     </div>
-    <h2 style="text-align:center; text-transform: uppercase;">Danh mục thiết bị kỹ thuật</h2>
-    <table border="1" style="width:100%; border-collapse:collapse; margin-top:20px;">
+    <h2 style="text-align:center; margin: 20px 0; text-transform: uppercase;">Bảng thống kê thiết bị kỹ thuật</h2>
+    <table border="1" style="width:100%; border-collapse:collapse;">
         <thead>
             <tr><th>STT</th><th>Tên thiết bị</th><th>Mã CCDC</th><th>Mã Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th></tr>
         </thead>
@@ -141,12 +151,18 @@
     </table>
 </div>
 
-<!-- VÙNG IN PHIẾU BÁO SD RIÊNG LẺ -->
+<!-- VÙNG IN PHIẾU BÁO SỬ DỤNG RIÊNG LẺ -->
 <div id="singleRepairArea"></div>
 
+<!-- VÙNG IN NHÃN QR -->
+<div id="labelArea"></div>
+
 <script>
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbywWF4ZrtOxZJw_dIhixcnkJ-fIR6qvugRbbORvbeTLD73w8EiE4WyAqILrWVI-4z-_/exec";
-    let inventory = JSON.parse(localStorage.getItem('atcc_inventory_sop_final')) || [];
+    // CẤU HÌNH: Dán link Web App của anh vào đây
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbywWF4ZrtOxZJw_dIhixcnkJ-fIR6qvugRbbORvbeTLD73w8EiE4WyAqILrWVI-4z-_/exec";
+    const STORAGE_KEY = 'atcc_inventory_final_v4';
+    
+    let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let currentUser = null;
 
     function checkLogin() {
@@ -154,7 +170,8 @@
         const p = document.getElementById('pass').value;
         if (u === 'admin' && p === 'admin') currentUser = 'admin';
         else if (u === 'guest' && p === '123456') currentUser = 'guest';
-        else return alert("Sai tài khoản!");
+        else return alert("Sai tài khoản hoặc mật khẩu!");
+
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
         render();
@@ -162,28 +179,44 @@
 
     async function addItem() {
         const name = document.getElementById('inName').value.trim();
-        if(!name) return alert("Nhập tên thiết bị!");
+        const sn = document.getElementById('inSN').value.trim();
+        if(!name || !sn) return alert("Vui lòng nhập Tên và S/N!");
+
         const newItem = {
-            name, code: document.getElementById('inCode').value || "-",
+            name, sn,
+            code: document.getElementById('inCode').value || "-",
             warehouse: document.getElementById('inWarehouse').value || "-",
             pn: document.getElementById('inPN').value || "-",
-            sn: document.getElementById('inSN').value || "-",
             loc: document.getElementById('inLoc').value || "-"
         };
+
+        inventory.push(newItem);
+        saveData();
+        
+        // Gửi lên Google Sheets (Hành động: add)
         try {
-            await fetch(URL_APPS_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify(newItem) });
-            inventory.push(newItem); localStorage.setItem('atcc_inventory_sop_final', JSON.stringify(inventory));
-            render(); alert("Đã lưu!");
-        } catch (e) { alert("Lỗi ghi dữ liệu!"); }
+            fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...newItem, action: "add"}) });
+            alert("Đã lưu và đồng bộ lên Sheet!");
+            ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
+        } catch(e) { alert("Lỗi kết nối đồng bộ!"); }
     }
 
     function render() {
         const tbody = document.getElementById('mainTable');
         const pBody = document.getElementById('printTableBody');
+        const lArea = document.getElementById('labelArea');
         const search = document.getElementById('searchInput').value.toLowerCase();
-        tbody.innerHTML = ''; pBody.innerHTML = '';
         
-        inventory.filter(i => i.name.toLowerCase().includes(search)).forEach((item, idx) => {
+        tbody.innerHTML = ''; pBody.innerHTML = ''; lArea.innerHTML = '';
+        
+        const filtered = inventory.filter(i => 
+            i.name.toLowerCase().includes(search) || 
+            i.sn.toLowerCase().includes(search) || 
+            i.loc.toLowerCase().includes(search)
+        );
+
+        filtered.forEach((item, idx) => {
+            // Hiển thị bảng Web
             tbody.innerHTML += `<tr>
                 <td>${idx+1}</td>
                 <td><b>${item.name}</b></td>
@@ -193,11 +226,34 @@
                 <td>${item.sn}</td>
                 <td>${item.loc}</td>
                 <td><button class="btn-row-repair" onclick="printSingleRepair(${idx})">📄 In Phiếu</button></td>
-                <td class="admin-only"><button style="background:red;color:white;border:none;padding:5px;border-radius:4px;" onclick="deleteItem(${idx})">Xóa</button></td>
+                <td class="admin-only"><button style="background:var(--danger);color:white;padding:5px;border:none;border-radius:4px;" onclick="deleteItem(${idx})">Xóa</button></td>
             </tr>`;
+
+            // Hiển thị bảng in SOP
             pBody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
+
+            // Tạo Nhãn QR Kiểm kê
+            const qrCheckUrl = `${WEB_APP_URL}?sn=${encodeURIComponent(item.sn)}&name=${encodeURIComponent(item.name)}`;
+            const lId = `qrl-${idx}`;
+            lArea.innerHTML += `
+                <div class="label-box">
+                    <div class="label-text">
+                        CNS/ATM - ĐỘI THÔNG TIN<br>
+                        TB: ${item.name}<br>
+                        S/N: ${item.sn}<br>
+                        VT: ${item.loc}
+                    </div>
+                    <div id="${lId}" class="label-qr-wrap"></div>
+                </div>`;
+
+            setTimeout(() => {
+                new QRCode(document.getElementById(lId), { text: qrCheckUrl, width: 80, height: 80, correctLevel: QRCode.CorrectLevel.H });
+            }, 50);
         });
-        if (currentUser === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
+
+        if (currentUser === 'admin') {
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = (el.tagName === 'TD' || el.tagName === 'TH') ? 'table-cell' : 'block');
+        }
     }
 
     function printSingleRepair(idx) {
@@ -210,36 +266,49 @@
                     <div>TỔNG CÔNG TY QUẢN LÝ BAY VN<br>TRUNG TÂM BĐKT - ĐỘI THÔNG TIN</div>
                     <div>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc</div>
                 </div>
-                <div class="repair-title-box">
+                <div class="repair-title">
                     <h2>PHIẾU BÁO SỬ DỤNG - SỬA CHỮA THIẾT BỊ</h2>
                     <p><i>Ngày ${date.getDate()} tháng ${date.getMonth()+1} năm ${date.getFullYear()}</i></p>
                 </div>
                 <div class="repair-content">
-                    <div class="info-row"><b>1. Tên thiết bị / Model:</b> <span class="dotted-line">${item.name}</span></div>
-                    <div class="info-row"><b>2. Mã CCDC / Mã kho:</b> <span class="dotted-line">${item.code} / ${item.warehouse}</span></div>
-                    <div class="info-row"><b>3. Part Number (P/N):</b> <span class="dotted-line">${item.pn}</span></div>
-                    <div class="info-row"><b>4. Serial Number (S/N):</b> <span class="dotted-line">${item.sn}</span></div>
-                    <div class="info-row"><b>5. Vị trí lắp đặt:</b> <span class="dotted-line">${item.loc}</span></div>
-                    <div class="info-row"><b>6. Nội dung yêu cầu:</b> <span class="dotted-line"></span></div>
-                    <div class="info-row"><span class="dotted-line" style="margin-left:0; height:30px;"></span></div>
-                    <div class="info-row"><b>7. Tình trạng sau xử lý:</b> <span class="dotted-line"></span></div>
+                    <div class="repair-row"><b>1. Tên thiết bị / Model:</b> <span class="dotted">${item.name}</span></div>
+                    <div class="repair-row"><b>2. Mã CCDC / Mã kho:</b> <span class="dotted">${item.code} / ${item.warehouse}</span></div>
+                    <div class="repair-row"><b>3. Part Number (P/N):</b> <span class="dotted">${item.pn}</span></div>
+                    <div class="repair-row"><b>4. Serial Number (S/N):</b> <span class="dotted">${item.sn}</span></div>
+                    <div class="repair-row"><b>5. Vị trí lắp đặt:</b> <span class="dotted">${item.loc}</span></div>
+                    <div class="repair-row"><b>6. Nội dung yêu cầu:</b> <span class="dotted"></span></div>
+                    <div class="repair-row"><span class="dotted" style="margin-left:0; height:30px;"></span></div>
+                    <div class="repair-row"><b>7. Kết quả xử lý:</b> <span class="dotted"></span></div>
                 </div>
                 <div class="repair-footer">
-                    <div><b>NGƯỜI BÁO CÁO</b><br><br><div class="footer-sign"></div><b>${currentUser === 'admin' ? 'Trần Văn Trường' : 'Cán bộ trực'}</b></div>
-                    <div><b>XÁC NHẬN CỦA ĐƠN VỊ</b><br><br><div class="footer-sign"></div>..........................................</div>
+                    <div><b>NGƯỜI BÁO CÁO</b><br><br><br><br><b>${currentUser === 'admin' ? 'Trần Văn Trường' : 'Cán bộ trực'}</b></div>
+                    <div><b>XÁC NHẬN ĐƠN VỊ</b><br><br><br><br>..........................................</div>
                 </div>
             </div>`;
         document.body.className = "printing-repair";
         window.print();
     }
 
-    function deleteItem(idx) { if(confirm("Xóa?")) { inventory.splice(idx,1); localStorage.setItem('atcc_inventory_sop_final', JSON.stringify(inventory)); render(); } }
+    function deleteItem(idx) { if(confirm("Xác nhận xóa thiết bị này?")) { inventory.splice(idx,1); saveData(); } }
+    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); render(); }
+    
     function printReport() { document.body.className = "printing-report"; window.print(); }
+    function printLabels() { document.body.className = "printing-labels"; window.print(); }
+
     async function syncFromCloud() {
-        const res = await fetch(URL_APPS_SCRIPT);
-        inventory = await res.json();
-        localStorage.setItem('atcc_inventory_sop_final', JSON.stringify(inventory));
-        render();
+        try {
+            const res = await fetch(WEB_APP_URL);
+            const data = await res.json();
+            if(data) { inventory = data; saveData(); alert("Đồng bộ dữ liệu mới nhất từ Cloud thành công!"); }
+        } catch(e) { alert("Lỗi khi tải dữ liệu từ Cloud!"); }
+    }
+
+    function exportCSV() {
+        let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,Ma Kho,P/N,S/N,Vi Tri\n";
+        inventory.forEach((i, idx) => csv += `${idx+1},"${i.name}","${i.code}","${i.warehouse}","${i.pn}","${i.sn}","${i.loc}"\n`);
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        link.download = `VatTu_CNS_ATM.csv`; link.click();
     }
 </script>
 </body>
