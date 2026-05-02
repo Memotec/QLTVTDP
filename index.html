@@ -3,137 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>QUẢN LÝ THIẾT BỊ CNS/ATM - ATCC/HCM</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>QUẢN LÝ CNS/ATM - ATCC/HCM</title>
+    <!-- Sử dụng thư viện kjua để tạo mã QR dạng Image siêu nét -->
+    <script src="https://cdn.jsdelivr.net/npm/kjua@0.9.0/dist/kjua.min.js"></script>
     <style>
-        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --success: #10b981; --danger: #ef4444; }
+        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --success: #10b981; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--txt); padding: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--txt); padding: 10px; }
         
-        /* Đăng nhập */
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 320px; text-align: center; }
+        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 8px; outline: none; }
         
-        .no-print { max-width: 1400px; margin: 0 auto; display: none; }
-        .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .no-print { max-width: 1200px; margin: 0 auto; display: none; }
+        .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
         
-        /* Form nhập liệu */
-        .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 4px; outline: none; }
+        .btn-add { background: var(--p); width: 100%; margin-top: 10px; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 15px; }
+        .actions button { padding: 10px; border-radius: 8px; border: none; color: white; cursor: pointer; font-weight: 600; }
         
-        /* Nút bấm */
-        .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; }
-        button { padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 13px; transition: 0.2s; }
-        .btn-add { background: var(--p); width: 100%; margin-top: 10px; }
-        .btn-sync { background: #6366f1; }
-        .btn-excel { background: var(--success); }
-        .btn-label { background: #f59e0b; }
-        .btn-print { background: #0f172a; }
-        .btn-logout { background: #64748b; }
-        .btn-row-repair { background: #ec4899; padding: 5px 8px; font-size: 11px; }
-
-        /* Bảng dữ liệu */
-        .table-container { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; min-width: 1200px; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
-        th { background: #f8fafc; font-size: 11px; text-transform: uppercase; color: #64748b; border-right: 1px solid #e2e8f0; }
+        .table-container { overflow-x: auto; background: white; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0; }
         
         .admin-only { display: none; }
 
-        @media (min-width: 768px) {
-            .form-grid { grid-template-columns: repeat(6, 1fr); }
-            .full { grid-column: span 2; }
-            .actions { grid-template-columns: repeat(5, 1fr); }
-        }
-
-        /* --- THIẾT LẬP IN ẤN --- */
-        #printArea, #labelArea, #singleRepairArea { display: none; }
+        /* CSS PHỤC VỤ IN NHÃN - QUAN TRỌNG ĐỂ QUÉT ĐƯỢC */
+        #labelArea { display: none; }
         @media print {
-            @page { size: A4 portrait; margin: 10mm; }
+            @page { size: A4 portrait; margin: 0; }
             .no-print, #loginOverlay { display: none !important; }
-            body { background: white; padding: 0; color: black; }
-            
-            /* Nhãn QR tối ưu (60x35mm) */
-            body.printing-labels #labelArea { display: grid !important; grid-template-columns: repeat(3, 62mm); gap: 4mm; justify-content: center; }
-            .label-box { width: 62mm; height: 35mm; border: 1pt solid #000; padding: 2mm; display: flex; align-items: center; page-break-inside: avoid; }
-            .label-text { font-size: 7.5pt; line-height: 1.3; font-weight: bold; flex: 1; text-transform: uppercase; }
-            .label-qr-wrap { width: 24mm; height: 24mm; display: flex; align-items: center; justify-content: center; }
-            .label-qr-wrap img { width: 100% !important; height: 100% !important; }
-
-            /* Báo cáo SOP */
-            body.printing-report #printArea { display: block !important; }
-            .sop-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 10pt; text-align: center; }
-
-            /* Phiếu báo hỏng/SD */
-            body.printing-repair #singleRepairArea { display: block !important; }
-            .repair-paper { border: 1.5pt solid black; padding: 30px; height: 100%; }
-            .repair-title { text-align: center; border-bottom: 2px solid black; margin-bottom: 20px; padding-bottom: 10px; }
-            .repair-row { display: flex; align-items: baseline; margin-bottom: 15px; font-size: 12pt; }
-            .dotted { border-bottom: 1px dotted black; flex: 1; margin-left: 10px; height: 18px; }
-            .repair-footer { display: grid; grid-template-columns: 1fr 1fr; text-align: center; margin-top: 40px; }
+            #labelArea { 
+                display: grid !important; 
+                grid-template-columns: repeat(3, 65mm); 
+                gap: 2mm; 
+                padding: 10mm;
+                justify-content: center;
+            }
+            .label-box { 
+                width: 65mm; 
+                height: 38mm; 
+                border: 0.5pt solid #000; 
+                display: flex; 
+                align-items: center; 
+                padding: 3mm;
+                page-break-inside: avoid;
+                overflow: hidden;
+            }
+            .label-text { 
+                flex: 1; 
+                font-size: 8pt; 
+                line-height: 1.4; 
+                font-weight: bold; 
+                text-transform: uppercase;
+                padding-right: 2mm;
+            }
+            .label-qr-wrap { 
+                width: 26mm; 
+                height: 26mm; 
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            /* Đảm bảo ảnh QR không bị mờ khi in */
+            .label-qr-wrap img { 
+                width: 100% !important; 
+                height: 100% !important; 
+                image-rendering: pixelated; 
+            }
         }
     </style>
 </head>
 <body>
 
-<!-- Giao diện Đăng nhập -->
 <div id="loginOverlay">
     <div class="login-box">
-        <h3 style="margin-bottom: 20px; color: var(--p);">HỆ THỐNG QUẢN LÝ CNS</h3>
-        <input type="text" id="user" placeholder="Tên đăng nhập">
-        <input type="password" id="pass" placeholder="Mật khẩu" style="margin-top:10px;">
-        <button class="btn-add" onclick="checkLogin()">Đăng nhập</button>
+        <h3>QUẢN LÝ THIẾT BỊ CNS</h3>
+        <input type="text" id="user" placeholder="Tài khoản">
+        <input type="password" id="pass" placeholder="Mật khẩu">
+        <button class="btn-add" onclick="checkLogin()">ĐĂNG NHẬP</button>
     </div>
 </div>
 
 <div class="no-print" id="mainApp">
-    <div style="text-align: center; margin-bottom: 20px;">
-        <h2 style="color: var(--p);">QUẢN LÝ THIẾT BỊ CNS/ATM</h2>
-        <p>Trung tâm BĐKT - Đội Thông tin</p>
-    </div>
-
-    <!-- Form nhập liệu (Chỉ Admin) -->
     <div class="card admin-only">
-        <div class="form-grid">
-            <div class="full"><label>Tên thiết bị / Model</label><input type="text" id="inName"></div>
-            <div><label>Mã CCDC</label><input type="text" id="inCode"></div>
-            <div><label>Mã Kho</label><input type="text" id="inWarehouse"></div>
-            <div><label>P/N</label><input type="text" id="inPN"></div>
-            <div><label>S/N</label><input type="text" id="inSN"></div>
-            <div class="full"><label>Vị trí lắp đặt</label><input type="text" id="inLoc"></div>
+        <h4 style="margin-bottom:10px">THÊM THIẾT BỊ MỚI</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+            <input type="text" id="inName" placeholder="Tên thiết bị">
+            <input type="text" id="inPN" placeholder="P/N">
+            <input type="text" id="inSN" placeholder="S/N">
+            <input type="text" id="inLoc" placeholder="Vị trí">
         </div>
-        <button id="btnAdd" class="btn-add" onclick="addItem()">➕ Thêm thiết bị & Đồng bộ Cloud</button>
+        <button id="btnAdd" class="btn-add" onclick="addItem()">LƯU VÀ ĐỒNG BỘ SHEET</button>
     </div>
 
-    <!-- Thanh công cụ -->
     <div class="card">
         <div class="actions">
-            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ Cloud</button>
-            <button class="btn-excel" onclick="exportCSV()">📁 Xuất Excel</button>
-            <button class="btn-label" onclick="printLabels()">🏷️ In Nhãn QR (Dễ quét)</button>
-            <button class="btn-print" onclick="printReport()">📄 Báo cáo SOP</button>
-            <button class="btn-logout" onclick="location.reload()">🔒 Đăng xuất</button>
+            <button style="background:#6366f1" onclick="syncFromCloud()">🔄 Đồng bộ Cloud</button>
+            <button style="background:#f59e0b" onclick="window.print()">🏷️ IN NHÃN QR (SIÊU NHẠY)</button>
+            <button style="background:#64748b" onclick="location.reload()">🔒 Thoát</button>
         </div>
     </div>
 
-    <!-- Tìm kiếm -->
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh thiết bị, S/N hoặc vị trí..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px; font-size: 16px;">
-
-    <!-- Bảng dữ liệu -->
-    <div class="table-container">
-        <table>
+    <div class="table-container card">
+        <table id="dataTable">
             <thead>
                 <tr>
-                    <th>STT</th>
-                    <th>Thiết bị</th>
-                    <th>Mã CCDC</th>
-                    <th>Mã Kho</th>
-                    <th>P/N</th>
-                    <th>S/N</th>
-                    <th>Vị trí</th>
-                    <th>Thao tác</th>
-                    <th class="admin-only">Xóa</th>
+                    <th>STT</th><th>Thiết bị</th><th>P/N</th><th>S/N</th><th>Vị trí</th>
                 </tr>
             </thead>
             <tbody id="mainTable"></tbody>
@@ -141,183 +117,90 @@
     </div>
 </div>
 
-<!-- Các vùng phục vụ in ấn (Ẩn trên Web) -->
-<div id="printArea">
-    <div class="sop-header">
-        <div>TỔNG CÔNG TY QUẢN LÝ BAY VN<br>TRUNG TÂM BĐKT - ĐỘI THÔNG TIN</div>
-        <div>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-    </div>
-    <h2 style="text-align:center; margin: 20px 0; text-transform: uppercase;">Bảng thống kê thiết bị kỹ thuật</h2>
-    <table border="1" style="width:100%; border-collapse:collapse; text-align: center;">
-        <thead>
-            <tr><th>STT</th><th>Tên thiết bị</th><th>Mã CCDC</th><th>Mã Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th></tr>
-        </thead>
-        <tbody id="printTableBody"></tbody>
-    </table>
-</div>
-
-<div id="singleRepairArea"></div>
 <div id="labelArea"></div>
 
 <script>
-    // CẤU HÌNH: Dán link Web App anh nhận được khi Deploy vào đây
+    // 1. THAY LINK APPS SCRIPT CỦA ANH VÀO ĐÂY
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzeLtgKbAowgUWWHwpxK4SvqlMHBbFA5aWT-YsO0334r3vR9zIUvr7XZ-O81EdFz3pZ/exec"; 
-    const STORAGE_KEY = 'atcc_inventory_final_v7';
-    
+    const STORAGE_KEY = 'cns_atcc_v8';
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let currentUser = null;
 
     function checkLogin() {
-        const u = document.getElementById('user').value.toLowerCase();
+        const u = document.getElementById('user').value;
         const p = document.getElementById('pass').value;
         if (u === 'admin' && p === 'admin') currentUser = 'admin';
         else if (u === 'guest' && p === '123456') currentUser = 'guest';
-        else return alert("Sai thông tin!");
+        else return alert("Sai tài khoản!");
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
         render();
     }
 
     async function addItem() {
-        const name = document.getElementById('inName').value.trim();
-        const sn = document.getElementById('inSN').value.trim();
-        const pn = document.getElementById('inPN').value.trim() || "-";
-
-        if(!name || !sn) return alert("Thiếu Tên hoặc S/N!");
-
-        // CHẶN TRÙNG LẶP P/N & S/N
-        if (inventory.some(i => i.sn.toLowerCase() === sn.toLowerCase() && i.pn.toLowerCase() === pn.toLowerCase())) {
-            return alert("❌ Thiết bị này (P/N & S/N) đã có trong hệ thống!");
-        }
-
-        const newItem = {
-            name, sn, pn,
-            code: document.getElementById('inCode').value || "-",
-            warehouse: document.getElementById('inWarehouse').value || "-",
-            loc: document.getElementById('inLoc').value || "-"
+        const item = {
+            name: document.getElementById('inName').value,
+            pn: document.getElementById('inPN').value || "-",
+            sn: document.getElementById('inSN').value,
+            loc: document.getElementById('inLoc').value || "-",
+            action: "add"
         };
-
-        const btn = document.getElementById('btnAdd');
-        btn.innerText = "⌛ Đang gửi dữ liệu..."; btn.disabled = true;
-
+        if(!item.name || !item.sn) return alert("Nhập Tên và S/N!");
+        
+        inventory.push(item);
+        saveData();
         try {
-            inventory.push(newItem);
-            saveData();
-            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...newItem, action: "add"}) });
-            alert("✅ Đã lưu thành công!");
-            ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
-        } catch(e) { alert("⚠️ Lỗi đồng bộ Cloud!"); }
-        finally { btn.innerText = "➕ Thêm thiết bị & Đồng bộ Cloud"; btn.disabled = false; }
+            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(item) });
+            alert("Đã lưu!");
+        } catch(e) { console.log(e); }
     }
 
     function render() {
         const tbody = document.getElementById('mainTable');
-        const pBody = document.getElementById('printTableBody');
         const lArea = document.getElementById('labelArea');
-        const search = document.getElementById('searchInput').value.toLowerCase();
-        
-        tbody.innerHTML = ''; pBody.innerHTML = ''; lArea.innerHTML = '';
-        
-        const filtered = inventory.filter(i => 
-            i.name.toLowerCase().includes(search) || i.sn.toLowerCase().includes(search) || i.loc.toLowerCase().includes(search)
-        );
+        tbody.innerHTML = ''; lArea.innerHTML = '';
 
-        filtered.forEach((item, idx) => {
-            tbody.innerHTML += `<tr>
-                <td>${idx+1}</td>
-                <td><b>${item.name}</b></td>
-                <td>${item.code}</td>
-                <td>${item.warehouse}</td>
-                <td>${item.pn}</td>
-                <td>${item.sn}</td>
-                <td>${item.loc}</td>
-                <td><button class="btn-row-repair" onclick="printSingleRepair(${idx})">In Phiếu</button></td>
-                <td class="admin-only"><button style="background:var(--danger);padding:5px;border:none;border-radius:4px;color:white;" onclick="deleteItem(${idx})">Xóa</button></td>
-            </tr>`;
+        inventory.forEach((item, idx) => {
+            tbody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
 
-            pBody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
-
-            // TỐI ƯU QR: Chỉ truyền S/N để link ngắn nhất -> Mã QR thưa và cực kỳ dễ quét
-            const qrCheckUrl = `${WEB_APP_URL}?sn=${encodeURIComponent(item.sn)}`;
-            const lId = `qrl-${idx}`;
-            
+            // TẠO NHÃN IN
+            const containerId = `qr-${idx}`;
             lArea.innerHTML += `
                 <div class="label-box">
                     <div class="label-text">
-                        CNS/ATM - ĐỘI THÔNG TIN<br>
-                        TB: ${item.name.substring(0, 22)}<br>
+                        CNS/ATM - ATCC HCM<br>
+                        TB: ${item.name}<br>
                         P/N: ${item.pn}<br>
                         S/N: ${item.sn}<br>
                         VT: ${item.loc}
                     </div>
-                    <div id="${lId}" class="label-qr-wrap"></div>
+                    <div id="${containerId}" class="label-qr-wrap"></div>
                 </div>`;
 
+            // Render QR bằng KJUA (Tạo thẻ IMG thay vì Canvas)
             setTimeout(() => {
-                const container = document.getElementById(lId);
-                if(container) {
-                    new QRCode(container, { 
-                        text: qrCheckUrl, 
-                        width: 100, 
-                        height: 100, 
-                        correctLevel: QRCode.CorrectLevel.L // Level L giúp mã QR thưa, dễ quét nhất
-                    });
-                }
-            }, 100);
+                const el = document.getElementById(containerId);
+                const qrImg = kjua({
+                    render: 'image', // Ép kiểu image để điện thoại dễ quét
+                    size: 200,
+                    text: `${WEB_APP_URL}?sn=${encodeURIComponent(item.sn)}`,
+                    ecLevel: 'L', // Level thấp để ô vuông to, rõ
+                    fill: '#000000',
+                    back: '#ffffff',
+                    quiet: 1 // Lề trắng xung quanh mã QR
+                });
+                el.appendChild(qrImg);
+            }, 50);
         });
 
-        if (currentUser === 'admin') {
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = (el.tagName === 'TD' || el.tagName === 'TH') ? 'table-cell' : 'block');
-        }
+        if (currentUser === 'admin') document.querySelectorAll('.admin-only').forEach(e => e.style.display = 'block');
     }
 
-    function printSingleRepair(idx) {
-        const item = inventory[idx];
-        const date = new Date();
-        const area = document.getElementById('singleRepairArea');
-        area.innerHTML = `
-            <div class="repair-paper">
-                <div class="sop-header">
-                    <div>TỔNG CÔNG TY QUẢN LÝ BAY VN<br>TRUNG TÂM BĐKT - ĐỘI THÔNG TIN</div>
-                    <div>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-                </div>
-                <div class="repair-title">
-                    <h2>PHIẾU BÁO SỬ DỤNG - SỬA CHỮA THIẾT BỊ</h2>
-                    <p><i>Ngày ${date.getDate()} tháng ${date.getMonth()+1} năm ${date.getFullYear()}</i></p>
-                </div>
-                <div class="repair-row"><b>1. Tên thiết bị:</b> <span class="dotted">${item.name}</span></div>
-                <div class="repair-row"><b>2. Mã kho/CCDC:</b> <span class="dotted">${item.warehouse} / ${item.code}</span></div>
-                <div class="repair-row"><b>3. P/N & S/N:</b> <span class="dotted">${item.pn} | ${item.sn}</span></div>
-                <div class="repair-row"><b>4. Vị trí lắp đặt:</b> <span class="dotted">${item.loc}</span></div>
-                <div class="repair-row"><b>5. Nội dung yêu cầu:</b> <span class="dotted"></span></div>
-                <div class="repair-row"><span class="dotted" style="margin-left:0; height:40px;"></span></div>
-                <div class="repair-footer">
-                    <div><b>NGƯỜI BÁO CÁO</b><br><br><br><b>${currentUser === 'admin' ? 'Trần Văn Trường' : 'Cán bộ trực'}</b></div>
-                    <div><b>XÁC NHẬN ĐƠN VỊ</b><br><br><br>...........................</div>
-                </div>
-            </div>`;
-        document.body.className = "printing-repair"; window.print();
-    }
-
-    function deleteItem(idx) { if(confirm("Xóa thiết bị này? Thao tác này chỉ xóa dữ liệu tạm trên máy tính.")) { inventory.splice(idx,1); saveData(); } }
     function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); render(); }
-    function printReport() { document.body.className = "printing-report"; window.print(); }
-    function printLabels() { document.body.className = "printing-labels"; window.print(); }
-
     async function syncFromCloud() {
-        try {
-            const res = await fetch(WEB_APP_URL);
-            const data = await res.json();
-            if(data) { inventory = data; saveData(); alert("Đã cập nhật dữ liệu mới nhất từ Sheet!"); }
-        } catch(e) { alert("Lỗi tải dữ liệu!"); }
-    }
-
-    function exportCSV() {
-        let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,Ma Kho,P/N,S/N,Vi Tri\n";
-        inventory.forEach((i, idx) => csv += `${idx+1},"${i.name}","${i.code}","${i.warehouse}","${i.pn}","${i.sn}","${i.loc}"\n`);
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `DanhMuc_VatTu_CNS.csv`; link.click();
+        const res = await fetch(WEB_APP_URL);
+        const data = await res.json();
+        if(data) { inventory = data; saveData(); alert("Đã đồng bộ!"); }
     }
 </script>
 </body>
