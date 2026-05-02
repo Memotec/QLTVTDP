@@ -41,25 +41,20 @@
             .actions { grid-template-columns: repeat(5, 1fr); }
         }
 
-        /* --- PHẦN XUẤT BÁO CÁO SOP VÀ NHÃN --- */
+        /* --- PRINT STYLES --- */
         #printArea, #labelArea { display: none; }
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
             .no-print, #loginOverlay { display: none !important; }
             body { background: white; padding: 0; color: black; }
-            
             body.printing-report #printArea { display: block !important; }
             .sop-header { display: flex; justify-content: space-between; margin-bottom: 20px; text-align: center; font-weight: bold; font-size: 11pt; }
             .sop-title { text-align: center; margin: 30px 0; }
-            .sop-title h1 { font-size: 18pt; text-transform: uppercase; margin-bottom: 5px; }
-            
+            .sop-title h1 { font-size: 18pt; text-transform: uppercase; }
             #printTable { width: 100%; border-collapse: collapse; }
             #printTable th, #printTable td { border: 1px solid black; padding: 8px; font-size: 10pt; }
-            #printTable th { background: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
-
             .sop-footer { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; text-align: center; }
             .footer-space { height: 80px; }
-
             body.printing-labels #labelArea { display: grid !important; grid-template-columns: repeat(3, 60mm); gap: 5mm; justify-content: center; padding: 10mm; }
             .label-box { width: 60mm; height: 35mm; border: 0.5pt solid #000; padding: 3mm; display: flex; align-items: center; page-break-inside: avoid; }
             .label-text { font-size: 7.5pt; line-height: 1.3; font-weight: bold; flex: 1; text-transform: uppercase; }
@@ -81,7 +76,7 @@
 <div class="no-print" id="mainApp">
     <div style="text-align: center; margin-bottom: 20px;">
         <h2 style="color: var(--p);">QUẢN LÝ THIẾT BỊ CNS/ATM</h2>
-        <p>Cán bộ: <b id="displayUser"></b> | Đội Thông tin - Trung tâm BĐKT</p>
+        <p>Phụ trách: <b id="displayUser"></b> | Đội Thông tin - Trung tâm BĐKT</p>
     </div>
 
     <div class="card admin-only">
@@ -94,27 +89,25 @@
             <div class="full"><label>Vị trí lắp đặt</label><input type="text" id="inLoc"></div>
         </div>
         <div class="actions">
-            <button class="btn-add" style="grid-column: span 5;" onclick="addItem()">➕ Thêm thiết bị mới</button>
+            <button id="btnAdd" class="btn-add" style="grid-column: span 5;" onclick="addItem()">➕ Thêm thiết bị & Ghi vào Sheet</button>
         </div>
     </div>
 
     <div class="card">
         <div class="actions">
-            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ dữ liệu Cloud</button>
+            <button class="btn-sync" onclick="syncFromCloud()">🔄 Đồng bộ từ Cloud</button>
             <button class="btn-excel" onclick="exportCSV()">📁 Xuất Excel</button>
-            <button class="btn-label" onclick="printLabels()">🏷️ Nhãn dán</button>
-            <button class="btn-print" onclick="printReport()">📄 Xuất Báo Cáo SOP</button>
+            <button class="btn-label" onclick="printLabels()">🏷️ In Nhãn</button>
+            <button class="btn-print" onclick="printReport()">📄 Xuất Phiếu SOP</button>
             <button class="btn-logout" onclick="location.reload()">🔒 Đăng xuất</button>
         </div>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh thiết bị, S/N, vị trí..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px;">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px;">
 
     <table>
         <thead>
-            <tr>
-                <th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>S/N</th><th>Vị trí</th><th>QR</th><th class="admin-only">Xóa</th>
-            </tr>
+            <tr><th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>S/N</th><th>Vị trí</th><th>QR</th><th class="admin-only">Xóa</th></tr>
         </thead>
         <tbody id="mainTable"></tbody>
     </table>
@@ -131,9 +124,7 @@
     </div>
     <table id="printTable">
         <thead>
-            <tr>
-                <th>STT</th><th>Tên thiết bị / Model</th><th>Mã CCDC</th><th>Mã kho</th><th>P/N</th><th>S/N</th><th>Vị trí lắp đặt</th>
-            </tr>
+            <tr><th>STT</th><th>Tên thiết bị / Model</th><th>Mã CCDC</th><th>Mã kho</th><th>P/N</th><th>S/N</th><th>Vị trí lắp đặt</th></tr>
         </thead>
         <tbody id="printTableBody"></tbody>
     </table>
@@ -146,8 +137,7 @@
 <div id="labelArea"></div>
 
 <script>
-    // URL CỐ ĐỊNH
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxcOJy8hXHgqBZboUQt3W-Mcx-ybBmW7BjPDw927le60wsEo6OAIUmMO524kH6tZmSc/exec";
+    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzI0Fa0ny2De1m00r4mzk_CgSN4DOFMzZGN9pvXyzNue1slPwETSMnJbfNtA3OnKHom/exec";
     const STORAGE_KEY = 'atcc_inventory_sop_final';
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let currentUser = null;
@@ -164,25 +154,46 @@
         const name = (u === 'admin' ? "Trần Văn Trường" : "Cán bộ trực");
         document.getElementById('displayUser').innerText = name;
         document.getElementById('footerUser').innerText = name;
-        
         if (currentUser === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell' || (el.style.display = 'block'));
         render();
     }
 
-    function addItem() {
+    async function addItem() {
         const name = document.getElementById('inName').value.trim();
-        if(!name) return alert("Vui lòng nhập tên thiết bị!");
-        inventory.push({
-            id: Date.now(),
+        if(!name) return alert("Nhập tên thiết bị!");
+
+        const btn = document.getElementById('btnAdd');
+        btn.innerText = "⌛ Đang ghi vào Sheet...";
+        btn.disabled = true;
+
+        const newItem = {
             name: name,
             code: document.getElementById('inCode').value.trim() || "-",
             warehouse: document.getElementById('inWarehouse').value.trim() || "-",
             pn: document.getElementById('inPN').value.trim() || "-",
             sn: document.getElementById('inSN').value.trim() || "-",
             loc: document.getElementById('inLoc').value.trim() || "-"
-        });
-        saveData();
-        ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
+        };
+
+        try {
+            // GỬI DỮ LIỆU LÊN GOOGLE SHEET (Cần hàm doPost trong Apps Script)
+            await fetch(URL_APPS_SCRIPT, {
+                method: 'POST',
+                mode: 'no-cors', // Quan trọng để tránh lỗi CORS khi dùng Apps Script
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newItem)
+            });
+
+            inventory.push({ ...newItem, id: Date.now() });
+            saveData();
+            ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
+            alert("Đã thêm thành công và đang cập nhật lên Sheet!");
+        } catch (e) {
+            alert("Lỗi kết nối khi gửi dữ liệu!");
+        } finally {
+            btn.innerText = "➕ Thêm thiết bị & Ghi vào Sheet";
+            btn.disabled = false;
+        }
     }
 
     function render() {
@@ -190,85 +201,55 @@
         const pBody = document.getElementById('printTableBody');
         const lArea = document.getElementById('labelArea');
         const search = document.getElementById('searchInput').value.toLowerCase();
-        
         tbody.innerHTML = ''; pBody.innerHTML = ''; lArea.innerHTML = '';
+        
         const filtered = inventory.filter(i => Object.values(i).some(v => String(v).toLowerCase().includes(search)));
 
         filtered.forEach((item, idx) => {
-            const qrT = `qt-${item.id}`; const qrL = `ql-${item.id}`;
-
+            const qrId = `qr-${idx}`;
+            const qrLId = `qrl-${idx}`;
+            
             tbody.innerHTML += `<tr>
                 <td>${idx+1}</td>
-                <td><b>${item.name || item.name_thiet_bi || ""}</b></td>
-                <td>${item.code || item.ma_ccdc || "-"}</td>
-                <td>${item.sn || item.s_n || "-"}</td>
-                <td>${item.loc || item.vi_tri || "-"}</td>
-                <td><div id="${qrT}" class="qr-container"></div></td>
-                <td class="admin-only"><button style="background:var(--danger); padding:5px 10px; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="deleteItem(${item.id})">Xóa</button></td>
+                <td><b>${item.name}</b></td>
+                <td>${item.code}</td>
+                <td>${item.sn}</td>
+                <td>${item.loc}</td>
+                <td><div id="${qrId}" class="qr-container"></div></td>
+                <td class="admin-only"><button style="background:var(--danger);color:white;padding:5px;border:none;border-radius:4px;" onclick="deleteItem(${idx})">Xóa</button></td>
             </tr>`;
 
-            pBody.innerHTML += `<tr>
-                <td>${idx+1}</td>
-                <td>${item.name || item.name_thiet_bi || ""}</td>
-                <td>${item.code || item.ma_ccdc || "-"}</td>
-                <td>${item.warehouse || item.ma_kho || "-"}</td>
-                <td>${item.pn || item.p_n || "-"}</td>
-                <td>${item.sn || item.s_n || "-"}</td>
-                <td>${item.loc || item.vi_tri || "-"}</td>
-            </tr>`;
+            pBody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
 
-            lArea.innerHTML += `<div class="label-box">
-                <div class="label-text">TB: ${item.name || item.name_thiet_bi}<br>CCDC: ${item.code || item.ma_ccdc}<br>S/N: ${item.sn || item.s_n}<br>VT: ${item.loc || item.vi_tri}</div>
-                <div id="${qrL}" class="label-qr-wrap"></div>
-            </div>`;
+            lArea.innerHTML += `<div class="label-box"><div class="label-text">TB: ${item.name}<br>CCDC: ${item.code}<br>S/N: ${item.sn}<br>VT: ${item.loc}</div><div id="${qrLId}" class="label-qr-wrap"></div></div>`;
 
             setTimeout(() => {
-                const txt = `TB: ${item.name || item.name_thiet_bi} | SN: ${item.sn || item.s_n}`;
-                new QRCode(document.getElementById(qrT), { text: txt, width: 50, height: 50 });
-                new QRCode(document.getElementById(qrL), { text: txt, width: 80, height: 80 });
+                const content = `TB: ${item.name}\nSN: ${item.sn}\nVT: ${item.loc}`;
+                new QRCode(document.getElementById(qrId), { text: content, width: 50, height: 50 });
+                new QRCode(document.getElementById(qrLId), { text: content, width: 80, height: 80 });
             }, 50);
         });
-        if (currentUser === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
     }
 
-    function deleteItem(id) {
-        if(confirm("Xóa thiết bị này?")) {
-            inventory = inventory.filter(i => i.id !== id);
-            saveData();
-        }
-    }
-
-    function saveData() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
-        render();
-    }
+    function deleteItem(idx) { if(confirm("Xóa mục này?")) { inventory.splice(idx, 1); saveData(); } }
+    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); render(); }
 
     async function syncFromCloud() {
         try {
             const res = await fetch(URL_APPS_SCRIPT);
             const data = await res.json();
-            if(data && Array.isArray(data)) {
-                inventory = data;
-                saveData();
-                alert("Đồng bộ thành công " + data.length + " mục!");
-            }
-        } catch(e) {
-            alert("Lỗi đồng bộ. Hãy kiểm tra URL Apps Script và quyền truy cập.");
-        }
+            if(data) { inventory = data; saveData(); alert("Đồng bộ thành công!"); }
+        } catch(e) { alert("Lỗi khi tải dữ liệu từ Cloud!"); }
     }
 
     function printReport() {
-        const now = new Date();
-        document.getElementById('printDate').innerText = `Ngày ${now.getDate()} tháng ${now.getMonth()+1} năm ${now.getFullYear()}`;
-        document.body.className = "printing-report"; 
-        window.print(); 
+        document.getElementById('printDate').innerText = `Ngày ${new Date().getDate()} tháng ${new Date().getMonth()+1} năm ${new Date().getFullYear()}`;
+        document.body.className = "printing-report"; window.print();
     }
-    
     function printLabels() { document.body.className = "printing-labels"; window.print(); }
-
     function exportCSV() {
         let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,Ma Kho,P/N,S/N,Vi Tri\n";
-        inventory.forEach((i, idx) => csv += `${idx+1},"${i.name || i.name_thiet_bi}","${i.code || i.ma_ccdc}","${i.warehouse || i.ma_kho}","${i.pn || i.p_n}","${i.sn || i.s_n}","${i.loc || i.vi_tri}"\n`);
+        inventory.forEach((i, idx) => csv += `${idx+1},"${i.name}","${i.code}","${i.warehouse}","${i.pn}","${i.sn}","${i.loc}"\n`);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
         link.download = `VatTu_CNS_ATM.csv`; link.click();
