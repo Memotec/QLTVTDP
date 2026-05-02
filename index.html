@@ -22,7 +22,7 @@
         .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; }
         button { padding: 14px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; transition: 0.2s; }
         .btn-add { background: var(--p); }
-        .btn-sync { background: #6366f1; border: 2px solid #ffffff33; }
+        .btn-sync { background: #6366f1; }
         .btn-excel { background: #10b981; }
         .btn-label { background: #f59e0b; }
         .btn-print { background: #0f172a; }
@@ -146,7 +146,7 @@
 <div id="labelArea"></div>
 
 <script>
-    // URL CỐ ĐỊNH CỦA ANH TRƯỜNG
+    // URL CỐ ĐỊNH
     const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbxcOJy8hXHgqBZboUQt3W-Mcx-ybBmW7BjPDw927le60wsEo6OAIUmMO524kH6tZmSc/exec";
     const STORAGE_KEY = 'atcc_inventory_sop_final';
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
@@ -199,25 +199,31 @@
 
             tbody.innerHTML += `<tr>
                 <td>${idx+1}</td>
-                <td><b>${item.name}</b></td>
-                <td>${item.code}</td>
-                <td>${item.sn}</td>
-                <td>${item.loc}</td>
+                <td><b>${item.name || item.name_thiet_bi || ""}</b></td>
+                <td>${item.code || item.ma_ccdc || "-"}</td>
+                <td>${item.sn || item.s_n || "-"}</td>
+                <td>${item.loc || item.vi_tri || "-"}</td>
                 <td><div id="${qrT}" class="qr-container"></div></td>
                 <td class="admin-only"><button style="background:var(--danger); padding:5px 10px; color:white; border:none; border-radius:4px; cursor:pointer;" onclick="deleteItem(${item.id})">Xóa</button></td>
             </tr>`;
 
             pBody.innerHTML += `<tr>
-                <td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td>
+                <td>${idx+1}</td>
+                <td>${item.name || item.name_thiet_bi || ""}</td>
+                <td>${item.code || item.ma_ccdc || "-"}</td>
+                <td>${item.warehouse || item.ma_kho || "-"}</td>
+                <td>${item.pn || item.p_n || "-"}</td>
+                <td>${item.sn || item.s_n || "-"}</td>
+                <td>${item.loc || item.vi_tri || "-"}</td>
             </tr>`;
 
             lArea.innerHTML += `<div class="label-box">
-                <div class="label-text">TB: ${item.name}<br>CCDC: ${item.code}<br>S/N: ${item.sn}<br>VT: ${item.loc}</div>
+                <div class="label-text">TB: ${item.name || item.name_thiet_bi}<br>CCDC: ${item.code || item.ma_ccdc}<br>S/N: ${item.sn || item.s_n}<br>VT: ${item.loc || item.vi_tri}</div>
                 <div id="${qrL}" class="label-qr-wrap"></div>
             </div>`;
 
             setTimeout(() => {
-                const txt = `TB: ${item.name} | SN: ${item.sn}`;
+                const txt = `TB: ${item.name || item.name_thiet_bi} | SN: ${item.sn || item.s_n}`;
                 new QRCode(document.getElementById(qrT), { text: txt, width: 50, height: 50 });
                 new QRCode(document.getElementById(qrL), { text: txt, width: 80, height: 80 });
             }, 50);
@@ -237,33 +243,17 @@
         render();
     }
 
-    // CẬP NHẬT: HÀM ĐỒNG BỘ CẢI TIẾN
     async function syncFromCloud() {
-        const btn = document.querySelector('.btn-sync');
-        const originalText = btn.innerText;
-        btn.innerText = "⌛ Đang đồng bộ...";
-        btn.disabled = true;
-
         try {
             const res = await fetch(URL_APPS_SCRIPT);
-            if (!res.ok) throw new Error('Network response was not ok');
-            
             const data = await res.json();
-            
             if(data && Array.isArray(data)) {
-                // Xóa sạch dữ liệu cũ để nạp mới hoàn toàn từ Cloud
-                inventory = data; 
+                inventory = data;
                 saveData();
-                alert("Đã đồng bộ thành công " + data.length + " thiết bị từ Cloud!");
-            } else {
-                alert("Dữ liệu Cloud không đúng định dạng!");
+                alert("Đồng bộ thành công " + data.length + " mục!");
             }
         } catch(e) {
-            console.error(e);
-            alert("Lỗi đồng bộ: " + e.message + "\n\nVui lòng kiểm tra quyền truy cập (Anyone) trên Apps Script.");
-        } finally {
-            btn.innerText = originalText;
-            btn.disabled = false;
+            alert("Lỗi đồng bộ. Hãy kiểm tra URL Apps Script và quyền truy cập.");
         }
     }
 
@@ -278,7 +268,7 @@
 
     function exportCSV() {
         let csv = "\ufeffSTT,Thiet Bi,Ma CCDC,Ma Kho,P/N,S/N,Vi Tri\n";
-        inventory.forEach((i, idx) => csv += `${idx+1},"${i.name}","${i.code}","${i.warehouse}","${i.pn}","${i.sn}","${i.loc}"\n`);
+        inventory.forEach((i, idx) => csv += `${idx+1},"${i.name || i.name_thiet_bi}","${i.code || i.ma_ccdc}","${i.warehouse || i.ma_kho}","${i.pn || i.p_n}","${i.sn || i.s_n}","${i.loc || i.vi_tri}"\n`);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
         link.download = `VatTu_CNS_ATM.csv`; link.click();
