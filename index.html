@@ -10,19 +10,19 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--txt); padding: 10px; }
         
-        /* Đăng nhập */
+        /* Login */
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; text-align: center; }
         
         .no-print { max-width: 1400px; margin: 0 auto; display: none; }
         .card { background: white; border-radius: 12px; padding: 15px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
         
-        /* Form nhập liệu */
+        /* Input Form */
         .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
         label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
         input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 4px; outline: none; }
         
-        /* Nút bấm */
+        /* Buttons */
         .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; }
         button { padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 13px; transition: 0.2s; }
         .btn-add { background: var(--p); width: 100%; margin-top: 10px; }
@@ -33,7 +33,7 @@
         .btn-logout { background: #64748b; }
         .btn-row-repair { background: #ec4899; padding: 5px 8px; font-size: 11px; }
 
-        /* Bảng dữ liệu */
+        /* Data Table */
         .table-container { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
@@ -54,17 +54,18 @@
             .no-print, #loginOverlay { display: none !important; }
             body { background: white; padding: 0; color: black; }
             
-            /* In Báo cáo SOP */
+            /* Labels with QR */
+            body.printing-labels #labelArea { display: grid !important; grid-template-columns: repeat(3, 60mm); gap: 5mm; justify-content: center; padding-top: 10mm; }
+            .label-box { width: 60mm; height: 35mm; border: 0.8pt solid #000; padding: 2mm; display: flex; align-items: center; page-break-inside: avoid; position: relative; }
+            .label-text { font-size: 7pt; line-height: 1.2; font-weight: bold; flex: 1; text-transform: uppercase; padding-right: 2mm; }
+            .label-qr-wrap { width: 22mm; height: 22mm; }
+            .label-qr-wrap img { width: 100% !important; height: 100% !important; }
+
+            /* SOP Report */
             body.printing-report #printArea { display: block !important; }
             .sop-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; font-size: 10pt; text-align: center; }
-            
-            /* In Nhãn QR Kiểm kê */
-            body.printing-labels #labelArea { display: grid !important; grid-template-columns: repeat(3, 60mm); gap: 5mm; justify-content: center; }
-            .label-box { width: 60mm; height: 35mm; border: 0.5pt solid #000; padding: 2mm; display: flex; align-items: center; page-break-inside: avoid; }
-            .label-text { font-size: 7pt; line-height: 1.2; font-weight: bold; flex: 1; text-transform: uppercase; }
-            .label-qr-wrap { width: 22mm; height: 22mm; margin-left: 2mm; }
 
-            /* In Phiếu báo SD chuyên nghiệp */
+            /* Repair Form */
             body.printing-repair #singleRepairArea { display: block !important; }
             .repair-paper { border: 1.5pt solid black; padding: 30px; height: 100%; }
             .repair-title { text-align: center; border-bottom: 2px solid black; margin-bottom: 20px; padding-bottom: 10px; }
@@ -79,8 +80,8 @@
 <div id="loginOverlay">
     <div class="login-box">
         <h3 style="margin-bottom: 20px; color: var(--p);">HỆ THỐNG CNS/ATM</h3>
-        <input type="text" id="user" placeholder="Tên đăng nhập (admin)">
-        <input type="password" id="pass" placeholder="Mật khẩu (admin)" style="margin-top:10px;">
+        <input type="text" id="user" placeholder="Tên đăng nhập">
+        <input type="password" id="pass" placeholder="Mật khẩu" style="margin-top:10px;">
         <button class="btn-add" onclick="checkLogin()">Đăng nhập</button>
     </div>
 </div>
@@ -88,7 +89,7 @@
 <div class="no-print" id="mainApp">
     <div style="text-align: center; margin-bottom: 20px;">
         <h2 style="color: var(--p);">QUẢN LÝ THIẾT BỊ CNS/ATM</h2>
-        <p>Đội Thông tin - Trung tâm BĐKT</p>
+        <p>Trung tâm BĐKT - Đội Thông tin</p>
     </div>
 
     <div class="card admin-only">
@@ -113,7 +114,7 @@
         </div>
     </div>
 
-    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh theo Tên, S/N, Vị trí..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px;">
+    <input type="text" id="searchInput" onkeyup="render()" placeholder="🔍 Tìm kiếm nhanh..." style="width:100%; padding:14px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom: 15px;">
 
     <div class="table-container">
         <table>
@@ -126,7 +127,7 @@
                     <th>P/N</th>
                     <th>S/N</th>
                     <th>Vị trí</th>
-                    <th>Phiếu SD</th>
+                    <th>Thao tác</th>
                     <th class="admin-only">Xóa</th>
                 </tr>
             </thead>
@@ -135,7 +136,7 @@
     </div>
 </div>
 
-<!-- VÙNG IN BÁO CÁO -->
+<!-- Print Report -->
 <div id="printArea">
     <div class="sop-header">
         <div>TỔNG CÔNG TY QUẢN LÝ BAY VN<br>TRUNG TÂM BĐKT - ĐỘI THÔNG TIN</div>
@@ -150,16 +151,16 @@
     </table>
 </div>
 
-<!-- VÙNG IN PHIẾU BÁO SỬ DỤNG RIÊNG LẺ -->
+<!-- Print Repair Form -->
 <div id="singleRepairArea"></div>
 
-<!-- VÙNG IN NHÃN QR -->
+<!-- Print QR Labels -->
 <div id="labelArea"></div>
 
 <script>
-    // CẤU HÌNH: Thay link Web App của anh vào đây
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzeLtgKbAowgUWWHwpxK4SvqlMHBbFA5aWT-YsO0334r3vR9zIUvr7XZ-O81EdFz3pZ/exec";
-    const STORAGE_KEY = 'atcc_inventory_final_v5';
+    // QUAN TRỌNG: Thay link Apps Script đã Deploy (Anyone can access) vào đây
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzeLtgKbAowgUWWHwpxK4SvqlMHBbFA5aWT-YsO0334r3vR9zIUvr7XZ-O81EdFz3pZ/exec"; 
+    const STORAGE_KEY = 'atcc_inventory_final_v6';
     
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let currentUser = null;
@@ -169,8 +170,7 @@
         const p = document.getElementById('pass').value;
         if (u === 'admin' && p === 'admin') currentUser = 'admin';
         else if (u === 'guest' && p === '123456') currentUser = 'guest';
-        else return alert("Sai tài khoản hoặc mật khẩu!");
-
+        else return alert("Sai tài khoản!");
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
         render();
@@ -183,15 +183,12 @@
 
         if(!name || !sn) return alert("Vui lòng nhập Tên và S/N!");
 
-        // KIỂM TRA TRÙNG LẶP P/N VÀ S/N
         const isDuplicate = inventory.some(item => 
             item.sn.toLowerCase() === sn.toLowerCase() && 
             item.pn.toLowerCase() === pn.toLowerCase()
         );
 
-        if (isDuplicate) {
-            return alert(`❌ LỖI TRÙNG LẶP: \nThiết bị có P/N: ${pn} và S/N: ${sn} đã tồn tại!`);
-        }
+        if (isDuplicate) return alert(`❌ LỖI: P/N: ${pn} và S/N: ${sn} đã tồn tại!`);
 
         const newItem = {
             name, sn, pn,
@@ -201,29 +198,16 @@
         };
 
         const btn = document.getElementById('btnAdd');
-        btn.innerText = "⌛ Đang đồng bộ...";
-        btn.disabled = true;
+        btn.innerText = "⌛ Đang đồng bộ..."; btn.disabled = true;
 
         try {
-            // Lưu local trước
             inventory.push(newItem);
             saveData();
-
-            // Gửi lên Google Sheets
-            await fetch(WEB_APP_URL, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify({...newItem, action: "add"}) 
-            });
-
-            alert("✅ Thành công: Đã lưu và đồng bộ lên Sheet!");
+            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({...newItem, action: "add"}) });
+            alert("✅ Đã lưu và đồng bộ!");
             ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
-        } catch(e) { 
-            alert("⚠️ Lưu thành công cục bộ nhưng lỗi kết nối Cloud!"); 
-        } finally {
-            btn.innerText = "➕ Thêm thiết bị & Ghi vào Sheet";
-            btn.disabled = false;
-        }
+        } catch(e) { alert("⚠️ Lỗi đồng bộ Cloud!"); }
+        finally { btn.innerText = "➕ Thêm thiết bị & Ghi vào Sheet"; btn.disabled = false; }
     }
 
     function render() {
@@ -235,9 +219,7 @@
         tbody.innerHTML = ''; pBody.innerHTML = ''; lArea.innerHTML = '';
         
         const filtered = inventory.filter(i => 
-            i.name.toLowerCase().includes(search) || 
-            i.sn.toLowerCase().includes(search) || 
-            i.loc.toLowerCase().includes(search)
+            i.name.toLowerCase().includes(search) || i.sn.toLowerCase().includes(search) || i.loc.toLowerCase().includes(search)
         );
 
         filtered.forEach((item, idx) => {
@@ -249,15 +231,16 @@
                 <td>${item.pn}</td>
                 <td>${item.sn}</td>
                 <td>${item.loc}</td>
-                <td><button class="btn-row-repair" onclick="printSingleRepair(${idx})">📄 Phiếu</button></td>
-                <td class="admin-only"><button style="background:var(--danger);color:white;padding:5px;border:none;border-radius:4px;" onclick="deleteItem(${idx})">Xóa</button></td>
+                <td><button class="btn-row-repair" onclick="printSingleRepair(${idx})">📄 In Phiếu</button></td>
+                <td class="admin-only"><button style="background:var(--danger);padding:5px;border:none;border-radius:4px;color:white;" onclick="deleteItem(${idx})">Xóa</button></td>
             </tr>`;
 
             pBody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
 
-            // LINK QR KIỂM KÊ CHUYÊN NGHIỆP
+            // TẠO LINK QR KIỂM KÊ: Phải có tham số sn để Apps Script nhận diện
             const qrCheckUrl = `${WEB_APP_URL}?sn=${encodeURIComponent(item.sn)}&name=${encodeURIComponent(item.name)}`;
             const lId = `qrl-${idx}`;
+            
             lArea.innerHTML += `
                 <div class="label-box">
                     <div class="label-text">
@@ -270,14 +253,15 @@
                     <div id="${lId}" class="label-qr-wrap"></div>
                 </div>`;
 
+            // Render QR sau khi DOM đã sẵn sàng
             setTimeout(() => {
                 new QRCode(document.getElementById(lId), { 
                     text: qrCheckUrl, 
-                    width: 80, 
-                    height: 80, 
-                    correctLevel: QRCode.CorrectLevel.H 
+                    width: 100, 
+                    height: 100, 
+                    correctLevel: QRCode.CorrectLevel.M 
                 });
-            }, 50);
+            }, 100);
         });
 
         if (currentUser === 'admin') {
@@ -293,38 +277,27 @@
             <div class="repair-paper">
                 <div class="sop-header">
                     <div>TỔNG CÔNG TY QUẢN LÝ BAY VN<br>TRUNG TÂM BĐKT - ĐỘI THÔNG TIN</div>
-                    <div>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập - Tự do - Hạnh phúc</div>
+                    <div>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
                 </div>
                 <div class="repair-title">
                     <h2>PHIẾU BÁO SỬ DỤNG - SỬA CHỮA THIẾT BỊ</h2>
                     <p><i>Ngày ${date.getDate()} tháng ${date.getMonth()+1} năm ${date.getFullYear()}</i></p>
                 </div>
-                <div class="repair-content">
-                    <div class="repair-row"><b>1. Tên thiết bị / Model:</b> <span class="dotted">${item.name}</span></div>
-                    <div class="repair-row"><b>2. Mã CCDC / Mã kho:</b> <span class="dotted">${item.code} / ${item.warehouse}</span></div>
-                    <div class="repair-row"><b>3. Part Number (P/N):</b> <span class="dotted">${item.pn}</span></div>
-                    <div class="repair-row"><b>4. Serial Number (S/N):</b> <span class="dotted">${item.sn}</span></div>
-                    <div class="repair-row"><b>5. Vị trí lắp đặt:</b> <span class="dotted">${item.loc}</span></div>
-                    <div class="repair-row"><b>6. Nội dung yêu cầu:</b> <span class="dotted"></span></div>
-                    <div class="repair-row"><span class="dotted" style="margin-left:0; height:30px;"></span></div>
-                    <div class="repair-row"><b>7. Kết quả xử lý:</b> <span class="dotted"></span></div>
-                </div>
+                <div class="repair-row"><b>1. Tên thiết bị:</b> <span class="dotted">${item.name}</span></div>
+                <div class="repair-row"><b>2. Mã kho/CCDC:</b> <span class="dotted">${item.warehouse} / ${item.code}</span></div>
+                <div class="repair-row"><b>3. P/N & S/N:</b> <span class="dotted">${item.pn} | ${item.sn}</span></div>
+                <div class="repair-row"><b>4. Vị trí:</b> <span class="dotted">${item.loc}</span></div>
+                <div class="repair-row"><b>5. Nội dung:</b> <span class="dotted"></span></div>
+                <div class="repair-row"><span class="dotted" style="margin-left:0; height:40px;"></span></div>
                 <div class="repair-footer">
-                    <div><b>NGƯỜI BÁO CÁO</b><br><br><br><br><b>${currentUser === 'admin' ? 'Trần Văn Trường' : 'Cán bộ trực'}</b></div>
-                    <div><b>XÁC NHẬN ĐƠN VỊ</b><br><br><br><br>..........................................</div>
+                    <div><b>NGƯỜI BÁO CÁO</b><br><br><br><b>${currentUser === 'admin' ? 'Trần Văn Trường' : 'Cán bộ trực'}</b></div>
+                    <div><b>XÁC NHẬN ĐƠN VỊ</b><br><br><br>...........................</div>
                 </div>
             </div>`;
-        document.body.className = "printing-repair";
-        window.print();
+        document.body.className = "printing-repair"; window.print();
     }
 
-    function deleteItem(idx) { 
-        if(confirm("Xác nhận xóa thiết bị? Thao tác này chỉ xóa trên trình duyệt, không xóa trên Sheet.")) { 
-            inventory.splice(idx,1); 
-            saveData(); 
-        } 
-    }
-
+    function deleteItem(idx) { if(confirm("Xóa thiết bị này khỏi máy?")) { inventory.splice(idx,1); saveData(); } }
     function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); render(); }
     function printReport() { document.body.className = "printing-report"; window.print(); }
     function printLabels() { document.body.className = "printing-labels"; window.print(); }
@@ -333,12 +306,8 @@
         try {
             const res = await fetch(WEB_APP_URL);
             const data = await res.json();
-            if(data) { 
-                inventory = data; 
-                saveData(); 
-                alert("Đồng bộ dữ liệu Cloud thành công!"); 
-            }
-        } catch(e) { alert("Lỗi khi tải dữ liệu từ Cloud!"); }
+            if(data) { inventory = data; saveData(); alert("Đồng bộ Cloud thành công!"); }
+        } catch(e) { alert("Lỗi tải Cloud!"); }
     }
 
     function exportCSV() {
@@ -346,8 +315,7 @@
         inventory.forEach((i, idx) => csv += `${idx+1},"${i.name}","${i.code}","${i.warehouse}","${i.pn}","${i.sn}","${i.loc}"\n`);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `VatTu_CNS_ATM.csv`; 
-        link.click();
+        link.download = `VatTu_CNS_ATM.csv`; link.click();
     }
 </script>
 </body>
