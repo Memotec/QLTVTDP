@@ -6,7 +6,7 @@
     <title>HỆ THỐNG QUẢN LÝ THIẾT BỊ CNS/ATM</title>
     <script src="https://cdn.jsdelivr.net/npm/kjua@0.9.0/dist/kjua.min.js"></script>
     <style>
-        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; }
+        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; --edit: #0ea5e9; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--txt); padding: 10px; }
         
@@ -19,10 +19,14 @@
         .form-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
         label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
         input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; margin-top: 4px; outline: none; }
+        input:focus { border-color: var(--p); box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1); }
         
         .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 15px; }
         button { padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 13px; transition: 0.2s; }
-        .btn-add { background: var(--p); width: 100%; margin-top: 10px; }
+        .btn-add { background: var(--p); width: 100%; margin-top: 10px; font-size: 15px; }
+        .btn-update { background: var(--edit); width: 100%; margin-top: 10px; font-size: 15px; display: none; }
+        .btn-cancel { background: #64748b; width: 100%; margin-top: 5px; font-size: 13px; display: none; }
+        
         .btn-sync { background: #6366f1; }
         .btn-excel { background: var(--success); }
         .btn-label { background: var(--warning); }
@@ -35,6 +39,7 @@
         th { background: #f8fafc; font-size: 11px; text-transform: uppercase; color: #64748b; }
         
         .admin-only { display: none; }
+        .btn-edit-row { background: var(--edit); padding: 5px 8px; font-size: 11px; margin-right: 2px; }
 
         @media (min-width: 768px) {
             .form-grid { grid-template-columns: repeat(6, 1fr); }
@@ -42,28 +47,22 @@
             .actions { grid-template-columns: repeat(5, 1fr); }
         }
 
-        /* --- PRINT STYLES --- */
+        /* --- PRINT STYLES (SOP) --- */
         #printArea, #labelArea, #singleRepairArea { display: none; }
         @media print {
             @page { size: A4 portrait; margin: 10mm 15mm; }
             .no-print, #loginOverlay { display: none !important; }
-            body { background: white; padding: 0; color: black; font-family: "Times New Roman", Times, serif; }
-            
-            /* Styles cho Bảng thống kê chuẩn SOP */
+            body { background: white; padding: 0; color: black; font-family: "Times New Roman", serif; }
             body.printing-report #printArea { display: block !important; }
             .report-header { display: flex; justify-content: space-between; text-align: center; margin-bottom: 30px; }
             .header-left { width: 45%; font-size: 11pt; font-weight: bold; }
             .header-right { width: 50%; font-size: 11pt; }
             .report-title { text-align: center; margin-bottom: 20px; }
-            .report-title h2 { font-size: 14pt; margin-bottom: 5px; text-transform: uppercase; }
-            
-            table.sop-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .report-title h2 { font-size: 14pt; text-transform: uppercase; }
+            table.sop-table { width: 100%; border-collapse: collapse; }
             table.sop-table th, table.sop-table td { border: 1px solid black; padding: 8px; font-size: 10pt; }
-            table.sop-table th { background: #eee !important; -webkit-print-color-adjust: exact; }
-
-            .signature-section { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; font-size: 11pt; }
-            .sig-box { padding-top: 10px; }
-            .sig-space { height: 80px; }
+            .signature-section { margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; }
+            .sig-space { height: 70px; }
 
             /* Nhãn QR */
             body.printing-labels #labelArea { display: grid !important; grid-template-columns: repeat(3, 62mm); gap: 4mm; justify-content: center; }
@@ -71,9 +70,7 @@
             .label-text { font-size: 7.5pt; line-height: 1.3; font-weight: bold; flex: 1; text-transform: uppercase; }
             .label-qr-wrap img { width: 25mm !important; height: 25mm !important; image-rendering: pixelated; }
 
-            /* Phiếu sửa chữa */
             body.printing-repair #singleRepairArea { display: block !important; }
-            .repair-paper { border: 1.5pt solid black; padding: 30px; }
         }
     </style>
 </head>
@@ -82,7 +79,7 @@
 <div id="loginOverlay">
     <div class="login-box">
         <h3 style="margin-bottom: 20px; color: var(--p);">HỆ THỐNG QUẢN LÝ CNS</h3>
-        <input type="text" id="user" placeholder="Tài khoản">
+        <input type="text" id="user" placeholder="Tài khoản (admin)">
         <input type="password" id="pass" placeholder="Mật khẩu">
         <button class="btn-add" onclick="checkLogin()">ĐĂNG NHẬP</button>
     </div>
@@ -94,8 +91,11 @@
         <p>Đội Thông tin - ATCC/HCM</p>
     </div>
 
+    <!-- Khối nhập liệu Admin (Bổ sung Edit Mode) -->
     <div class="card admin-only">
+        <h4 id="formTitle" style="margin-bottom: 10px; font-size: 12px; color: var(--p);">THÊM THIẾT BỊ MỚI</h4>
         <div class="form-grid">
+            <input type="hidden" id="editIndex" value="-1">
             <div class="full"><label>Tên thiết bị</label><input type="text" id="inName"></div>
             <div><label>Mã CCDC</label><input type="text" id="inCode"></div>
             <div><label>Mã Kho</label><input type="text" id="inWarehouse"></div>
@@ -104,6 +104,8 @@
             <div class="full"><label>Vị trí</label><input type="text" id="inLoc"></div>
         </div>
         <button id="btnAdd" class="btn-add" onclick="addItem()">➕ Thêm thiết bị & Ghi vào Sheet</button>
+        <button id="btnUpdate" class="btn-update" onclick="updateItem()">💾 Cập nhật thay đổi</button>
+        <button id="btnCancel" class="btn-cancel" onclick="cancelEdit()">Hủy chỉnh sửa</button>
     </div>
 
     <div class="card">
@@ -122,7 +124,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>Mã Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th><th>Phiếu</th><th class="admin-only">Xóa</th>
+                    <th>STT</th><th>Thiết bị</th><th>Mã CCDC</th><th>Mã Kho</th><th>P/N</th><th>S/N</th><th>Vị trí</th><th>Thao tác</th><th class="admin-only">Xóa</th>
                 </tr>
             </thead>
             <tbody id="mainTable"></tbody>
@@ -130,60 +132,30 @@
     </div>
 </div>
 
-<!-- BÁO CÁO THỐNG KÊ CHUẨN SOP -->
+<!-- VÙNG IN BÁO CÁO SOP -->
 <div id="printArea">
     <div class="report-header">
         <div class="header-left">
-            TỔNG CÔNG TY QUẢN LÝ BAY VIỆT NAM<br>
-            TRUNG TÂM BẢO ĐẢM KỸ THUẬT<br>
-            <span style="text-decoration: underline;">ĐỘI THÔNG TIN</span>
+            TỔNG CÔNG TY QUẢN LÝ BAY VIỆT NAM<br>TRUNG TÂM BẢO ĐẢM KỸ THUẬT<br><u>ĐỘI THÔNG TIN</u>
         </div>
         <div class="header-right">
-            <b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br>
-            <b>Độc lập - Tự do - Hạnh phúc</b><br>
-            <i id="currentDateTime">Hồ Chí Minh, ngày....tháng....năm 2026</i>
+            <b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b><br>
+            <i id="currentDateTime">Hồ Chí Minh, ngày 02 tháng 05 năm 2026</i>
         </div>
     </div>
-
     <div class="report-title">
-        <h2>BẢNG THỐNG KÊ THIẾT BỊ KỸ THUẬT </h2>
-        <p>(Kèm theo kế hoạch quản lý tài sản đơn vị)</p>
+        <h2>BẢNG THỐNG KÊ THIẾT BỊ KỸ THUẬT</h2>
     </div>
-
     <table class="sop-table">
         <thead>
-            <tr>
-                <th width="40">STT</th>
-                <th>Tên thiết bị / Model</th>
-                <th>Mã CCDC</th>
-                <th>Mã Kho</th>
-                <th>P/N</th>
-                <th>S/N</th>
-                <th>Vị trí lắp đặt</th>
-            </tr>
+            <tr><th>STT</th><th>Tên thiết bị / Model</th><th>Mã CCDC</th><th>Mã Kho</th><th>P/N</th><th>S/N</th><th>Vị trí lắp đặt</th></tr>
         </thead>
         <tbody id="printTableBody"></tbody>
     </table>
-
     <div class="signature-section">
-        <div class="sig-box">
-            <b>NGƯỜI LẬP BIỂU</b><br>
-            <i>(Ký và ghi rõ họ tên)</i>
-            <div class="sig-space"></div>
-            <b id="sigUser">Trần Văn Trường</b>
-        </div>
-        <div class="sig-box">
-            <b>ĐỘI TRƯỞNG PHÊ DUYỆT</b><br>
-            <i>(Ký và ghi rõ họ tên)</i>
-            <div class="sig-space"></div>
-            ..................................
-        </div>
-        <div class="sig-box">
-            <b>XÁC NHẬN ĐƠN VỊ</b><br>
-            <i>(Ký tên và đóng dấu)</i>
-            <div class="sig-space"></div>
-            ..................................
-        </div>
+        <div><b>NGƯỜI LẬP BIỂU</b><div class="sig-space"></div><b id="sigUser">Trần Văn Trường</b></div>
+        <div><b>ĐỘI TRƯỞNG</b><div class="sig-space"></div>..........................</div>
+        <div><b>XÁC NHẬN ĐƠN VỊ</b><div class="sig-space"></div>..........................</div>
     </div>
 </div>
 
@@ -192,7 +164,7 @@
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzeLtgKbAowgUWWHwpxK4SvqlMHBbFA5aWT-YsO0334r3vR9zIUvr7XZ-O81EdFz3pZ/exec"; 
-    const STORAGE_KEY = 'cns_sop_pro_v10';
+    const STORAGE_KEY = 'cns_admin_edit_v11';
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let currentUser = null;
 
@@ -210,7 +182,7 @@
     async function addItem() {
         const name = document.getElementById('inName').value.trim();
         const sn = document.getElementById('inSN').value.trim();
-        if(!name || !sn) return alert("Nhập đủ Tên và S/N!");
+        if(!name || !sn) return alert("Vui lòng nhập Tên và S/N!");
         
         const newItem = { name, sn, pn: document.getElementById('inPN').value || "-", code: document.getElementById('inCode').value || "-", warehouse: document.getElementById('inWarehouse').value || "-", loc: document.getElementById('inLoc').value || "-", action: "add" };
         
@@ -218,9 +190,62 @@
         saveData();
         try {
             await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(newItem) });
-            alert("✅ Đã lưu!");
-            ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = '');
+            alert("✅ Đã thêm mới!");
+            clearForm();
         } catch(e) { console.log(e); }
+    }
+
+    // TÍNH NĂNG CHỈNH SỬA
+    function editRow(idx) {
+        const item = inventory[idx];
+        document.getElementById('editIndex').value = idx;
+        document.getElementById('inName').value = item.name;
+        document.getElementById('inCode').value = item.code;
+        document.getElementById('inWarehouse').value = item.warehouse;
+        document.getElementById('inPN').value = item.pn;
+        document.getElementById('inSN').value = item.sn;
+        document.getElementById('inLoc').value = item.loc;
+
+        document.getElementById('formTitle').innerText = "CHỈNH SỬA THÔNG TIN THIẾT BỊ";
+        document.getElementById('btnAdd').style.display = 'none';
+        document.getElementById('btnUpdate').style.display = 'block';
+        document.getElementById('btnCancel').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function updateItem() {
+        const idx = document.getElementById('editIndex').value;
+        const updatedItem = {
+            name: document.getElementById('inName').value,
+            code: document.getElementById('inCode').value,
+            warehouse: document.getElementById('inWarehouse').value,
+            pn: document.getElementById('inPN').value,
+            sn: document.getElementById('inSN').value,
+            loc: document.getElementById('inLoc').value,
+            action: "update" // Gửi lệnh update về Apps Script
+        };
+
+        inventory[idx] = updatedItem;
+        saveData();
+        
+        const btn = document.getElementById('btnUpdate');
+        btn.innerText = "⌛ Đang cập nhật Sheet..."; btn.disabled = true;
+
+        try {
+            await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(updatedItem) });
+            alert("✅ Đã cập nhật thông tin!");
+            cancelEdit();
+        } catch(e) { alert("Lỗi kết nối Cloud!"); }
+        finally { btn.innerText = "💾 Cập nhật thay đổi"; btn.disabled = false; }
+    }
+
+    function cancelEdit() {
+        clearForm();
+        document.getElementById('editIndex').value = "-1";
+        document.getElementById('formTitle').innerText = "THÊM THIẾT BỊ MỚI";
+        document.getElementById('btnAdd').style.display = 'block';
+        document.getElementById('btnUpdate').style.display = 'none';
+        document.getElementById('btnCancel').style.display = 'none';
     }
 
     function render() {
@@ -233,7 +258,22 @@
         const filtered = inventory.filter(i => i.name.toLowerCase().includes(search) || i.sn.toLowerCase().includes(search));
 
         filtered.forEach((item, idx) => {
-            tbody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td><td><button class="btn-row-repair" onclick="printSingleRepair(${idx})">📄</button></td><td class="admin-only"><button style="background:var(--danger);padding:4px;border:none;border-radius:4px;color:white;" onclick="deleteItem(${idx})">X</button></td></tr>`;
+            const realIdx = inventory.indexOf(item);
+            tbody.innerHTML += `<tr>
+                <td>${idx+1}</td>
+                <td><b>${item.name}</b></td>
+                <td>${item.code}</td>
+                <td>${item.warehouse}</td>
+                <td>${item.pn}</td>
+                <td>${item.sn}</td>
+                <td>${item.loc}</td>
+                <td>
+                    ${currentUser === 'admin' ? `<button class="btn-edit-row" onclick="editRow(${realIdx})">Sửa</button>` : ''}
+                    <button class="btn-row-repair" style="background:#ec4899;padding:5px 8px;border-radius:4px;color:white;border:none;font-size:11px" onclick="printSingleRepair(${realIdx})">Phiếu</button>
+                </td>
+                <td class="admin-only"><button style="background:var(--danger);padding:4px;border:none;border-radius:4px;color:white;" onclick="deleteItem(${realIdx})">X</button></td>
+            </tr>`;
+            
             pBody.innerHTML += `<tr><td>${idx+1}</td><td>${item.name}</td><td>${item.code}</td><td>${item.warehouse}</td><td>${item.pn}</td><td>${item.sn}</td><td>${item.loc}</td></tr>`;
 
             const lId = `qr-${idx}`;
@@ -247,51 +287,43 @@
         if (currentUser === 'admin') document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'table-cell');
     }
 
-    function printReport() {
-        const d = new Date();
-        document.getElementById('currentDateTime').innerText = `Hồ Chí Minh, ngày ${d.getDate()} tháng ${d.getMonth()+1} năm ${d.getFullYear()}`;
-        document.getElementById('sigUser').innerText = currentUser === 'admin' ? "Trần Văn Trường" : "Cán bộ trực";
-        document.body.className = "printing-report";
-        window.print();
+    function clearForm() { ['inName','inCode','inWarehouse','inPN','inSN','inLoc'].forEach(id => document.getElementById(id).value = ''); }
+    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); render(); }
+    function printReport() { document.body.className = "printing-report"; window.print(); }
+    function printLabels() { document.body.className = "printing-labels"; window.print(); }
+    
+    async function syncFromCloud() {
+        const res = await fetch(WEB_APP_URL);
+        const data = await res.json();
+        if(data) { inventory = data; saveData(); alert("Đồng bộ thành công!"); }
     }
 
     function printSingleRepair(idx) {
         const item = inventory[idx];
         const d = new Date();
         document.getElementById('singleRepairArea').innerHTML = `
-            <div class="repair-paper">
-                <div class="report-header">
-                    <div class="header-left">TỔNG CÔNG TY QUẢN LÝ BAY VN<br>TRUNG TÂM BĐKT - ĐỘI THÔNG TIN</div>
-                    <div class="header-right"><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b></div>
-                </div>
-                <h3 style="text-align:center; margin-top:20px;">PHIẾU YÊU CẦU KIỂM TRA - SỬA CHỮA</h3>
+            <div class="repair-paper" style="border:2pt solid black; padding:30px;">
+                <h3 style="text-align:center">PHIẾU YÊU CẦU KIỂM TRA / SỬA CHỮA</h3>
                 <p style="text-align:center"><i>Ngày ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}</i></p><br>
                 <p><b>Thiết bị:</b> ${item.name}</p>
-                <p><b>P/N | S/N:</b> ${item.pn} | ${item.sn}</p>
-                <p><b>Vị trí:</b> ${item.loc}</p>
+                <p><b>S/N:</b> ${item.sn} | <b>Vị trí:</b> ${item.loc}</p>
                 <p><b>Nội dung:</b> ..................................................................................</p>
-                <div style="margin-top:40px; display:flex; justify-content:space-around; text-align:center">
-                    <div><b>Người yêu cầu</b><br><br><br><b>Trần Văn Trường</b></div>
+                <div style="margin-top:50px; display:flex; justify-content:space-around; text-align:center">
+                    <div><b>Người yêu cầu</b><br><br><br><b>${currentUser === 'admin' ? 'Trần Văn Trường' : 'Cán bộ trực'}</b></div>
                     <div><b>Xác nhận đơn vị</b><br><br><br>...........................</div>
                 </div>
             </div>`;
         document.body.className = "printing-repair"; window.print();
     }
 
-    function deleteItem(idx) { if(confirm("Xóa?")) { inventory.splice(idx,1); saveData(); } }
-    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); render(); }
-    function printLabels() { document.body.className = "printing-labels"; window.print(); }
-    async function syncFromCloud() {
-        const res = await fetch(WEB_APP_URL);
-        const data = await res.json();
-        if(data) { inventory = data; saveData(); alert("Đã đồng bộ!"); }
-    }
+    function deleteItem(idx) { if(confirm("Xác nhận xóa thiết bị này?")) { inventory.splice(idx,1); saveData(); } }
+
     function exportCSV() {
         let csv = "\ufeffSTT,Thiet Bi,P/N,S/N,Vi Tri\n";
         inventory.forEach((i, idx) => csv += `${idx+1},"${i.name}","${i.pn}","${i.sn}","${i.loc}"\n`);
         const link = document.createElement("a");
         link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-        link.download = `DanhMuc_CNS.csv`; link.click();
+        link.download = `Danh_muc_CNS.csv`; link.click();
     }
 </script>
 </body>
