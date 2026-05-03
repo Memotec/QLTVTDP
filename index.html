@@ -35,18 +35,22 @@
         th { background: #f8fafc; padding: 12px; font-size: 12px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 14px; }
 
-        /* Cấu hình in - Đã tối ưu khoảng cách nhãn */
         #printLabelArea, #printQrOnlyArea { display: none; }
         @media print {
             .no-print { display: none !important; }
             body.printing-labels #printLabelArea { display: grid !important; grid-template-columns: repeat(3, 62mm); gap: 2mm; padding: 5mm; }
-            body.printing-qrs #printQrOnlyArea { display: grid !important; grid-template-columns: repeat(6, 30mm); gap: 5mm; padding: 10mm; }
+            body.printing-qrs #printQrOnlyArea { display: grid !important; grid-template-columns: repeat(3, 62mm); gap: 2mm; padding: 5mm; }
+            
             .label-item { 
-                width: 62mm; height: 30mm; /* Giảm chiều cao nhãn từ 35mm xuống 30mm */
-                border: 0.5pt solid #000; padding: 1.5mm; 
+                width: 62mm; height: 30mm; border: 0.5pt solid #000; padding: 1.5mm; 
                 display: flex; flex-direction: column; justify-content: flex-start; page-break-inside: avoid; 
             }
-            .qr-only-item { width: 30mm; text-align: center; border: 0.5pt dashed #ccc; padding: 2mm; page-break-inside: avoid; }
+            /* Style cho nhãn có kèm QR */
+            .qr-label-item {
+                width: 62mm; height: 32mm; border: 0.5pt solid #000; padding: 1.5mm;
+                display: grid; grid-template-columns: 1fr 22mm; gap: 2mm; align-items: start; page-break-inside: avoid;
+            }
+            .header-print { font-size:6pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000; margin-bottom:1mm; padding-bottom:0.5mm; grid-column: 1 / -1; }
         }
     </style>
 </head>
@@ -86,14 +90,14 @@
         <div class="btn-group">
             <button style="background:#22c55e" onclick="syncCloud()">🔄 Đồng bộ Cloud</button>
             <button style="background:var(--word)" onclick="exportToWord()">📝 Xuất File Word</button>
-            <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN (THU NHỎ)</button>
-            <button style="background:#10b981" onclick="doPrint('qrs')">📱 IN MÃ QR CODE</button>
+            <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN (KHÔNG QR)</button>
+            <button style="background:#10b981" onclick="doPrint('qrs')">📱 IN NHÃN + MÃ QR</button>
             <button style="background:var(--danger)" onclick="location.reload()">🔒 Thoát</button>
         </div>
     </div>
 
     <div class="table-wrap">
-        <table>
+        <table id="mainTable">
             <thead>
                 <tr>
                     <th>STT</th>
@@ -151,11 +155,11 @@
                     <td><button style="background:var(--edit)" onclick="editItem(${idx})">Sửa</button></td>
                 </tr>`;
 
-                // NHÃN DÁN - ĐÃ GIẢM KÍCH CỠ CHỮ VÀ KHOẢNG CÁCH
+                // 1. NHÃN CHỈ CÓ CHỮ (Nhãn dán)
                 lblArea.innerHTML += `
                     <div class="label-item">
-                        <div style="font-size:6.5pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000; margin-bottom:1mm; padding-bottom:0.5mm">ĐỘI THÔNG TIN - TT BĐKT HCM</div>
-                        <div style="font-size:6.5pt; line-height:1.1">
+                        <div class="header-print">ĐỘI THÔNG TIN - TT BĐKT HCM</div>
+                        <div style="font-size:6.5pt; line-height:1.2">
                             <b style="font-size:7pt; display:block; margin-bottom:0.5mm; text-transform:uppercase">${item.name.substring(0,45)}</b>
                             <b>P/N:</b> ${item.pn}<br>
                             <b>S/N:</b> ${item.sn}<br>
@@ -164,12 +168,24 @@
                         </div>
                     </div>`;
 
-                const qid = `q-${idx}`;
-                qrArea.innerHTML += `<div class="qr-only-item"><div id="${qid}"></div><div style="font-size:7pt; font-weight:bold; margin-top:2px;">SN: ${item.sn}</div></div>`;
+                // 2. NHÃN CHỮ + QR (Phần In Mã QR)
+                const qid = `qr-code-${idx}`;
+                qrArea.innerHTML += `
+                    <div class="qr-label-item">
+                        <div class="header-print">ĐỘI THÔNG TIN - TT BĐKT HCM</div>
+                        <div style="font-size:6.5pt; line-height:1.2">
+                            <b style="font-size:7pt; display:block; margin-bottom:0.5mm; text-transform:uppercase">${item.name.substring(0,35)}</b>
+                            <b>P/N:</b> ${item.pn}<br>
+                            <b>S/N:</b> ${item.sn}<br>
+                            <b>Mã TS:</b> ${item.code}<br>
+                            <b>Mã Kho:</b> ${item.warehouse || '-'}
+                        </div>
+                        <div id="${qid}" style="display:flex; justify-content:center; align-items:center;"></div>
+                    </div>`;
 
                 setTimeout(() => {
                     const qEl = document.getElementById(qid);
-                    if(qEl) qEl.appendChild(kjua({render:'image', size:100, text:item.sn}));
+                    if(qEl) qEl.appendChild(kjua({render:'image', size:80, text:item.sn, quiet:1}));
                 }, 50);
             }
         });
