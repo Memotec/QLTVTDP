@@ -30,21 +30,31 @@
         .input-group input { padding: 12px 15px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: #f8fafc; }
 
         .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-        button { padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; display: flex; align-items: center; gap: 8px; justify-content: center; }
+        button { padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; display: flex; align-items: center; gap: 8px; justify-content: center; transition: 0.2s; }
+        button:hover { opacity: 0.85; transform: translateY(-1px); }
 
-        input#searchInput { width: 100%; padding: 16px 20px; border-radius: 12px; border: 2px solid #e2e8f0; margin-bottom: 20px; font-size: 16px; }
+        input#searchInput { width: 100%; padding: 16px 20px; border-radius: 12px; border: 2px solid #e2e8f0; margin-bottom: 20px; font-size: 16px; transition: 0.3s; }
+        input#searchInput:focus { border-color: var(--p); outline: none; }
 
-        .table-wrap { overflow-x: auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0; }
+        /* GIAO DIỆN BẢNG CẢI TIẾN */
+        .table-wrap { overflow-x: auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background: #f8fafc; padding: 15px; font-size: 12px; color: #475569; border-bottom: 2px solid #e2e8f0; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 14px; }
+        th { background: #f8fafc; padding: 16px; font-size: 11px; font-weight: 800; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 14px; color: #1e293b; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f1f5f9; }
+        
+        .stt-col { color: #64748b; font-weight: 700; background: #f8fafc; width: 50px; }
+        .name-col { text-align: left !important; font-weight: 600; color: #0f172a; max-width: 300px; }
+        .badge-warehouse { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 12px; }
+        .badge-qty { background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-weight: 700; }
 
+        /* PRINT CONFIG */
         #printLabelArea, #printQrOnlyArea { display: none; }
         @media print {
             .no-print { display: none !important; }
             body.printing-labels #printLabelArea { display: grid !important; grid-template-columns: repeat(3, 62mm); gap: 2mm; padding: 5mm; }
             body.printing-qrs #printQrOnlyArea { display: grid !important; grid-template-columns: repeat(6, 30mm); gap: 5mm; padding: 10mm; }
-            
             .label-item { width: 62mm; height: 30mm; border: 0.5pt solid #000; padding: 1.5mm; display: flex; flex-direction: column; page-break-inside: avoid; }
             .qr-only-item { width: 30mm; text-align: center; border: 0.5pt dashed #ccc; padding: 2mm; page-break-inside: avoid; }
             .header-print { font-size:6.5pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000; margin-bottom:1mm; padding-bottom:0.5mm; }
@@ -85,7 +95,7 @@
 
     <div class="card">
         <div class="section-title">🔍 Tra cứu & Trích xuất</div>
-        <input type="text" id="searchInput" oninput="render()" placeholder="Tìm kiếm nhanh...">
+        <input type="text" id="searchInput" oninput="render()" placeholder="Tìm kiếm nhanh thiết bị, số serial, mã tài sản...">
         <div class="btn-group">
             <button style="background:var(--success)" onclick="syncCloud()">🔄 Đồng bộ</button>
             <button style="background:var(--word)" onclick="exportToWord()">📝 File Word</button>
@@ -99,8 +109,15 @@
         <table>
             <thead>
                 <tr>
-                    <th>STT</th><th style="text-align:left">Tên thiết bị</th>
-                    <th>P/N</th><th>S/N</th><th>Mã TS</th><th>Kho</th><th>SL</th><th>Vị trí</th><th>Sửa</th>
+                    <th style="width: 60px;">STT</th>
+                    <th style="text-align:left">Tên thiết bị / Model</th>
+                    <th>Part Number</th>
+                    <th>Serial Number</th>
+                    <th>Mã Tài Sản</th>
+                    <th>Mã Kho</th>
+                    <th>SL</th>
+                    <th>Vị trí lắp đặt</th>
+                    <th>Thao tác</th>
                 </tr>
             </thead>
             <tbody id="inventoryBody"></tbody>
@@ -144,10 +161,15 @@
             
             if (match) {
                 tbody.innerHTML += `<tr>
-                    <td>${idx+1}</td><td style="text-align:left"><b>${item.name}</b></td>
-                    <td>${item.pn}</td><td>${item.sn}</td><td>${item.code}</td>
-                    <td>${item.warehouse || '-'}</td><td>${item.qty}</td><td>${item.loc}</td>
-                    <td><button style="background:var(--edit); padding: 5px 12px;" onclick="editItem(${idx})">Sửa</button></td>
+                    <td class="stt-col">${idx+1}</td>
+                    <td class="name-col">${item.name}</td>
+                    <td style="color: #64748b; font-family: monospace;">${item.pn}</td>
+                    <td style="font-weight: 600;">${item.sn}</td>
+                    <td>${item.code || '-'}</td>
+                    <td><span class="badge-warehouse">${item.warehouse || '-'}</span></td>
+                    <td><span class="badge-qty">${item.qty}</span></td>
+                    <td style="font-size: 13px; color: #475569;">${item.loc}</td>
+                    <td><button style="background:var(--edit); padding: 6px 15px; font-size:12px;" onclick="editItem(${idx})">Sửa</button></td>
                 </tr>`;
 
                 lblArea.innerHTML += `
@@ -162,7 +184,6 @@
                 const qid = `qr-only-${idx}`;
                 qrArea.innerHTML += `<div class="qr-only-item"><div id="${qid}"></div><div style="font-size:7pt; font-weight:bold; margin-top:2px;">SN: ${item.sn}</div></div>`;
 
-                // Cập nhật nội dung khi quét QR: Hiện đầy đủ thông tin như nhãn dán
                 const qrContent = `Tên: ${item.name}\nP/N: ${item.pn}\nS/N: ${item.sn}\nMã TS: ${item.code}\nKho: ${item.warehouse || '-'}`;
 
                 setTimeout(() => {
