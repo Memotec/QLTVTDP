@@ -14,52 +14,40 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
         
-        /* Login */
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center; width: 400px; border: 1px solid #e2e8f0; }
-        .login-box input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1.5px solid #e2e8f0; border-radius: 10px; outline: none; transition: 0.3s; }
-        .login-box input:focus { border-color: var(--p); box-shadow: 0 0 0 4px rgba(67, 56, 202, 0.1); }
+        .login-box input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1.5px solid #e2e8f0; border-radius: 10px; outline: none; }
 
         .container { max-width: 1400px; margin: 0 auto; display: none; }
-        
-        /* Styled Admin Area (Giao diện nhập liệu mới) */
         .card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .section-title { font-size: 14px; font-weight: 700; color: var(--p); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .section-title { font-size: 14px; font-weight: 700; color: var(--p); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
         
         .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
         .full { grid-column: span 4; }
         .half { grid-column: span 2; }
-        
         .input-group { display: flex; flex-direction: column; gap: 6px; }
         .input-group label { font-size: 12px; font-weight: 600; color: #64748b; }
-        .input-group input { padding: 12px 15px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: 0.3s; background: #f8fafc; }
-        .input-group input:focus { background: white; border-color: var(--p); outline: none; box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.1); }
+        .input-group input { padding: 12px 15px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: #f8fafc; }
 
-        /* Buttons */
         .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-        button { padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; transition: all 0.2s; display: flex; align-items: center; gap: 8px; justify-content: center; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        button:active { transform: translateY(0); }
+        button { padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; display: flex; align-items: center; gap: 8px; justify-content: center; }
 
-        /* Search & Table */
-        input#searchInput { width: 100%; padding: 16px 20px; border-radius: 12px; border: 2px solid #e2e8f0; margin-bottom: 20px; font-size: 16px; transition: 0.3s; }
-        input#searchInput:focus { border-color: var(--p); outline: none; }
+        input#searchInput { width: 100%; padding: 16px 20px; border-radius: 12px; border: 2px solid #e2e8f0; margin-bottom: 20px; font-size: 16px; }
 
-        .table-wrap { overflow-x: auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .table-wrap { overflow-x: auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0; }
         table { width: 100%; border-collapse: collapse; min-width: 1000px; }
-        th { background: #f8fafc; padding: 15px; font-size: 12px; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; }
+        th { background: #f8fafc; padding: 15px; font-size: 12px; color: #475569; border-bottom: 2px solid #e2e8f0; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 14px; }
-        tr:hover { background: #fdfdfd; }
 
-        /* Printing Labels */
         #printLabelArea, #printQrOnlyArea { display: none; }
         @media print {
             .no-print { display: none !important; }
             body.printing-labels #printLabelArea { display: grid !important; grid-template-columns: repeat(3, 62mm); gap: 2mm; padding: 5mm; }
-            body.printing-qrs #printQrOnlyArea { display: grid !important; grid-template-columns: repeat(3, 62mm); gap: 2mm; padding: 5mm; }
+            body.printing-qrs #printQrOnlyArea { display: grid !important; grid-template-columns: repeat(6, 30mm); gap: 5mm; padding: 10mm; }
+            
             .label-item { width: 62mm; height: 30mm; border: 0.5pt solid #000; padding: 1.5mm; display: flex; flex-direction: column; page-break-inside: avoid; }
-            .qr-label-item { width: 62mm; height: 32mm; border: 0.5pt solid #000; padding: 1.5mm; display: grid; grid-template-columns: 1fr 22mm; gap: 2mm; page-break-inside: avoid; }
-            .header-print { font-size:6pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000; margin-bottom:1mm; padding-bottom:0.5mm; grid-column: 1 / -1; }
+            .qr-only-item { width: 30mm; text-align: center; border: 0.5pt dashed #ccc; padding: 2mm; page-break-inside: avoid; }
+            .header-print { font-size:6.5pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000; margin-bottom:1mm; padding-bottom:0.5mm; }
         }
     </style>
 </head>
@@ -68,63 +56,41 @@
 <div id="loginOverlay">
     <div class="login-box">
         <h1 style="color: var(--p); margin-bottom: 5px; font-size: 24px;">CNS/ATM SYSTEM</h1>
-        <p style="font-size: 12px; margin-bottom: 30px; color:#64748b; font-weight: 500;">ĐỘI THÔNG TIN - TT BĐKT HCM</p>
+        <p style="font-size: 12px; margin-bottom: 30px; color:#64748b;">ĐỘI THÔNG TIN - TT BĐKT HCM</p>
         <input type="text" id="user" placeholder="Tên đăng nhập">
         <input type="password" id="pass" placeholder="Mật khẩu">
-        <button onclick="checkLogin()" style="background:var(--p); width:100%; padding:16px;">ĐĂNG NHẬP HỆ THỐNG</button>
+        <button onclick="checkLogin()" style="background:var(--p); width:100%;">ĐĂNG NHẬP</button>
     </div>
 </div>
 
 <div class="container no-print" id="mainApp">
-    <!-- KHU VỰC NHẬP LIỆU CHUYÊN NGHIỆP -->
     <div class="card" id="adminArea" style="display:none;">
         <div class="section-title">📦 Cập nhật thông tin thiết bị</div>
         <div class="form-grid">
             <input type="hidden" id="editIndex" value="-1">
-            <div class="full input-group">
-                <label>Tên thiết bị / Model</label>
-                <input type="text" id="inName" placeholder="Nhập tên thiết bị...">
-            </div>
-            <div class="input-group">
-                <label>Part Number (P/N)</label>
-                <input type="text" id="inPN" placeholder="...">
-            </div>
-            <div class="input-group">
-                <label>Serial Number (S/N)</label>
-                <input type="text" id="inSN" placeholder="...">
-            </div>
-            <div class="input-group">
-                <label>Mã Tài Sản</label>
-                <input type="text" id="inCode" placeholder="...">
-            </div>
-            <div class="input-group">
-                <label>Mã Kho</label>
-                <input type="text" id="inWarehouse" placeholder="...">
-            </div>
-            <div class="half input-group">
-                <label>Vị trí lắp đặt</label>
-                <input type="text" id="inLoc" placeholder="Ví dụ: ACC HCM, Quy Nhơn...">
-            </div>
-            <div class="half input-group">
-                <label>Số lượng</label>
-                <input type="number" id="inQty" value="1">
-            </div>
+            <div class="full input-group"><label>Tên thiết bị / Model</label><input type="text" id="inName"></div>
+            <div class="input-group"><label>Part Number (P/N)</label><input type="text" id="inPN"></div>
+            <div class="input-group"><label>Serial Number (S/N)</label><input type="text" id="inSN"></div>
+            <div class="input-group"><label>Mã Tài Sản</label><input type="text" id="inCode"></div>
+            <div class="input-group"><label>Mã Kho</label><input type="text" id="inWarehouse"></div>
+            <div class="half input-group"><label>Vị trí lắp đặt</label><input type="text" id="inLoc"></div>
+            <div class="half input-group"><label>Số lượng</label><input type="number" id="inQty" value="1"></div>
         </div>
         <div class="btn-group">
-            <button id="btnAdd" style="background:var(--p); min-width: 150px;" onclick="addItem()">➕ Thêm thiết bị</button>
+            <button id="btnAdd" style="background:var(--p); min-width: 150px;" onclick="addItem()">➕ Thêm mới</button>
             <button id="btnUpdate" style="background:var(--edit); min-width: 150px; display:none;" onclick="updateItem()">💾 Lưu thay đổi</button>
-            <button style="background:#94a3b8" onclick="clearForm()">Làm mới form</button>
+            <button style="background:#94a3b8" onclick="clearForm()">Làm mới</button>
         </div>
     </div>
 
     <div class="card">
         <div class="section-title">🔍 Tra cứu & Trích xuất</div>
-        <input type="text" id="searchInput" oninput="render()" placeholder="Tìm nhanh theo Tên, S/N, P/N hoặc Mã tài sản...">
+        <input type="text" id="searchInput" oninput="render()" placeholder="Tìm kiếm nhanh...">
         <div class="btn-group">
             <button style="background:var(--success)" onclick="syncCloud()">🔄 Đồng bộ</button>
             <button style="background:var(--word)" onclick="exportToWord()">📝 File Word</button>
-            <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ Nhãn chữ</button>
-            <button style="background:var(--p)" onclick="doPrint('qrs')">📱 Nhãn + QR</button>
+            <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN</button>
+            <button style="background:var(--p)" onclick="doPrint('qrs')">📱 IN MÃ QR CODE</button>
             <button style="background:var(--danger); margin-left: auto;" onclick="location.reload()">Thoát</button>
         </div>
     </div>
@@ -133,8 +99,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>STT</th>
-                    <th style="text-align:left">Tên thiết bị</th>
+                    <th>STT</th><th style="text-align:left">Tên thiết bị</th>
                     <th>P/N</th><th>S/N</th><th>Mã TS</th><th>Kho</th><th>SL</th><th>Vị trí</th><th>Sửa</th>
                 </tr>
             </thead>
@@ -179,8 +144,7 @@
             
             if (match) {
                 tbody.innerHTML += `<tr>
-                    <td>${idx+1}</td>
-                    <td style="text-align:left"><b>${item.name}</b></td>
+                    <td>${idx+1}</td><td style="text-align:left"><b>${item.name}</b></td>
                     <td>${item.pn}</td><td>${item.sn}</td><td>${item.code}</td>
                     <td>${item.warehouse || '-'}</td><td>${item.qty}</td><td>${item.loc}</td>
                     <td><button style="background:var(--edit); padding: 5px 12px;" onclick="editItem(${idx})">Sửa</button></td>
@@ -189,26 +153,21 @@
                 lblArea.innerHTML += `
                     <div class="label-item">
                         <div class="header-print">ĐỘI THÔNG TIN - TT BĐKT HCM</div>
-                        <div style="font-size:6.5pt; line-height:1.2">
+                        <div style="font-size:6.5pt; line-height:1.15">
                             <b style="font-size:7pt; display:block; margin-bottom:0.5mm; text-transform:uppercase">${item.name.substring(0,45)}</b>
                             <b>P/N:</b> ${item.pn}<br><b>S/N:</b> ${item.sn}<br><b>Mã TS:</b> ${item.code}<br><b>Mã Kho:</b> ${item.warehouse || '-'}
                         </div>
                     </div>`;
 
-                const qid = `qr-code-${idx}`;
-                qrArea.innerHTML += `
-                    <div class="qr-label-item">
-                        <div class="header-print">ĐỘI THÔNG TIN - TT BĐKT HCM</div>
-                        <div style="font-size:6.5pt; line-height:1.2">
-                            <b style="font-size:7pt; display:block; margin-bottom:0.5mm; text-transform:uppercase">${item.name.substring(0,35)}</b>
-                            <b>P/N:</b> ${item.pn}<br><b>S/N:</b> ${item.sn}<br><b>Mã TS:</b> ${item.code}<br><b>Mã Kho:</b> ${item.warehouse || '-'}
-                        </div>
-                        <div id="${qid}" style="display:flex; justify-content:center; align-items:center;"></div>
-                    </div>`;
+                const qid = `qr-only-${idx}`;
+                qrArea.innerHTML += `<div class="qr-only-item"><div id="${qid}"></div><div style="font-size:7pt; font-weight:bold; margin-top:2px;">SN: ${item.sn}</div></div>`;
+
+                // Cập nhật nội dung khi quét QR: Hiện đầy đủ thông tin như nhãn dán
+                const qrContent = `Tên: ${item.name}\nP/N: ${item.pn}\nS/N: ${item.sn}\nMã TS: ${item.code}\nKho: ${item.warehouse || '-'}`;
 
                 setTimeout(() => {
                     const qEl = document.getElementById(qid);
-                    if(qEl) qEl.appendChild(kjua({render:'image', size:80, text:item.sn, quiet:1}));
+                    if(qEl) qEl.appendChild(kjua({render:'image', size:120, text: qrContent, quiet:1}));
                 }, 50);
             }
         });
@@ -269,8 +228,8 @@
         try {
             const r = await fetch(WEB_APP_URL);
             inventory = await r.json();
-            save(); alert("Đã đồng bộ!");
-        } catch(e) { alert("Lỗi!"); }
+            save(); alert("Đồng bộ thành công!");
+        } catch(e) { alert("Lỗi kết nối!"); }
     }
 
     function doPrint(type) {
