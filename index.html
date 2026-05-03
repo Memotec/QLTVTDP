@@ -29,20 +29,21 @@
 
         .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
         button { padding: 10px 15px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 13px; transition: 0.2s; }
-        button:active { transform: scale(0.95); }
 
         .table-wrap { overflow-x: auto; background: white; border-radius: 10px; border: 1px solid #e2e8f0; }
         table { width: 100%; border-collapse: collapse; min-width: 1100px; }
         th { background: #f8fafc; padding: 12px; font-size: 12px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 14px; }
 
-        /* Cấu hình in Nhãn dán */
         #printLabelArea, #printQrOnlyArea { display: none; }
         @media print {
             .no-print { display: none !important; }
             body.printing-labels #printLabelArea { display: grid !important; grid-template-columns: repeat(3, 62mm); gap: 2mm; padding: 5mm; }
             body.printing-qrs #printQrOnlyArea { display: grid !important; grid-template-columns: repeat(6, 30mm); gap: 5mm; padding: 10mm; }
-            .label-item { width: 62mm; height: 35mm; border: 0.5pt solid #000; padding: 2mm; display: flex; flex-direction: column; page-break-inside: avoid; }
+            .label-item { 
+                width: 62mm; height: 35mm; border: 1pt solid #000; padding: 3mm; 
+                display: flex; flex-direction: column; justify-content: center; page-break-inside: avoid; 
+            }
             .qr-only-item { width: 30mm; text-align: center; border: 0.5pt dashed #ccc; padding: 2mm; page-break-inside: avoid; }
         }
     </style>
@@ -79,11 +80,11 @@
     </div>
 
     <div class="card">
-        <input type="text" id="searchInput" oninput="render()" placeholder="🔍 Tìm kiếm Tên, S/N, P/N, Mã Tài Sản hoặc Kho...">
+        <input type="text" id="searchInput" oninput="render()" placeholder="🔍 Tìm kiếm Tên, S/N, P/N, Mã TS hoặc Kho...">
         <div class="btn-group">
             <button style="background:#22c55e" onclick="syncCloud()">🔄 Đồng bộ Cloud</button>
             <button style="background:var(--word)" onclick="exportToWord()">📝 Xuất File Word</button>
-            <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN</button>
+            <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN (KHÔNG QR)</button>
             <button style="background:#10b981" onclick="doPrint('qrs')">📱 IN MÃ QR CODE</button>
             <button style="background:var(--danger)" onclick="location.reload()">🔒 Thoát</button>
         </div>
@@ -139,7 +140,6 @@
                           (item.warehouse && item.warehouse.toLowerCase().includes(q));
             
             if (q === "" || match) {
-                // Hiển thị bảng chính
                 tbody.innerHTML += `<tr>
                     <td>${idx+1}</td>
                     <td style="text-align:left"><b>${item.name}</b></td>
@@ -149,30 +149,26 @@
                     <td><button style="background:var(--edit)" onclick="editItem(${idx})">Sửa</button></td>
                 </tr>`;
 
-                // NỘI DUNG NHÃN DÁN (LABEL) - CẬP NHẬT 4 THÔNG TIN
-                const lid = `l-${idx}`;
+                // NHÃN DÁN (LABEL) - CHỈ CÓ CHỮ, KHÔNG CÓ QR
                 lblArea.innerHTML += `
                     <div class="label-item">
-                        <div style="font-size:7pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000; margin-bottom:1mm">ĐỘI THÔNG TIN - TT BĐKT</div>
-                        <div style="display:flex; align-items:center; flex:1">
-                            <div style="flex:2; font-size:6.5pt; line-height:1.2">
-                                <b style="font-size:7pt">${item.name.substring(0,35)}</b><br>
-                                P/N: ${item.pn}<br>
-                                S/N: ${item.sn}<br>
-                                Mã TS: ${item.code}<br>
-                                Mã Kho: ${item.warehouse || '-'}
-                            </div>
-                            <div style="flex:1" id="${lid}"></div>
+                        <div style="font-size:7.5pt; font-weight:bold; text-align:center; border-bottom:0.8pt solid #000; margin-bottom:2mm; padding-bottom:1mm">ĐỘI THÔNG TIN - TT BĐKT HCM</div>
+                        <div style="font-size:8pt; line-height:1.5">
+                            <b style="font-size:9pt; display:block; margin-bottom:1mm">${item.name.substring(0,40)}</b>
+                            <b>P/N:</b> ${item.pn}<br>
+                            <b>S/N:</b> ${item.sn}<br>
+                            <b>Mã TS:</b> ${item.code}<br>
+                            <b>Mã Kho:</b> ${item.warehouse || '-'}
                         </div>
                     </div>`;
 
-                // QR riêng lẻ
+                // QR RIÊNG LẺ - GIỮ NGUYÊN ĐỂ DÙNG KHI CẦN
                 const qid = `q-${idx}`;
                 qrArea.innerHTML += `<div class="qr-only-item"><div id="${qid}"></div><div style="font-size:7pt; font-weight:bold; margin-top:2px;">SN: ${item.sn}</div></div>`;
 
                 setTimeout(() => {
-                    if(document.getElementById(lid)) document.getElementById(lid).appendChild(kjua({render:'image', size:120, text:item.sn}));
-                    if(document.getElementById(qid)) document.getElementById(qid).appendChild(kjua({render:'image', size:100, text:item.sn}));
+                    const qEl = document.getElementById(qid);
+                    if(qEl) qEl.appendChild(kjua({render:'image', size:100, text:item.sn}));
                 }, 50);
             }
         });
@@ -249,7 +245,7 @@
             rows.push(new TableRow({ children: [(i+1).toString(), item.name, item.pn, item.sn, item.code || "", item.warehouse || ""].map(t => new TableCell({ children: [new Paragraph({text: t || ""})] })) }));
         });
         const doc = new Document({ sections: [{ children: [ new Paragraph({ children: [new TextRun({text:"DANH MỤC THIẾT BỊ CNS/ATM", bold:true, size:28})], alignment: AlignmentType.CENTER }), new Paragraph({text:"", break:1}), new Table({ width: {size:100, type:WidthType.PERCENTAGE}, rows }) ] }] });
-        Packer.toBlob(doc).then(blob => saveAs(blob, "Danh_muc_Thiet_bi_CNS.docx"));
+        Packer.toBlob(doc).then(blob => saveAs(blob, "Danh_muc_CNS.docx"));
     }
 </script>
 </body>
