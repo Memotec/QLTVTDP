@@ -36,6 +36,7 @@
         th { background: #f8fafc; padding: 12px; font-size: 12px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
         td { padding: 12px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 14px; }
 
+        /* Cấu hình in Nhãn dán */
         #printLabelArea, #printQrOnlyArea { display: none; }
         @media print {
             .no-print { display: none !important; }
@@ -50,7 +51,8 @@
 
 <div id="loginOverlay">
     <div class="login-box">
-        <h2 style="color: var(--p); margin-bottom: 20px;">CNS/ATM MANAGEMENT</h2>
+        <h2 style="color: var(--p); margin-bottom: 10px;">CNS/ATM MANAGEMENT</h2>
+        <p style="font-size: 11px; margin-bottom: 20px; color:#64748b;">ĐỘI THÔNG TIN - TT BĐKT HCM</p>
         <input type="text" id="user" placeholder="Tài khoản">
         <input type="password" id="pass" placeholder="Mật khẩu">
         <button onclick="checkLogin()" style="background:var(--p); width:100%; padding:14px;">ĐĂNG NHẬP</button>
@@ -64,7 +66,7 @@
             <div class="full"><label>Tên thiết bị</label><input type="text" id="inName"></div>
             <div><label>P/N</label><input type="text" id="inPN"></div>
             <div><label>S/N</label><input type="text" id="inSN"></div>
-            <div><label>Mã CCDC</label><input type="text" id="inCode"></div>
+            <div><label>Mã Tài Sản</label><input type="text" id="inCode"></div>
             <div><label>Mã Kho</label><input type="text" id="inWarehouse"></div>
             <div><label>Số lượng</label><input type="number" id="inQty" value="1"></div>
             <div class="full"><label>Vị trí lắp đặt</label><input type="text" id="inLoc"></div>
@@ -77,7 +79,7 @@
     </div>
 
     <div class="card">
-        <input type="text" id="searchInput" oninput="render()" placeholder="🔍 Tìm nhanh theo Tên, S/N, P/N hoặc Mã Kho...">
+        <input type="text" id="searchInput" oninput="render()" placeholder="🔍 Tìm kiếm Tên, S/N, P/N, Mã Tài Sản hoặc Kho...">
         <div class="btn-group">
             <button style="background:#22c55e" onclick="syncCloud()">🔄 Đồng bộ Cloud</button>
             <button style="background:var(--word)" onclick="exportToWord()">📝 Xuất File Word</button>
@@ -93,13 +95,7 @@
                 <tr>
                     <th>STT</th>
                     <th style="text-align:left">Tên thiết bị</th>
-                    <th>P/N</th>
-                    <th>S/N</th>
-                    <th>Mã CCDC</th>
-                    <th>Mã Kho</th> <!-- CỘT MỚI CẬP NHẬT -->
-                    <th>SL</th>
-                    <th>Vị trí</th>
-                    <th>Thao tác</th>
+                    <th>P/N</th><th>S/N</th><th>Mã TS</th><th>Mã Kho</th><th>SL</th><th>Vị trí</th><th>Thao tác</th>
                 </tr>
             </thead>
             <tbody id="inventoryBody"></tbody>
@@ -112,7 +108,7 @@
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOhq-bmhvxGeFz1oCaXoiJRJTpTtckexhNxSTNT4BmcuxtfEUENqHZrPNpxTD_xuXJ/exec";
-    let inventory = JSON.parse(localStorage.getItem('cns_data_v26_1')) || [];
+    let inventory = JSON.parse(localStorage.getItem('cns_data_v26_final')) || [];
     let role = null;
 
     function checkLogin() {
@@ -139,25 +135,39 @@
             const match = item.name.toLowerCase().includes(q) || 
                           item.sn.toLowerCase().includes(q) || 
                           item.pn.toLowerCase().includes(q) ||
+                          (item.code && item.code.toLowerCase().includes(q)) ||
                           (item.warehouse && item.warehouse.toLowerCase().includes(q));
             
             if (q === "" || match) {
-                // Table Row (Bổ sung hiển thị item.warehouse)
+                // Hiển thị bảng chính
                 tbody.innerHTML += `<tr>
                     <td>${idx+1}</td>
                     <td style="text-align:left"><b>${item.name}</b></td>
-                    <td>${item.pn}</td>
-                    <td>${item.sn}</td>
-                    <td>${item.code}</td>
+                    <td>${item.pn}</td><td>${item.sn}</td><td>${item.code}</td>
                     <td style="color:var(--p); font-weight:bold">${item.warehouse || '-'}</td>
-                    <td>${item.qty}</td>
-                    <td>${item.loc}</td>
+                    <td>${item.qty}</td><td>${item.loc}</td>
                     <td><button style="background:var(--edit)" onclick="editItem(${idx})">Sửa</button></td>
                 </tr>`;
 
-                // Nhãn & QR giữ nguyên logic của anh
-                const lid = `l-${idx}`, qid = `q-${idx}`;
-                lblArea.innerHTML += `<div class="label-item"><div style="font-size:7pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000">ĐỘI THÔNG TIN - TT BĐKT</div><div style="display:flex; align-items:center; flex:1"><div style="flex:2; font-size:7pt; line-height:1.3"><b>${item.name.substring(0,30)}</b><br>PN: ${item.pn}<br>SN: ${item.sn}<br>CCDC: ${item.code}</div><div style="flex:1" id="${lid}"></div></div></div>`;
+                // NỘI DUNG NHÃN DÁN (LABEL) - CẬP NHẬT 4 THÔNG TIN
+                const lid = `l-${idx}`;
+                lblArea.innerHTML += `
+                    <div class="label-item">
+                        <div style="font-size:7pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000; margin-bottom:1mm">ĐỘI THÔNG TIN - TT BĐKT</div>
+                        <div style="display:flex; align-items:center; flex:1">
+                            <div style="flex:2; font-size:6.5pt; line-height:1.2">
+                                <b style="font-size:7pt">${item.name.substring(0,35)}</b><br>
+                                P/N: ${item.pn}<br>
+                                S/N: ${item.sn}<br>
+                                Mã TS: ${item.code}<br>
+                                Mã Kho: ${item.warehouse || '-'}
+                            </div>
+                            <div style="flex:1" id="${lid}"></div>
+                        </div>
+                    </div>`;
+
+                // QR riêng lẻ
+                const qid = `q-${idx}`;
                 qrArea.innerHTML += `<div class="qr-only-item"><div id="${qid}"></div><div style="font-size:7pt; font-weight:bold; margin-top:2px;">SN: ${item.sn}</div></div>`;
 
                 setTimeout(() => {
@@ -206,14 +216,18 @@
     }
 
     async function save() {
-        localStorage.setItem('cns_data_v26_1', JSON.stringify(inventory));
+        localStorage.setItem('cns_data_v26_final', JSON.stringify(inventory));
         render();
         if(WEB_APP_URL && role === 'admin') {
             await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(inventory) });
         }
     }
 
-    function clearForm() { document.querySelectorAll('.form-grid input').forEach(i => i.value = i.id==='inQty'?'1':''); document.getElementById('btnAdd').style.display='block'; document.getElementById('btnUpdate').style.display='none'; }
+    function clearForm() { 
+        document.querySelectorAll('.form-grid input').forEach(i => i.value = i.id==='inQty'?'1':''); 
+        document.getElementById('btnAdd').style.display='block'; 
+        document.getElementById('btnUpdate').style.display='none'; 
+    }
 
     async function syncCloud() {
         try {
@@ -230,12 +244,12 @@
 
     function exportToWord() {
         const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, TextRun } = docx;
-        const rows = [new TableRow({ children: ["STT", "Thiết bị", "P/N", "S/N", "Kho", "Vị trí"].map(t => new TableCell({ children: [new Paragraph({ children: [new TextRun({text:t, bold:true})], alignment: AlignmentType.CENTER })], background:{fill:"E2E8F0"} })) })];
+        const rows = [new TableRow({ children: ["STT", "Thiết bị", "P/N", "S/N", "Mã TS", "Kho"].map(t => new TableCell({ children: [new Paragraph({ children: [new TextRun({text:t, bold:true})], alignment: AlignmentType.CENTER })], background:{fill:"E2E8F0"} })) })];
         inventory.forEach((item, i) => {
-            rows.push(new TableRow({ children: [(i+1).toString(), item.name, item.pn, item.sn, item.warehouse || "", item.loc].map(t => new TableCell({ children: [new Paragraph({text: t || ""})] })) }));
+            rows.push(new TableRow({ children: [(i+1).toString(), item.name, item.pn, item.sn, item.code || "", item.warehouse || ""].map(t => new TableCell({ children: [new Paragraph({text: t || ""})] })) }));
         });
         const doc = new Document({ sections: [{ children: [ new Paragraph({ children: [new TextRun({text:"DANH MỤC THIẾT BỊ CNS/ATM", bold:true, size:28})], alignment: AlignmentType.CENTER }), new Paragraph({text:"", break:1}), new Table({ width: {size:100, type:WidthType.PERCENTAGE}, rows }) ] }] });
-        Packer.toBlob(doc).then(blob => saveAs(blob, "Danh_muc_CNS_ATM.docx"));
+        Packer.toBlob(doc).then(blob => saveAs(blob, "Danh_muc_Thiet_bi_CNS.docx"));
     }
 </script>
 </body>
