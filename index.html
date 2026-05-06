@@ -8,9 +8,11 @@
     <script src="https://cdn.jsdelivr.net/npm/kjua@0.9.0/dist/kjua.min.js"></script>
     <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- Bổ sung thư viện xuất Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --word: #2b579a; --edit: #0ea5e9; --danger: #ef4444; --success: #10b981; }
+        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --word: #2b579a; --edit: #0ea5e9; --danger: #ef4444; --success: #10b981; --excel: #1d6f42; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
         
@@ -58,12 +60,11 @@
             .header-print { font-size:6.5pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000; margin-bottom:1mm; padding-bottom:0.5mm; }
         }
 
-        /* --- PHẦN CẬP NHẬT TỰ ĐỘNG HIỂN THỊ TRÊN DI ĐỘNG --- */
         @media (max-width: 768px) {
-            .form-grid { grid-template-columns: 1fr; } /* Chuyển form thành 1 cột trên mobile */
+            .form-grid { grid-template-columns: 1fr; }
             .full, .half { grid-column: span 1; }
             .login-box { width: 90%; padding: 25px; }
-            button { width: 100%; } /* Nút bấm full chiều rộng trên mobile */
+            button { width: 100%; }
             .section-title { font-size: 12px; }
             .btn-group { flex-direction: column; }
             .btn-group button { margin-left: 0 !important; }
@@ -108,6 +109,8 @@
         <div class="btn-group">
             <button style="background:var(--success)" onclick="syncCloud()">🔄 Đồng bộ</button>
             <button style="background:var(--word)" onclick="exportToWord()">📝 File Word</button>
+            <!-- Nút xuất Excel mới -->
+            <button style="background:var(--excel)" onclick="exportToExcel()">📊 File Excel</button>
             <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN</button>
             <button style="background:var(--p)" onclick="doPrint('qrs')">📱 IN MÃ QR CODE</button>
             <button style="background:var(--danger); margin-left: auto;" onclick="location.reload()">Thoát</button>
@@ -287,6 +290,33 @@
         });
         const doc = new Document({ sections: [{ children: [ new Paragraph({ children: [new TextRun({text:"DANH MỤC THIẾT BỊ CNS/ATM", bold:true, size:28})], alignment: AlignmentType.CENTER }), new Paragraph({text:"", break:1}), new Table({ width: {size:100, type:WidthType.PERCENTAGE}, rows }) ] }] });
         Packer.toBlob(doc).then(blob => saveAs(blob, "Danh_muc_CNS.docx"));
+    }
+
+    /* --- PHẦN BỔ SUNG: XUẤT EXCEL --- */
+    function exportToExcel() {
+        if (inventory.length === 0) return alert("Không có dữ liệu để xuất!");
+        
+        // Chuẩn bị dữ liệu cho Excel (Chuyển đổi từ Array Objects sang định dạng Excel mong muốn)
+        const excelData = inventory.map((item, index) => ({
+            "STT": index + 1,
+            "Tên thiết bị / Model": item.name,
+            "Part Number (P/N)": item.pn,
+            "Serial Number (S/N)": item.sn,
+            "Mã Tài Sản": item.code || "-",
+            "Mã Kho": item.warehouse || "-",
+            "Số lượng": item.qty,
+            "Vị trí lắp đặt": item.loc
+        }));
+
+        // Tạo Worksheet
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+        
+        // Tạo Workbook
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Danh mục thiết bị");
+
+        // Xuất file
+        XLSX.writeFile(workbook, `Danh_muc_CNS_${new Date().toLocaleDateString()}.xlsx`);
     }
 </script>
 </body>
