@@ -11,7 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --word: #2b579a; --edit: #0ea5e9; --danger: #ef4444; --success: #10b981; --excel: #1d6f42; }
+        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --word: #2b579a; --edit: #0ea5e9; --danger: #ef4444; --success: #10b981; --excel: #1d6f42; --report: #6366f1; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
         
@@ -109,6 +109,7 @@
             <button style="background:var(--success)" onclick="syncCloud()">🔄 Đồng bộ</button>
             <button style="background:var(--word)" onclick="exportToWord()">📝 File Word</button>
             <button style="background:var(--excel)" onclick="exportToExcel()">📊 File Excel</button>
+            <button style="background:var(--report)" onclick="exportInventoryReport()">📄 BÁO CÁO TỒN KHO</button>
             <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN</button>
             <button style="background:var(--p)" onclick="doPrint('qrs')">📱 IN MÃ QR CODE</button>
             <button style="background:var(--danger); margin-left: auto;" onclick="location.reload()">Thoát</button>
@@ -209,7 +210,6 @@
         });
     }
 
-    /* --- CẬP NHẬT: KIỂM TRA TRÙNG LẶP KHI THÊM MỚI --- */
     function addItem() {
         const name = document.getElementById('inName').value.trim();
         const pn = document.getElementById('inPN').value.trim();
@@ -221,7 +221,6 @@
 
         if (!name || !sn) return alert("Vui lòng nhập Tên và Serial Number!");
 
-        // Kiểm tra trùng lặp 3 trường: P/N, S/N, Mã Tài Sản
         const isDuplicate = inventory.some(item => 
             item.pn === pn && 
             item.sn === sn && 
@@ -324,6 +323,105 @@
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Danh mục thiết bị");
         XLSX.writeFile(workbook, `Danh_muc_CNS_${new Date().toLocaleDateString()}.xlsx`);
+    }
+
+    // TÍNH NĂNG MỚI: XUẤT BÁO CÁO TỒN KHO
+    function exportInventoryReport() {
+        if (inventory.length === 0) return alert("Không có dữ liệu!");
+
+        const totalTypes = inventory.length;
+        const totalQty = inventory.reduce((sum, item) => sum + parseInt(item.qty || 0), 0);
+        const now = new Date();
+        const dateStr = `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
+
+        let tableRows = inventory.map((item, idx) => `
+            <tr>
+                <td style="border:1px solid black; padding:5px; text-align:center;">${idx + 1}</td>
+                <td style="border:1px solid black; padding:5px;">${item.name}</td>
+                <td style="border:1px solid black; padding:5px;">${item.pn}</td>
+                <td style="border:1px solid black; padding:5px;">${item.sn}</td>
+                <td style="border:1px solid black; padding:5px; text-align:center;">${item.code || ''}</td>
+                <td style="border:1px solid black; padding:5px; text-align:center;">${item.warehouse || ''}</td>
+                <td style="border:1px solid black; padding:5px; text-align:center;">${item.qty}</td>
+                <td style="border:1px solid black; padding:5px;">${item.loc || ''}</td>
+            </tr>
+        `).join('');
+
+        const reportWin = window.open('', '_blank');
+        reportWin.document.write(`
+            <html>
+            <head>
+                <title>Báo cáo tồn kho CNS/ATM</title>
+                <style>
+                    body { font-family: "Times New Roman", Times, serif; padding: 40px; color: #000; line-height: 1.5; }
+                    .header { display: flex; justify-content: space-between; margin-bottom: 30px; }
+                    .title { text-align: center; margin-bottom: 30px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+                    th { border: 1px solid black; padding: 8px; background: #eee; }
+                    .summary { margin: 20px 0; font-weight: bold; }
+                    .footer { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; text-align: center; }
+                    @media print { @page { size: A4; margin: 15mm; } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div style="text-align: center;">
+                        <b>TỔNG CÔNG TY QUẢN LÝ BAY VN</b><br>
+                        <b>TT BẢO ĐẢM KỸ THUẬT HCM</b><br>
+                        <u>ĐỘI THÔNG TIN</u>
+                    </div>
+                    <div style="text-align: center;">
+                        <b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br>
+                        <b><u>Độc lập - Tự do - Hạnh phúc</u></b>
+                    </div>
+                </div>
+
+                <div class="title">
+                    <h2 style="margin-bottom:5px;">BÁO CÁO TỔNG HỢP TỒN KHO THIẾT BỊ CNS/ATM</h2>
+                    <p><i>TP. Hồ Chí Minh, ${dateStr}</i></p>
+                </div>
+
+                <div class="summary">
+                    <p>- Tổng số chủng loại thiết bị: ${totalTypes}</p>
+                    <p>- Tổng số lượng thiết bị (tổng cộng): ${totalQty}</p>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Tên thiết bị / Model</th>
+                            <th>P/N</th>
+                            <th>S/N</th>
+                            <th>Mã Tài Sản</th>
+                            <th>Mã Kho</th>
+                            <th>SL</th>
+                            <th>Vị trí</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+
+                <div class="footer">
+                    <div>
+                        <b>ĐỘI TRƯỞNG</b><br><br><br><br><br>
+                        ..........................................
+                    </div>
+                    <div>
+                        <b>NGƯỜI LẬP BIỂU</b><br><br><br><br><br>
+                        ..........................................
+                    </div>
+                </div>
+
+                <script>
+                    window.onload = function() { window.print(); };
+                <\/script>
+            </body>
+            </html>
+        `);
+        reportWin.document.close();
     }
 </script>
 </body>
