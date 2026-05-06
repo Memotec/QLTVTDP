@@ -3,53 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CNS/ATM - SAFE CLOUD SYNC</title>
+    <title>CNS/ATM - ORIGINAL SYNC</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
-        :root { --p: #1e40af; --bg: #f8fafc; --txt: #0f172a; --safe: #059669; --danger: #dc2626; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        :root { --p: #1e40af; --bg: #f8fafc; --txt: #0f172a; --sync: #8b5cf6; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         body { background: var(--bg); color: var(--txt); padding: 15px; }
-        .card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        h3 { font-size: 16px; margin-bottom: 15px; color: var(--p); text-transform: uppercase; border-left: 4px solid var(--p); padding-left: 10px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-        .group { display: flex; flex-direction: column; gap: 4px; }
-        label { font-size: 11px; font-weight: bold; color: #64748b; }
-        input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; }
-        input:focus { border-color: var(--p); }
-        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 15px; }
-        button { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; color: white; font-weight: 600; font-size: 13px; transition: 0.2s; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-        th { background: #f1f5f9; padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 12px; }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-        .status-bar { font-size: 11px; color: #64748b; margin-top: 8px; font-style: italic; }
-        #reader { width: 100%; border-radius: 8px; margin-bottom: 15px; }
+        .card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h3 { color: var(--p); margin-bottom: 15px; font-size: 16px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+        .group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-size: 12px; font-weight: bold; color: #64748b; }
+        input { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
+        button { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; color: white; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background: #f1f5f9; padding: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; font-size: 13px; }
+        td { padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h3>📦 THÊM THIẾT BỊ MỚI</h3>
+        <h3>📦 NHẬP THIẾT BỊ</h3>
         <div class="form-grid">
             <div class="group"><label>Tên thiết bị</label><input type="text" id="fName"></div>
             <div class="group"><label>Số Serial (S/N)</label><input type="text" id="fSN"></div>
             <div class="group"><label>Vị trí</label><input type="text" id="fLoc"></div>
         </div>
         <div class="btn-group">
-            <button style="background: var(--p)" onclick="app.add()">Thêm thiết bị</button>
-            <button style="background: #64748b" onclick="app.resetForm()">Làm mới</button>
+            <button style="background: var(--p)" onclick="app.add()">Thêm mới</button>
+            <button id="syncBtn" style="background: var(--sync)" onclick="app.syncCloud()">🔄 ĐỒNG BỘ CLOUD</button>
+            <button style="background: #10b981" onclick="app.export()">XUẤT EXCEL</button>
         </div>
-    </div>
-
-    <div class="card">
-        <h3>⚡ ĐỒNG BỘ VÀ SAO LƯU</h3>
-        <div class="btn-group">
-            <!-- Nút đồng bộ đã được cải tiến -->
-            <button id="syncBtn" style="background: #8b5cf6" onclick="app.syncCloud()">🔄 ĐỒNG BỘ CLOUD (AN TOÀN)</button>
-            <button style="background: var(--safe)" onclick="app.export()">XUẤT FILE EXCEL</button>
-            <button style="background: var(--danger)" onclick="app.clear()">XÓA HẾT DỮ LIỆU MÁY</button>
-        </div>
-        <div id="syncStatus" class="status-bar">Trạng thái: Sẵn sàng</div>
     </div>
 
     <div class="card" style="overflow-x: auto;">
@@ -57,9 +44,9 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 50px">STT</th>
+                    <th>STT</th>
                     <th>Tên thiết bị</th>
-                    <th>Số Serial (S/N)</th>
+                    <th>S/N</th>
                     <th>Vị trí</th>
                     <th>Thao tác</th>
                 </tr>
@@ -69,27 +56,26 @@
     </div>
 
 <script>
-// Dán URL Google Web App của bạn vào đây
+// Dán URL Web App của bạn vào đây
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzOhq-bmhvxGeFz1oCaXoiJRJTpTtckexhNxSTNT4BmcuxtfEUENqHZrPNpxTD_xuXJ/exec";
 
 const app = {
-    items: JSON.parse(localStorage.getItem('cns_data_safe')) || [],
+    items: JSON.parse(localStorage.getItem('cns_original_data')) || [],
 
     add() {
-        const name = document.getElementById('fName').value.trim();
-        const sn = document.getElementById('fSN').value.trim();
-        const loc = document.getElementById('fLoc').value.trim();
+        const name = document.getElementById('fName').value;
+        const sn = document.getElementById('fSN').value;
+        const loc = document.getElementById('fLoc').value;
+        if(!name || !sn) return alert("Thiếu thông tin!");
         
-        if(!name || !sn) return alert("Vui lòng nhập Tên và S/N!");
-
-        this.items.push({ name, sn, loc, time: new Date().toLocaleString() });
+        this.items.push({ name, sn, loc });
         this.save();
         this.render();
-        this.resetForm();
+        document.querySelectorAll('input').forEach(i => i.value = "");
     },
 
     save() {
-        localStorage.setItem('cns_data_safe', JSON.stringify(this.items));
+        localStorage.setItem('cns_original_data', JSON.stringify(this.items));
     },
 
     render() {
@@ -98,89 +84,58 @@ const app = {
             <tr>
                 <td>${idx + 1}</td>
                 <td><b>${item.name}</b></td>
-                <td><code>${item.sn}</code></td>
+                <td>${item.sn}</td>
                 <td>${item.loc}</td>
-                <td><button onclick="app.remove(${idx})" style="background:var(--danger); padding:4px 8px; font-size:11px">Xóa</button></td>
+                <td><button onclick="app.remove(${idx})" style="background:#ef4444; padding:4px 8px; font-size:11px">Xóa</button></td>
             </tr>
         `).join('');
     },
 
     remove(idx) {
-        if(confirm("Xóa thiết bị này?")) {
-            this.items.splice(idx, 1);
-            this.save();
-            this.render();
-        }
+        this.items.splice(idx, 1);
+        this.save();
+        this.render();
     },
 
-    resetForm() {
-        document.querySelectorAll('input').forEach(i => i.value = "");
-    },
-
-    clear() {
-        if(confirm("Bạn có chắc chắn muốn xóa hết dữ liệu trên máy? Hành động này không thể hoàn tác trừ khi bạn đã đồng bộ Cloud.")) {
-            this.items = [];
-            this.save();
-            this.render();
-        }
-    },
-
-    // --- CHỨC NĂNG ĐỒNG BỘ ĐÃ SỬA LỖI ---
+    // --- CHỨC NĂNG ĐỒNG BỘ NGUYÊN BẢN (Ghi đè trực tiếp) ---
     async syncCloud() {
-        if(!SCRIPT_URL.includes("macros")) return alert("Vui lòng cấu hình SCRIPT_URL!");
-        
         const btn = document.getElementById('syncBtn');
-        const status = document.getElementById('syncStatus');
-        
+        btn.innerText = "ĐANG ĐỒNG BỘ...";
         btn.disabled = true;
-        btn.innerText = "ĐANG XỬ LÝ...";
-        status.innerText = "Đang kết nối tới Cloud...";
 
         try {
-            // Bước 1: Gửi dữ liệu hiện có lên Cloud (để lưu trữ)
-            // Sử dụng mode: 'no-cors' cho POST để tránh lỗi bảo mật trình duyệt
+            // 1. Gửi dữ liệu hiện có lên (Xóa cũ ghi mới trên Sheet)
             await fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                cache: 'no-cache',
                 body: JSON.stringify(this.items)
             });
 
-            // Bước 2: Tải dữ liệu mới nhất từ Cloud về
+            // 2. Tải lại dữ liệu từ Sheet về máy
             const response = await fetch(SCRIPT_URL);
-            const cloudData = await response.json();
-
-            // KIỂM TRA CHỐT CHẶN: Chỉ cập nhật nếu Cloud trả về dữ liệu hợp lệ
-            if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
-                this.items = cloudData;
-                this.save();
-                this.render();
-                status.innerText = "Đồng bộ thành công lúc: " + new Date().toLocaleTimeString();
-                alert("✅ Đã đồng bộ thành công " + cloudData.length + " thiết bị!");
-            } else {
-                // Nếu Cloud rỗng, chúng ta giữ nguyên dữ liệu tại máy
-                status.innerText = "Cloud hiện đang trống. Dữ liệu tại máy đã được đẩy lên Cloud.";
-                alert("☁️ Đã đẩy dữ liệu lên Cloud. Cloud hiện chưa có dữ liệu cũ để tải về.");
-            }
-        } catch (error) {
-            console.error(error);
-            status.innerText = "Lỗi: Không thể kết nối. Vui lòng kiểm tra Internet hoặc Script URL.";
-            alert("❌ Lỗi đồng bộ. Dữ liệu tại máy vẫn được giữ an toàn.");
+            const data = await response.json();
+            
+            // Cập nhật lại toàn bộ bộ nhớ máy bằng dữ liệu từ Cloud
+            this.items = data;
+            this.save();
+            this.render();
+            alert("Đồng bộ hoàn tất!");
+        } catch (e) {
+            alert("Lỗi đồng bộ: " + e.message);
         } finally {
+            btn.innerText = "🔄 ĐỒNG BỘ CLOUD";
             btn.disabled = false;
-            btn.innerText = "🔄 ĐỒNG BỘ CLOUD (AN TOÀN)";
         }
     },
 
     export() {
         const ws = XLSX.utils.json_to_sheet(this.items);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+        XLSX.utils.book_append_sheet(wb, ws, "CNS");
         XLSX.writeFile(wb, "CNS_Inventory.xlsx");
     }
 };
 
-// Khởi tạo hiển thị
 app.render();
 </script>
 </body>
