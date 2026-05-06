@@ -8,7 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/kjua@0.9.0/dist/kjua.min.js"></script>
     <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <!-- Bổ sung thư viện xuất Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
@@ -109,7 +108,6 @@
         <div class="btn-group">
             <button style="background:var(--success)" onclick="syncCloud()">🔄 Đồng bộ</button>
             <button style="background:var(--word)" onclick="exportToWord()">📝 File Word</button>
-            <!-- Nút xuất Excel mới -->
             <button style="background:var(--excel)" onclick="exportToExcel()">📊 File Excel</button>
             <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN</button>
             <button style="background:var(--p)" onclick="doPrint('qrs')">📱 IN MÃ QR CODE</button>
@@ -211,14 +209,32 @@
         });
     }
 
+    /* --- CẬP NHẬT: KIỂM TRA TRÙNG LẶP KHI THÊM MỚI --- */
     function addItem() {
-        inventory.push({
-            name: document.getElementById('inName').value, pn: document.getElementById('inPN').value,
-            sn: document.getElementById('inSN').value, code: document.getElementById('inCode').value,
-            warehouse: document.getElementById('inWarehouse').value, qty: document.getElementById('inQty').value,
-            loc: document.getElementById('inLoc').value
-        });
-        save(); clearForm();
+        const name = document.getElementById('inName').value.trim();
+        const pn = document.getElementById('inPN').value.trim();
+        const sn = document.getElementById('inSN').value.trim();
+        const code = document.getElementById('inCode').value.trim();
+        const warehouse = document.getElementById('inWarehouse').value.trim();
+        const qty = document.getElementById('inQty').value;
+        const loc = document.getElementById('inLoc').value.trim();
+
+        if (!name || !sn) return alert("Vui lòng nhập Tên và Serial Number!");
+
+        // Kiểm tra trùng lặp 3 trường: P/N, S/N, Mã Tài Sản
+        const isDuplicate = inventory.some(item => 
+            item.pn === pn && 
+            item.sn === sn && 
+            item.code === code
+        );
+
+        if (isDuplicate) {
+            return alert("LỖI: Thiết bị này đã tồn tại trong hệ thống!\n(Trùng khớp Part Number, Serial Number và Mã Tài Sản)");
+        }
+
+        inventory.push({ name, pn, sn, code, warehouse, qty, loc });
+        save(); 
+        clearForm();
     }
 
     function editItem(idx) {
@@ -292,11 +308,8 @@
         Packer.toBlob(doc).then(blob => saveAs(blob, "Danh_muc_CNS.docx"));
     }
 
-    /* --- PHẦN BỔ SUNG: XUẤT EXCEL --- */
     function exportToExcel() {
         if (inventory.length === 0) return alert("Không có dữ liệu để xuất!");
-        
-        // Chuẩn bị dữ liệu cho Excel (Chuyển đổi từ Array Objects sang định dạng Excel mong muốn)
         const excelData = inventory.map((item, index) => ({
             "STT": index + 1,
             "Tên thiết bị / Model": item.name,
@@ -307,15 +320,9 @@
             "Số lượng": item.qty,
             "Vị trí lắp đặt": item.loc
         }));
-
-        // Tạo Worksheet
         const worksheet = XLSX.utils.json_to_sheet(excelData);
-        
-        // Tạo Workbook
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Danh mục thiết bị");
-
-        // Xuất file
         XLSX.writeFile(workbook, `Danh_muc_CNS_${new Date().toLocaleDateString()}.xlsx`);
     }
 </script>
