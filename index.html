@@ -57,6 +57,17 @@
             .qr-only-item { width: 30mm; text-align: center; border: 0.5pt dashed #ccc; padding: 2mm; page-break-inside: avoid; }
             .header-print { font-size:6.5pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000; margin-bottom:1mm; padding-bottom:0.5mm; }
         }
+
+        /* --- PHẦN CẬP NHẬT TỰ ĐỘNG HIỂN THỊ TRÊN DI ĐỘNG --- */
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; } /* Chuyển form thành 1 cột trên mobile */
+            .full, .half { grid-column: span 1; }
+            .login-box { width: 90%; padding: 25px; }
+            button { width: 100%; } /* Nút bấm full chiều rộng trên mobile */
+            .section-title { font-size: 12px; }
+            .btn-group { flex-direction: column; }
+            .btn-group button { margin-left: 0 !important; }
+        }
     </style>
 </head>
 <body>
@@ -143,20 +154,17 @@
         } else alert("Sai thông tin!");
     }
 
-    // HÀM RENDER ĐÃ ĐƯỢC XỬ LÝ LỖI TÌM KIẾM
     function render() {
         const tbody = document.getElementById('inventoryBody');
         const lblArea = document.getElementById('printLabelArea');
         const qrArea = document.getElementById('printQrOnlyArea');
         const q = document.getElementById('searchInput').value.trim().toLowerCase();
         
-        // Reset nội dung cũ
         tbody.innerHTML = ''; 
         lblArea.innerHTML = ''; 
         qrArea.innerHTML = '';
 
         inventory.forEach((item, idx) => {
-            // Logic tìm kiếm đa trường
             const match = (item.name || "").toLowerCase().includes(q) || 
                           (item.sn || "").toLowerCase().includes(q) || 
                           (item.pn || "").toLowerCase().includes(q) ||
@@ -164,7 +172,6 @@
                           (item.warehouse || "").toLowerCase().includes(q);
             
             if (match) {
-                // Hiển thị trên bảng
                 tbody.innerHTML += `<tr>
                     <td class="stt-col">${idx+1}</td>
                     <td class="name-col">${item.name}</td>
@@ -177,7 +184,6 @@
                     <td><button style="background:var(--edit); padding: 6px 15px; font-size:12px;" onclick="editItem(${idx})">Sửa</button></td>
                 </tr>`;
 
-                // Tạo nội dung in nhãn
                 lblArea.innerHTML += `
                     <div class="label-item">
                         <div class="header-print">ĐỘI THÔNG TIN - TT BĐKT HCM</div>
@@ -187,16 +193,14 @@
                         </div>
                     </div>`;
 
-                // Tạo khung QR
                 const qid = `qr-only-${idx}`;
                 qrArea.innerHTML += `<div class="qr-only-item"><div id="${qid}"></div><div style="font-size:7pt; font-weight:bold; margin-top:2px;">SN: ${item.sn}</div></div>`;
 
                 const qrContent = `Tên: ${item.name}\nP/N: ${item.pn}\nS/N: ${item.sn}\nMã TS: ${item.code}\nKho: ${item.warehouse || '-'}`;
 
-                // Vẽ QR Code sau khi khung HTML đã sẵn sàng
                 setTimeout(() => {
                     const qEl = document.getElementById(qid);
-                    if(qEl && qEl.innerHTML === "") { // Chỉ vẽ nếu chưa có QR
+                    if(qEl && qEl.innerHTML === "") { 
                         qEl.appendChild(kjua({render:'image', size:120, text: qrContent, quiet:1}));
                     }
                 }, 100);
