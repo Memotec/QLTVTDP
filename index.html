@@ -3,330 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CNS/ATM SYSTEM - DATA PROTECTION V4</title>
+    <title>HỆ THỐNG QUẢN LÝ CNS/ATM - ĐỘI THÔNG TIN</title>
     
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <style>
-        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --sync: #8b5cf6; --danger: #ef4444; --safe: #10b981; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: var(--bg); color: var(--txt); padding: 15px; }
+        :root { 
+            --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; 
+            --edit: #0ea5e9; --danger: #ef4444; --success: #10b981; 
+            --excel: #1d6f42; --audit: #ec4899; 
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
         
-        .container { max-width: 1200px; margin: 0 auto; display: none; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        .section-title { font-size: 14px; font-weight: 800; color: var(--p); margin-bottom: 15px; text-transform: uppercase; }
-
+        /* Layout */
+        .container { max-width: 1300px; margin: 0 auto; display: none; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .section-title { font-size: 14px; font-weight: 700; color: var(--p); margin-bottom: 15px; border-left: 4px solid var(--p); padding-left: 10px; text-transform: uppercase; }
+        
+        /* Login */
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .login-box { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 350px; }
-        .login-box input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .login-box { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 350px; text-align: center; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
 
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
-        .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
-        .input-group label { font-size: 11px; font-weight: 700; color: #64748b; }
+        /* Form */
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label { font-size: 12px; font-weight: 600; color: #64748b; }
         .input-group input { padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px; }
 
-        .btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        button { padding: 10px 18px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; color: white; transition: 0.2s; font-size: 13px; }
-        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        button { padding: 10px 18px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; color: white; transition: 0.2s; }
+        button:hover { opacity: 0.8; }
 
-        .table-wrap { overflow-x: auto; background: white; border-radius: 10px; border: 1px solid #e2e8f0; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: #f8fafc; padding: 12px; font-size: 12px; border-bottom: 2px solid #e2e8f0; text-align: center; }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 13px; }
+        /* Modal Kiểm Kê */
+        .audit-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; width: 400px; border-radius: 12px; padding: 20px; position: relative; }
+        .close-modal { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 20px; }
+        .check-item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px; cursor: pointer; }
 
-        #reader { width: 100%; border-radius: 8px; margin-bottom: 10px; display: none; background: #000; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; width: 450px; padding: 25px; border-radius: 15px; }
-
-        .spin { animation: spin 1s linear infinite; display: inline-block; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        /* Table */
+        .table-wrap { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8fafc; padding: 12px; font-size: 12px; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 14px; }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; color: white; }
     </style>
 </head>
 <body>
 
-<audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"></audio>
-
+<!-- LOGIN -->
 <div id="loginOverlay">
     <div class="login-box">
-        <h3 style="margin-bottom:20px; color: var(--p);">CNS/ATM SECURE APP</h3>
-        <input type="text" id="user" placeholder="Username (admin/guest)">
-        <input type="password" id="pass" placeholder="Password">
-        <button onclick="app.login()" style="background:var(--p); width:100%">ĐĂNG NHẬP</button>
+        <h2 style="color:var(--p)">HỆ THỐNG CNS</h2>
+        <input type="text" id="user" placeholder="Tài khoản">
+        <input type="password" id="pass" placeholder="Mật khẩu">
+        <button onclick="App.login()" style="background:var(--p); width:100%">ĐĂNG NHẬP</button>
     </div>
 </div>
 
-<div class="container" id="mainApp">
-    <!-- PANEL ADMIN -->
-    <div class="card" id="adminPanel" style="display:none">
-        <div class="section-title">📦 Cập nhật danh mục thiết bị</div>
-        <div class="form-grid">
-            <input type="hidden" id="editIdx" value="-1">
-            <div class="input-group"><label>Tên thiết bị</label><input type="text" id="fName"></div>
-            <div class="input-group"><label>S/N (Duy nhất)</label><input type="text" id="fSN"></div>
-            <div class="input-group"><label>Mã Kho</label><input type="text" id="fWarehouse"></div>
-            <div class="input-group"><label>Vị trí</label><input type="text" id="fLoc"></div>
-        </div>
-        <div class="btn-group">
-            <button id="btnAdd" style="background:var(--p)" onclick="app.addItem()">➕ Thêm thiết bị</button>
-            <button id="btnSave" style="background:var(--sync); display:none" onclick="app.updateItem()">💾 Lưu thay đổi</button>
-            <button style="background:#64748b" onclick="app.clearForm()">Hủy/Làm mới</button>
-        </div>
-    </div>
-
-    <!-- TÁC NGHIỆP -->
-    <div class="card">
-        <div class="section-title">⚡ Công cụ hệ thống</div>
-        <div class="btn-group">
-            <button id="syncBtn" style="background:var(--sync)" onclick="app.syncCloud()">🔄 ĐỒNG BỘ CLOUD (AN TOÀN)</button>
-            <button style="background:#f59e0b" onclick="invModal.open()">📝 KIỂM KÊ (QUÉT QR)</button>
-            <button style="background:#10b981" onclick="app.exportExcel()">📊 XUẤT EXCEL</button>
-            <button style="background:#94a3b8" onclick="app.restoreBackup()">🔙 KHÔI PHỤC BACKUP</button>
-            <button style="background:var(--danger); margin-left:auto" onclick="location.reload()">ĐĂNG XUẤT</button>
-        </div>
-        <p id="syncStatus" style="font-size: 11px; margin-top: 10px; color: #64748b;"></p>
-    </div>
-
-    <!-- DANH SÁCH -->
-    <div class="table-wrap">
-        <div style="padding: 15px; font-weight: 700; display: flex; justify-content: space-between;">
-            <span>📋 DANH MỤC THIẾT BỊ</span>
-            <span id="itemCount" style="color: var(--p)"></span>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 50px">STT</th>
-                    <th>Tên thiết bị</th>
-                    <th>S/N</th>
-                    <th>Mã Kho</th>
-                    <th>Vị trí</th>
-                    <th>Thao tác</th>
-                </tr>
-            </thead>
-            <tbody id="inventoryBody"></tbody>
-        </table>
-    </div>
-</div>
-
-<!-- MODAL SCANNER -->
-<div class="modal-overlay" id="invModalEl">
+<!-- MODAL KIỂM KÊ -->
+<div id="auditModal" class="audit-modal">
     <div class="modal-content">
-        <h3 style="margin-bottom:15px">Quét mã thiết bị</h3>
-        <div id="reader"></div>
-        <div id="scanMsg" style="text-align:center; margin:10px 0; font-size:12px; color:var(--p)"></div>
-        <input type="text" id="invResult" placeholder="Kết quả quét..." style="width:100%; padding:10px; margin-bottom:15px; border: 1px solid #ddd; border-radius: 8px;">
-        <div class="btn-group" style="justify-content:flex-end">
-            <button style="background:#94a3b8" onclick="invModal.close()">Hủy</button>
-            <button style="background:var(--p)" onclick="invModal.confirm()">Ghi nhận</button>
+        <span class="close-modal" onclick="Audit.close()">&times;</span>
+        <h3 style="color:var(--audit); margin-bottom:15px">📝 PHIẾU KIỂM KÊ</h3>
+        <div class="input-group" style="margin-bottom:15px">
+            <label>Mã Kho / Vị trí</label>
+            <input type="text" id="auditWh" placeholder="Nhập mã kho...">
+        </div>
+        <div class="input-group">
+            <label>Trạng thái thực tế</label>
+            <label class="check-item">
+                <input type="checkbox" id="chkOk" onclick="Audit.toggleCheck(this)"> 🟢 Tồn tại (Sẵn sàng)
+            </label>
+            <label class="check-item">
+                <input type="checkbox" id="chkFail" onclick="Audit.toggleCheck(this)"> 🔴 Không tồn tại (Mất/Dời)
+            </label>
+        </div>
+        <div class="input-group" style="margin-top:10px">
+            <label>Ngày kiểm tra</label>
+            <input type="date" id="auditDate">
+        </div>
+        <button onclick="Audit.submit()" style="background:var(--audit); width:100%; margin-top:20px">XÁC NHẬN LƯU</button>
+    </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="container" id="mainApp">
+    <div class="card">
+        <div class="section-title">📦 Quản lý Thiết bị</div>
+        <div class="form-grid">
+            <div class="input-group" style="grid-column: span 2"><label>Tên thiết bị</label><input type="text" id="name"></div>
+            <div class="input-group"><label>S/N</label><input type="text" id="sn"></div>
+            <div class="input-group"><label>Mã Kho</label><input type="text" id="warehouse"></div>
+        </div>
+        <div class="btn-group">
+            <button onclick="App.add()" style="background:var(--p)">➕ Thêm thiết bị</button>
+            <button onclick="App.sync()" style="background:var(--success)">🔄 Đồng bộ Google Sheet</button>
+            <button onclick="Audit.open()" style="background:var(--audit)">📝 KIỂM KÊ</button>
+            <button onclick="App.export()" style="background:var(--excel)">📊 Xuất Excel</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">🔍 Danh sách thiết bị</div>
+        <input type="text" id="search" oninput="App.render()" placeholder="Tìm kiếm nhanh..." style="width:100%; padding:10px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tên thiết bị</th>
+                        <th>S/N</th>
+                        <th>Mã Kho</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="deviceTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title" style="color:var(--audit)">📋 Báo cáo kiểm kê (Gần đây)</div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr style="background:#fff1f2">
+                        <th>Mã Kho</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày kiểm</th>
+                        <th>Người thực hiện</th>
+                    </tr>
+                </thead>
+                <tbody id="auditTable"></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
-// !!! QUAN TRỌNG: Dán URL Google Apps Script của bạn vào đây !!!
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzOhq-bmhvxGeFz1oCaXoiJRJTpTtckexhNxSTNT4BmcuxtfEUENqHZrPNpxTD_xuXJ/exec";
+/** 
+ * CẤU HÌNH WEB APP URL TẠI ĐÂY 
+ */
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOhq-bmhvxGeFz1oCaXoiJRJTpTtckexhNxSTNT4BmcuxtfEUENqHZrPNpxTD_xuXJ/exec";
 
-const app = {
-    items: JSON.parse(localStorage.getItem('cns_assets_v4')) || [],
-    role: '',
+// --- CORE LOGIC ---
+const App = {
+    devices: JSON.parse(localStorage.getItem('cns_devices')) || [],
+    userRole: '',
 
     login() {
-        const u = document.getElementById('user').value.toLowerCase().trim();
+        const u = document.getElementById('user').value;
         const p = document.getElementById('pass').value;
-        if(u === 'admin' || u === 'guest') {
-            this.role = u;
+        if(p === 'admin123') { // Demo simple pass
+            this.userRole = u;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
-            if(u === 'admin') document.getElementById('adminPanel').style.display = 'block';
             this.render();
-        } else alert("Tài khoản không chính xác!");
-    },
-
-    addItem() {
-        const sn = document.getElementById('fSN').value.trim();
-        const name = document.getElementById('fName').value.trim();
-        if(!sn || !name) return alert("Vui lòng nhập Tên và S/N!");
-        
-        // Kiểm tra trùng S/N tại máy
-        if(this.items.find(i => i.sn === sn)) return alert("Lỗi: S/N này đã tồn tại trong hệ thống!");
-
-        this.items.push({
-            name, sn,
-            warehouse: document.getElementById('fWarehouse').value,
-            loc: document.getElementById('fLoc').value,
-            updatedAt: new Date().toISOString()
-        });
-        this.save();
-        this.clearForm();
-    },
-
-    editItem(idx) {
-        const item = this.items[idx];
-        document.getElementById('editIdx').value = idx;
-        document.getElementById('fName').value = item.name;
-        document.getElementById('fSN').value = item.sn;
-        document.getElementById('fWarehouse').value = item.warehouse;
-        document.getElementById('fLoc').value = item.loc;
-        document.getElementById('btnAdd').style.display = 'none';
-        document.getElementById('btnSave').style.display = 'block';
-    },
-
-    updateItem() {
-        const idx = document.getElementById('editIdx').value;
-        this.items[idx] = {
-            ...this.items[idx],
-            name: document.getElementById('fName').value,
-            sn: document.getElementById('fSN').value,
-            warehouse: document.getElementById('fWarehouse').value,
-            loc: document.getElementById('fLoc').value,
-            updatedAt: new Date().toISOString()
-        };
-        this.save();
-        this.clearForm();
-    },
-
-    deleteItem(idx) {
-        if(confirm("Bạn chắc chắn muốn xóa thiết bị này khỏi danh mục máy?")) {
-            this.items.splice(idx, 1);
-            this.save();
-        }
-    },
-
-    save() {
-        localStorage.setItem('cns_assets_v4', JSON.stringify(this.items));
-        this.render();
-    },
-
-    // LỚP BẢO VỆ 3: TỰ ĐỘNG BACKUP TRƯỚC KHI ĐỒNG BỘ
-    createBackup() {
-        localStorage.setItem('cns_assets_backup', JSON.stringify(this.items));
-        console.log("Đã tạo bản sao lưu tại máy.");
-    },
-
-    restoreBackup() {
-        const backup = localStorage.getItem('cns_assets_backup');
-        if(!backup) return alert("Không tìm thấy bản sao lưu nào!");
-        if(confirm("Khôi phục lại dữ liệu trước lần đồng bộ cuối?")) {
-            this.items = JSON.parse(backup);
-            this.save();
-            alert("Đã khôi phục dữ liệu.");
-        }
+            Audit.render();
+        } else alert("Sai mật khẩu!");
     },
 
     render() {
-        const tbody = document.getElementById('inventoryBody');
-        document.getElementById('itemCount').innerText = `Tổng số: ${this.items.length}`;
-        tbody.innerHTML = this.items.map((item, idx) => `
-            <tr>
-                <td>${idx+1}</td>
-                <td style="font-weight:700; text-align:left">${item.name}</td>
-                <td><code style="background:#f1f5f9; padding:2px 5px">${item.sn}</code></td>
-                <td style="color:var(--p)">${item.warehouse}</td>
-                <td>${item.loc}</td>
-                <td>
-                    ${this.role === 'admin' ? `
-                        <button onclick="app.editItem(${idx})" style="background:var(--sync); padding:4px 8px; font-size:11px">Sửa</button>
-                        <button onclick="app.deleteItem(${idx})" style="background:var(--danger); padding:4px 8px; font-size:11px">Xóa</button>
-                    ` : '---'}
-                </td>
-            </tr>
-        `).join('') || '<tr><td colspan="6">Chưa có dữ liệu thiết bị</td></tr>';
+        const q = document.getElementById('search').value.toLowerCase();
+        const html = this.devices.filter(d => d.name.toLowerCase().includes(q) || d.sn.toLowerCase().includes(q))
+            .map((d, i) => `<tr>
+                <td style="text-align:left"><b>${d.name}</b></td>
+                <td>${d.sn}</td>
+                <td><span class="badge" style="background:#64748b">${d.warehouse}</span></td>
+                <td><button onclick="App.del(${i})" style="background:var(--danger); padding:4px 8px; font-size:10px">Xóa</button></td>
+            </tr>`).join('');
+        document.getElementById('deviceTable').innerHTML = html;
     },
 
-    clearForm() {
-        document.querySelectorAll('#adminPanel input').forEach(i => i.value = '');
-        document.getElementById('editIdx').value = '-1';
-        document.getElementById('btnAdd').style.display = 'block';
-        document.getElementById('btnSave').style.display = 'none';
+    add() {
+        const name = document.getElementById('name').value;
+        const sn = document.getElementById('sn').value;
+        const wh = document.getElementById('warehouse').value;
+        if(!name || !sn) return alert("Nhập đủ Tên và S/N!");
+        this.devices.push({name, sn, warehouse: wh});
+        this.save();
     },
 
-    // LỚP BẢO VỆ 1 & 2: ĐỒNG BỘ AN TOÀN
-    async syncCloud() {
-        if(!SCRIPT_URL.includes("macros")) return alert("Vui lòng cấu hình SCRIPT_URL để sử dụng tính năng này!");
-        
-        this.createBackup(); // Backup trước khi làm bất cứ điều gì
-        
-        const btn = document.getElementById('syncBtn');
-        const status = document.getElementById('syncStatus');
-        btn.disabled = true;
-        btn.innerHTML = `<span class="spin">🔄</span> ĐANG XỬ LÝ...`;
+    del(i) { if(confirm("Xóa thiết bị này?")) { this.devices.splice(i,1); this.save(); } },
 
+    save() {
+        localStorage.setItem('cns_devices', JSON.stringify(this.devices));
+        this.render();
+    },
+
+    async sync() {
+        if(!WEB_APP_URL.startsWith("http")) return alert("Chưa cấu hình URL Google Script!");
+        const btn = event.target;
+        btn.innerText = "Đang gửi...";
         try {
-            // Bước 1: Đẩy dữ liệu hiện tại lên Cloud
-            status.innerText = "Đang đẩy dữ liệu lên Cloud...";
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(this.items)
+            await fetch(WEB_APP_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: JSON.stringify({
+                    action: "sync_all",
+                    devices: this.devices,
+                    audits: Audit.logs
+                })
             });
-
-            // Bước 2: Tải dữ liệu từ Cloud về
-            status.innerText = "Đang tải dữ liệu từ Cloud về máy...";
-            const res = await fetch(SCRIPT_URL);
-            const cloudData = await res.json();
-
-            // CHỐT CHẶN AN TOÀN: Chỉ xử lý nếu dữ liệu Cloud có nội dung
-            if(cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
-                // Sử dụng cơ chế Merge (Gộp) thay vì ghi đè hoàn toàn nếu muốn an toàn hơn
-                // Ở đây tôi chọn ghi đè bằng dữ liệu Cloud vì Cloud giờ là "Master"
-                this.items = cloudData;
-                this.save();
-                status.innerText = "Đồng bộ hoàn tất lúc: " + new Date().toLocaleTimeString();
-                alert("✅ Đồng bộ thành công! Đã cập nhật " + cloudData.length + " mục.");
-            } else {
-                throw new Error("Dữ liệu trên Cloud rỗng hoặc không hợp lệ. Đã hủy ghi đè.");
-            }
-        } catch (e) {
-            status.innerText = "Lỗi đồng bộ: " + e.message;
-            alert("⚠️ CẢNH BÁO: " + e.message + "\nDữ liệu tại máy của bạn vẫn được giữ an toàn.");
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = "🔄 ĐỒNG BỘ CLOUD (AN TOÀN)";
-        }
+            alert("Đã đồng bộ thành công lên Google Sheet!");
+        } catch(e) { alert("Lỗi kết nối!"); }
+        btn.innerText = "🔄 Đồng bộ Google Sheet";
     },
 
-    exportExcel() {
-        const ws = XLSX.utils.json_to_sheet(this.items);
+    export() {
+        const ws = XLSX.utils.json_to_sheet(this.devices);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-        XLSX.writeFile(wb, "CNS_ATM_Inventory.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "ThietBi");
+        XLSX.writeFile(wb, "CNS_Device_Export.xlsx");
     }
 };
 
-/** SCANNER LOGIC **/
-const invModal = {
-    scanner: null,
-    open() {
-        document.getElementById('invModalEl').style.display = 'flex';
-        this.start();
+// --- AUDIT MODULE ---
+const Audit = {
+    logs: JSON.parse(localStorage.getItem('cns_audits')) || [],
+
+    open() { 
+        document.getElementById('auditModal').style.display = 'flex';
+        document.getElementById('auditDate').valueAsDate = new Date();
     },
-    close() {
-        if(this.scanner) this.scanner.stop();
-        document.getElementById('invModalEl').style.display = 'none';
-        document.getElementById('reader').style.display = 'none';
-        document.getElementById('invResult').value = '';
+    
+    close() { document.getElementById('auditModal').style.display = 'none'; },
+
+    toggleCheck(el) {
+        if(el.id === 'chkOk') document.getElementById('chkFail').checked = false;
+        else document.getElementById('chkOk').checked = false;
     },
-    async start() {
-        document.getElementById('reader').style.display = 'block';
-        this.scanner = new Html5Qrcode("reader");
-        try {
-            await this.scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (text) => {
-                document.getElementById('beep').play();
-                document.getElementById('invResult').value = text;
-                document.getElementById('scanMsg').innerText = "✅ Tìm thấy mã: " + text;
-            });
-        } catch (e) { alert("Lỗi camera: " + e); this.close(); }
-    },
-    confirm() {
-        const val = document.getElementById('invResult').value;
-        if(val) {
-            alert("Đã ghi nhận kiểm kê cho mã: " + val);
-            // Bạn có thể thêm logic cập nhật trạng thái "Đã kiểm" tại đây
-        }
+
+    submit() {
+        const wh = document.getElementById('auditWh').value;
+        const ok = document.getElementById('chkOk').checked;
+        const fail = document.getElementById('chkFail').checked;
+        const date = document.getElementById('auditDate').value;
+
+        if(!wh || (!ok && !fail)) return alert("Vui lòng nhập Mã Kho và chọn trạng thái!");
+
+        const entry = {
+            wh, 
+            status: ok ? "Tồn tại" : "Không tồn tại",
+            date,
+            user: App.userRole,
+            time: new Date().toLocaleString()
+        };
+
+        this.logs.unshift(entry);
+        localStorage.setItem('cns_audits', JSON.stringify(this.logs));
+        this.render();
         this.close();
+        // Tự động gợi ý đồng bộ sau khi kiểm kê
+        if(confirm("Đã lưu nội bộ. Bạn có muốn đồng bộ lên Google Sheet ngay?")) App.sync();
+    },
+
+    render() {
+        const html = this.logs.slice(0, 10).map(l => `<tr>
+            <td><b>${l.wh}</b></td>
+            <td><span class="badge" style="background:${l.status==='Tồn tại'?'var(--success)':'var(--danger)'}">${l.status}</span></td>
+            <td>${l.date}</td>
+            <td>${l.user}</td>
+        </tr>`).join('');
+        document.getElementById('auditTable').innerHTML = html;
     }
 };
 </script>
+
 </body>
 </html>
