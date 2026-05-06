@@ -87,7 +87,6 @@
         <div class="btn-group">
             <button id="btnAdd" style="background:var(--p); min-width: 150px;" onclick="addItem()">➕ Thêm mới</button>
             <button id="btnUpdate" style="background:var(--edit); min-width: 150px; display:none;" onclick="updateItem()">💾 Lưu thay đổi</button>
-            <button id="btnCancel" style="background:#94a3b8; display:none;" onclick="clearForm()">Hủy</button>
             <button style="background:#94a3b8" onclick="clearForm()">Làm mới</button>
         </div>
     </div>
@@ -96,11 +95,11 @@
         <div class="section-title">🔍 Tra cứu & Trích xuất</div>
         <input type="text" id="searchInput" oninput="render()" placeholder="Tìm kiếm nhanh thiết bị, số serial, mã tài sản...">
         <div class="btn-group">
-            <button style="background:var(--success)" id="syncBtn" onclick="syncCloud()">🔄 Đồng bộ</button>
+            <button style="background:var(--success)" onclick="syncCloud()">🔄 Đồng bộ</button>
             <button style="background:var(--word)" onclick="exportToWord()">📝 File Word</button>
             <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN</button>
             <button style="background:var(--p)" onclick="doPrint('qrs')">📱 IN MÃ QR CODE</button>
-            <button style="background:var(--danger); margin-left: auto;" onclick="logout()">Thoát</button>
+            <button style="background:var(--danger); margin-left: auto;" onclick="location.reload()">Thoát</button>
         </div>
     </div>
 
@@ -129,44 +128,43 @@
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOhq-bmhvxGeFz1oCaXoiJRJTpTtckexhNxSTNT4BmcuxtfEUENqHZrPNpxTD_xuXJ/exec";
-    const STORAGE_KEY = 'cns_data_v26_final';
-    let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    let inventory = JSON.parse(localStorage.getItem('cns_data_v26_final')) || [];
     let role = null;
-
-    // Cập nhật: Thêm tính năng logout sạch sẽ
-    function logout() {
-        if(confirm("Bạn muốn thoát hệ thống?")) location.reload();
-    }
 
     function checkLogin() {
         const u = document.getElementById('user').value.toLowerCase().trim();
         const p = document.getElementById('pass').value;
-        // Logic gốc
         if ((u === 'admin' && p === 'admin') || (u === 'guest' && p === '123456')) {
             role = u;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             if(role === 'admin') document.getElementById('adminArea').style.display = 'block';
             render();
-        } else alert("Sai thông tin đăng nhập!");
+        } else alert("Sai thông tin!");
     }
 
+    // HÀM RENDER ĐÃ ĐƯỢC XỬ LÝ LỖI TÌM KIẾM
     function render() {
         const tbody = document.getElementById('inventoryBody');
         const lblArea = document.getElementById('printLabelArea');
         const qrArea = document.getElementById('printQrOnlyArea');
         const q = document.getElementById('searchInput').value.trim().toLowerCase();
         
-        tbody.innerHTML = ''; lblArea.innerHTML = ''; qrArea.innerHTML = '';
+        // Reset nội dung cũ
+        tbody.innerHTML = ''; 
+        lblArea.innerHTML = ''; 
+        qrArea.innerHTML = '';
 
         inventory.forEach((item, idx) => {
-            const match = item.name.toLowerCase().includes(q) || 
-                          item.sn.toLowerCase().includes(q) || 
-                          item.pn.toLowerCase().includes(q) ||
-                          (item.code && item.code.toLowerCase().includes(q));
+            // Logic tìm kiếm đa trường
+            const match = (item.name || "").toLowerCase().includes(q) || 
+                          (item.sn || "").toLowerCase().includes(q) || 
+                          (item.pn || "").toLowerCase().includes(q) ||
+                          (item.code || "").toLowerCase().includes(q) ||
+                          (item.warehouse || "").toLowerCase().includes(q);
             
             if (match) {
-                // Render Table Row
+                // Hiển thị trên bảng
                 tbody.innerHTML += `<tr>
                     <td class="stt-col">${idx+1}</td>
                     <td class="name-col">${item.name}</td>
@@ -179,7 +177,7 @@
                     <td><button style="background:var(--edit); padding: 6px 15px; font-size:12px;" onclick="editItem(${idx})">Sửa</button></td>
                 </tr>`;
 
-                // Render Print Labels
+                // Tạo nội dung in nhãn
                 lblArea.innerHTML += `
                     <div class="label-item">
                         <div class="header-print">ĐỘI THÔNG TIN - TT BĐKT HCM</div>
@@ -189,32 +187,30 @@
                         </div>
                     </div>`;
 
-                // Render QR Code Items
+                // Tạo khung QR
                 const qid = `qr-only-${idx}`;
                 qrArea.innerHTML += `<div class="qr-only-item"><div id="${qid}"></div><div style="font-size:7pt; font-weight:bold; margin-top:2px;">SN: ${item.sn}</div></div>`;
 
                 const qrContent = `Tên: ${item.name}\nP/N: ${item.pn}\nS/N: ${item.sn}\nMã TS: ${item.code}\nKho: ${item.warehouse || '-'}`;
 
-                // Cập nhật: Sử dụng requestAnimationFrame để render QR mượt hơn
-                requestAnimationFrame(() => {
+                // Vẽ QR Code sau khi khung HTML đã sẵn sàng
+                setTimeout(() => {
                     const qEl = document.getElementById(qid);
-                    if(qEl && qEl.childNodes.length === 0) {
+                    if(qEl && qEl.innerHTML === "") { // Chỉ vẽ nếu chưa có QR
                         qEl.appendChild(kjua({render:'image', size:120, text: qrContent, quiet:1}));
                     }
-                });
+                }, 100);
             }
         });
     }
 
     function addItem() {
-        const newItem = {
+        inventory.push({
             name: document.getElementById('inName').value, pn: document.getElementById('inPN').value,
             sn: document.getElementById('inSN').value, code: document.getElementById('inCode').value,
             warehouse: document.getElementById('inWarehouse').value, qty: document.getElementById('inQty').value,
             loc: document.getElementById('inLoc').value
-        };
-        if(!newItem.name || !newItem.sn) return alert("Vui lòng nhập tên và S/N!");
-        inventory.push(newItem);
+        });
         save(); clearForm();
     }
 
@@ -229,11 +225,9 @@
         document.getElementById('inWarehouse').value = item.warehouse;
         document.getElementById('inQty').value = item.qty;
         document.getElementById('inLoc').value = item.loc;
-        
         document.getElementById('btnAdd').style.display = 'none';
         document.getElementById('btnUpdate').style.display = 'block';
-        document.getElementById('btnCancel').style.display = 'block';
-        window.scrollTo({top: 0, behavior: 'smooth'});
+        window.scrollTo(0,0);
     }
 
     function updateItem() {
@@ -248,13 +242,12 @@
     }
 
     async function save() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+        localStorage.setItem('cns_data_v26_final', JSON.stringify(inventory));
         render();
-        // Tự động đẩy lên cloud nếu là admin
         if(WEB_APP_URL && role === 'admin') {
             try {
                 await fetch(WEB_APP_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(inventory) });
-            } catch(e) { console.error("Cloud save failed"); }
+            } catch(e) { console.warn("Lỗi đồng bộ cloud."); }
         }
     }
 
@@ -262,72 +255,34 @@
         document.querySelectorAll('.form-grid input').forEach(i => i.value = i.id==='inQty'?'1':''); 
         document.getElementById('btnAdd').style.display='block'; 
         document.getElementById('btnUpdate').style.display='none'; 
-        document.getElementById('btnCancel').style.display='none';
-        document.getElementById('editIndex').value = "-1";
     }
 
-    // Cập nhật: Logic đồng bộ an toàn hơn
     async function syncCloud() {
-        const btn = document.getElementById('syncBtn');
-        btn.innerText = "⏳ Đang tải...";
-        btn.disabled = true;
         try {
             const r = await fetch(WEB_APP_URL);
-            const data = await r.json();
-            if(data && Array.isArray(data)) {
-                inventory = data;
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
-                render();
-                alert("Đồng bộ thành công từ Cloud!");
+            const cloudData = await r.json();
+            if(cloudData) {
+                inventory = cloudData;
+                localStorage.setItem('cns_data_v26_final', JSON.stringify(inventory));
+                render(); 
+                alert("Đồng bộ thành công!");
             }
-        } catch(e) { 
-            alert("Lỗi kết nối Cloud hoặc Script chưa được cấp quyền!"); 
-        } finally {
-            btn.innerText = "🔄 Đồng bộ";
-            btn.disabled = false;
-        }
+        } catch(e) { alert("Lỗi kết nối!"); }
     }
 
     function doPrint(type) {
-        if(inventory.length === 0) return alert("Không có dữ liệu để in!");
         document.body.className = type === 'labels' ? 'printing-labels' : 'printing-qrs';
         window.print();
     }
 
     function exportToWord() {
-        if(inventory.length === 0) return alert("Danh sách trống!");
         const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType, TextRun } = docx;
-        
-        const headerCells = ["STT", "Thiết bị", "P/N", "S/N", "Mã TS", "Kho"].map(t => 
-            new TableCell({ 
-                children: [new Paragraph({ children: [new TextRun({text:t, bold:true})], alignment: AlignmentType.CENTER })], 
-                background:{fill:"F8FAFC"} 
-            })
-        );
-
-        const rows = [new TableRow({ children: headerCells })];
-        
+        const rows = [new TableRow({ children: ["STT", "Thiết bị", "P/N", "S/N", "Mã TS", "Kho"].map(t => new TableCell({ children: [new Paragraph({ children: [new TextRun({text:t, bold:true})], alignment: AlignmentType.CENTER })], background:{fill:"F8FAFC"} })) })];
         inventory.forEach((item, i) => {
-            rows.push(new TableRow({ 
-                children: [(i+1).toString(), item.name, item.pn, item.sn, item.code || "", item.warehouse || ""].map(t => 
-                    new TableCell({ children: [new Paragraph({text: String(t || "")})] })
-                ) 
-            }));
+            rows.push(new TableRow({ children: [(i+1).toString(), item.name, item.pn, item.sn, item.code || "", item.warehouse || ""].map(t => new TableCell({ children: [new Paragraph({text: String(t) || ""})] })) }));
         });
-
-        const doc = new Document({ 
-            sections: [{ 
-                children: [ 
-                    new Paragraph({ children: [new TextRun({text:"DANH MỤC THIẾT BỊ CNS/ATM", bold:true, size:28})], alignment: AlignmentType.CENTER }), 
-                    new Paragraph({text:"", break:1}), 
-                    new Table({ width: {size:100, type:WidthType.PERCENTAGE}, rows }) 
-                ] 
-            }] 
-        });
-
-        Packer.toBlob(doc).then(blob => {
-            saveAs(blob, `Danh_muc_CNS_${new Date().toLocaleDateString()}.docx`);
-        });
+        const doc = new Document({ sections: [{ children: [ new Paragraph({ children: [new TextRun({text:"DANH MỤC THIẾT BỊ CNS/ATM", bold:true, size:28})], alignment: AlignmentType.CENTER }), new Paragraph({text:"", break:1}), new Table({ width: {size:100, type:WidthType.PERCENTAGE}, rows }) ] }] });
+        Packer.toBlob(doc).then(blob => saveAs(blob, "Danh_muc_CNS.docx"));
     }
 </script>
 </body>
