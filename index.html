@@ -49,15 +49,14 @@
         .badge-warehouse { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 12px; }
         .badge-qty { background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-weight: 700; }
 
-        /* Styles cho module Kiểm kê */
-        .badge-ok { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-        .badge-missing { background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-        
-        #auditModal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); }
-        .audit-box { background: white; width: 450px; padding: 30px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
-        .audit-grid { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
-        .radio-group { display: flex; gap: 20px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .radio-item { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; font-weight: 600; }
+        /* --- CSS KIỂM KÊ --- */
+        #auditModal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); }
+        .audit-box { background: white; width: 450px; padding: 25px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .audit-grid { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+        .audit-status-group { display: flex; gap: 15px; background: #f1f5f9; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .audit-radio { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
+        .badge-ok { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
+        .badge-missing { background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
 
         #printLabelArea, #printQrOnlyArea { display: none; }
         @media print {
@@ -120,10 +119,11 @@
             <button style="background:var(--word)" onclick="exportToWord()">📝 File Word</button>
             <button style="background:var(--excel)" onclick="exportToExcel()">📊 File Excel</button>
             <button style="background:var(--report)" onclick="exportInventoryReport()">📄 BÁO CÁO TỒN KHO</button>
-            <!-- Thêm mới module kiểm kê -->
+            
+            <!-- NÚT KIỂM KÊ MỚI -->
             <button style="background:#8b5cf6" onclick="openAuditModal()">📋 KIỂM KÊ</button>
             <button style="background:#ec4899" onclick="exportAuditReport()">📑 BÁO CÁO KIỂM KÊ</button>
-            
+
             <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN</button>
             <button style="background:var(--p)" onclick="doPrint('qrs')">📱 IN MÃ QR CODE</button>
             <button style="background:var(--danger); margin-left: auto;" onclick="location.reload()">Thoát</button>
@@ -151,33 +151,24 @@
     </div>
 </div>
 
-<!-- Modal Kiểm kê -->
+<!-- MODAL KIỂM KÊ -->
 <div id="auditModal">
     <div class="audit-box">
-        <h2 style="color:var(--p); font-size:18px; margin-bottom:5px;">📋 PHIẾU KIỂM KÊ NHANH</h2>
-        <p style="font-size:12px; color:#64748b; margin-bottom:20px;">Hỗ trợ quét mã QR/Barcode để ghi nhận trạng thái</p>
-        
+        <div class="section-title">📋 PHIẾU KIỂM KÊ THIẾT BỊ</div>
         <div class="audit-grid">
-            <div class="input-group"><label>Mã Kho Đối Soát</label>
-                <input type="text" id="auditWarehouse" placeholder="Nhập mã kho (ví dụ: KHO-HCM-01)"></div>
-            <div class="input-group"><label>Ngày thực hiện</label>
-                <input type="date" id="auditDate"></div>
-            
-            <div class="radio-group">
-                <label class="radio-item" style="color:var(--success)">
-                    <input type="radio" name="auditStatus" value="OK" checked> Tồn tại (OK)
-                </label>
-                <label class="radio-item" style="color:var(--danger)">
-                    <input type="radio" name="auditStatus" value="MISSING"> Không tồn tại (MISS)
-                </label>
+            <div class="input-group"><label>Mã kho đối soát</label><input type="text" id="auditWarehouse" placeholder="Nhập mã kho..."></div>
+            <div class="input-group"><label>Ngày kiểm kê</label><input type="date" id="auditDate"></div>
+            <div class="audit-status-group">
+                <label class="audit-radio" style="color:var(--success)"><input type="radio" name="auditStatus" value="OK" checked> Tồn tại</label>
+                <label class="audit-radio" style="color:var(--danger)"><input type="radio" name="auditStatus" value="MISSING"> Không tồn tại</label>
             </div>
-
-            <div class="input-group"><label>Serial Number (Scan QR/SN)</label>
-                <input type="text" id="auditSN" style="border: 2px solid var(--p); background:#fff" placeholder="Quét mã QR hoặc nhập S/N..."></div>
-            
-            <div class="btn-group" style="margin-top:10px">
-                <button style="background:var(--p); flex:2" onclick="processAudit()">XÁC NHẬN</button>
-                <button style="background:#94a3b8; flex:1" onclick="closeAuditModal()">THOÁT</button>
+            <div class="input-group">
+                <label>Serial Number (Scan hoặc nhập tay)</label>
+                <input type="text" id="auditSN" placeholder="Focus vào đây để Scan QR..." style="border: 2px solid var(--p);">
+            </div>
+            <div class="btn-group">
+                <button style="background:var(--p); flex: 1;" onclick="processAudit()">XÁC NHẬN</button>
+                <button style="background:#94a3b8; width: 100px;" onclick="closeAuditModal()">THOÁT</button>
             </div>
         </div>
     </div>
@@ -215,10 +206,10 @@
             const match = Object.values(item).some(val => String(val).toLowerCase().includes(q));
             
             if (match) {
-                // Logic hiển thị badge kiểm kê
+                // Logic hiển thị trạng thái kiểm kê
                 let auditBadge = '-';
-                if(item.auditStatus === 'OK') auditBadge = `<span class="badge-ok">OK (${item.auditDate})</span>`;
-                else if(item.auditStatus === 'MISSING') auditBadge = `<span class="badge-missing">MISS (${item.auditDate})</span>`;
+                if (item.auditStatus === 'OK') auditBadge = `<span class="badge-ok">OK (${item.auditDate})</span>`;
+                else if (item.auditStatus === 'MISSING') auditBadge = `<span class="badge-missing">MISSING (${item.auditDate})</span>`;
 
                 tbody.innerHTML += `<tr>
                     <td class="stt-col">${idx+1}</td>
@@ -257,11 +248,88 @@
         });
     }
 
+    // --- LOGIC KIỂM KÊ ---
+    function openAuditModal() {
+        document.getElementById('auditModal').style.display = 'flex';
+        document.getElementById('auditDate').valueAsDate = new Date();
+        document.getElementById('auditSN').focus();
+    }
+
+    function closeAuditModal() {
+        document.getElementById('auditModal').style.display = 'none';
+        document.getElementById('auditSN').value = '';
+    }
+
+    function processAudit() {
+        const wh = document.getElementById('auditWarehouse').value.trim();
+        const sn = document.getElementById('auditSN').value.trim();
+        const date = document.getElementById('auditDate').value;
+        const status = document.querySelector('input[name="auditStatus"]:checked').value;
+
+        if (!wh) return alert("Vui lòng nhập Mã kho!");
+        
+        // CASE 1: Kiểm tra mã kho tồn tại
+        const warehouseExists = inventory.some(item => item.warehouse === wh);
+        if (!warehouseExists) return alert("Mã kho không hợp lệ!");
+
+        // CASE 2: Kiểm tra Serial (không bắt buộc nhưng nếu nhập phải đúng)
+        if (sn) {
+            const itemIndex = inventory.findIndex(item => item.sn === sn);
+            if (itemIndex === -1) {
+                return alert("Thiết bị không tồn tại trong hệ thống!");
+            }
+            // CASE 3: Cập nhật thiết bị cụ thể
+            inventory[itemIndex].auditStatus = status;
+            inventory[itemIndex].auditDate = date;
+            alert(`Đã kiểm kê thiết bị: ${inventory[itemIndex].name} - Trạng thái: ${status}`);
+        } else {
+            alert("Vui lòng nhập Serial Number để xác định thiết bị!");
+            return;
+        }
+
+        save();
+        document.getElementById('auditSN').value = '';
+        document.getElementById('auditSN').focus();
+    }
+
+    function exportAuditReport() {
+        if (inventory.length === 0) return alert("Không có dữ liệu!");
+        const now = new Date();
+        const dateStr = `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
+        
+        let tableRows = inventory.map((item, idx) => `
+            <tr>
+                <td style="border:1px solid black; text-align:center;">${idx + 1}</td>
+                <td style="border:1px solid black; padding:5px;">${item.name}</td>
+                <td style="border:1px solid black; padding:5px;">${item.sn}</td>
+                <td style="border:1px solid black; padding:5px; text-align:center; font-weight:bold; color:${item.auditStatus==='OK'?'green':'red'}">${item.auditStatus === 'OK' ? 'TỒN TẠI' : (item.auditStatus === 'MISSING' ? 'KHÔNG TỒN TẠI' : '-')}</td>
+                <td style="border:1px solid black; padding:5px; text-align:center;">${item.auditDate || '-'}</td>
+                <td style="border:1px solid black; padding:5px;">${item.loc}</td>
+            </tr>`).join('');
+
+        const reportWin = window.open('', '_blank');
+        reportWin.document.write(`
+            <html><head><title>Báo cáo kiểm kê</title>
+            <style>body{font-family:"Times New Roman";padding:40px;} table{width:100%;border-collapse:collapse;margin-top:20px;} th,td{border:1px solid black;padding:8px; font-size:14px;}</style>
+            </head><body>
+                <h2 style="text-align:center;">BÁO CÁO KIỂM KÊ THIẾT BỊ CNS/ATM</h2>
+                <p style="text-align:center;"><i>TP. Hồ Chí Minh, ${dateStr}</i></p>
+                <table>
+                    <thead><tr><th>STT</th><th>Tên thiết bị</th><th>S/N</th><th>Trạng thái kiểm kê</th><th>Ngày kiểm kê</th><th>Vị trí lắp đặt</th></tr></thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                <div style="margin-top:50px; display:grid; grid-template-columns: 1fr 1fr; text-align:center;">
+                    <div><b>ĐỘI TRƯỞNG</b></div><div><b>NGƯỜI KIỂM KÊ</b></div>
+                </div>
+            </body></html>`);
+        reportWin.document.close();
+    }
+
+    // --- CÁC HÀM SẴN CÓ ---
     function addItem() {
         const name = document.getElementById('inName').value.trim();
         const sn = document.getElementById('inSN').value.trim();
         if (!name || !sn) return alert("Vui lòng nhập Tên và Serial Number!");
-
         inventory.push({
             name, sn, 
             pn: document.getElementById('inPN').value.trim(),
@@ -269,8 +337,7 @@
             warehouse: document.getElementById('inWarehouse').value.trim(),
             qty: document.getElementById('inQty').value,
             loc: document.getElementById('inLoc').value.trim(),
-            auditStatus: null,
-            auditDate: null
+            auditStatus: null, auditDate: null
         });
         save(); clearForm();
     }
@@ -293,13 +360,12 @@
 
     function updateItem() {
         const idx = document.getElementById('editIndex').value;
-        inventory[idx].name = document.getElementById('inName').value;
-        inventory[idx].pn = document.getElementById('inPN').value;
-        inventory[idx].sn = document.getElementById('inSN').value;
-        inventory[idx].code = document.getElementById('inCode').value;
-        inventory[idx].warehouse = document.getElementById('inWarehouse').value;
-        inventory[idx].qty = document.getElementById('inQty').value;
-        inventory[idx].loc = document.getElementById('inLoc').value;
+        inventory[idx] = {...inventory[idx],
+            name: document.getElementById('inName').value, pn: document.getElementById('inPN').value,
+            sn: document.getElementById('inSN').value, code: document.getElementById('inCode').value,
+            warehouse: document.getElementById('inWarehouse').value, qty: document.getElementById('inQty').value,
+            loc: document.getElementById('inLoc').value
+        };
         save(); clearForm();
     }
 
@@ -312,80 +378,6 @@
         document.querySelectorAll('.form-grid input').forEach(i => i.value = i.id==='inQty'?'1':''); 
         document.getElementById('btnAdd').style.display='block'; 
         document.getElementById('btnUpdate').style.display='none'; 
-    }
-
-    // Module Kiểm kê
-    function openAuditModal() {
-        document.getElementById('auditModal').style.display = 'flex';
-        document.getElementById('auditDate').valueAsDate = new Date();
-        document.getElementById('auditSN').focus();
-    }
-
-    function closeAuditModal() {
-        document.getElementById('auditModal').style.display = 'none';
-        document.getElementById('auditSN').value = '';
-    }
-
-    function processAudit() {
-        const wh = document.getElementById('auditWarehouse').value.trim();
-        const sn = document.getElementById('auditSN').value.trim();
-        const date = document.getElementById('auditDate').value;
-        const status = document.querySelector('input[name="auditStatus"]:checked').value;
-
-        if(!wh || !sn) return alert("Vui lòng nhập Mã Kho và Serial Number!");
-
-        // CASE 1: Kiểm tra mã kho
-        const isWhExists = inventory.some(i => i.warehouse === wh);
-        if(!isWhExists) return alert("Mã kho không hợp lệ!");
-
-        // CASE 2: Kiểm tra SN
-        const idx = inventory.findIndex(i => i.sn === sn);
-        if(idx === -1) return alert("Thiết bị không tồn tại trong hệ thống!");
-
-        // CASE 3: Hợp lệ -> Lưu trạng thái
-        inventory[idx].auditStatus = status;
-        inventory[idx].auditDate = date;
-
-        save();
-        alert("Đã cập nhật trạng thái kiểm kê cho: " + inventory[idx].name);
-        
-        // Giữ modal mở để scan tiếp, xóa SN
-        document.getElementById('auditSN').value = '';
-        document.getElementById('auditSN').focus();
-    }
-
-    function exportAuditReport() {
-        if (inventory.length === 0) return alert("Không có dữ liệu!");
-        const now = new Date();
-        const dateStr = `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
-        
-        let tableRows = inventory.map((item, idx) => `
-            <tr>
-                <td style="border:1px solid black; text-align:center;">${idx + 1}</td>
-                <td style="border:1px solid black; padding:5px;">${item.name}</td>
-                <td style="border:1px solid black; padding:5px;">${item.sn}</td>
-                <td style="border:1px solid black; text-align:center;">${item.auditStatus || 'Chưa kiểm'}</td>
-                <td style="border:1px solid black; text-align:center;">${item.auditDate || '-'}</td>
-                <td style="border:1px solid black; padding:5px;">${item.loc}</td>
-            </tr>`).join('');
-
-        const reportWin = window.open('', '_blank');
-        reportWin.document.write(`
-            <html><head><title>Báo cáo kiểm kê</title><style>
-                body { font-family: "Times New Roman"; padding: 40px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th { border: 1px solid black; background: #eee; padding: 8px; font-size:12px; }
-                td { border: 1px solid black; padding: 5px; font-size:12px; }
-            </style></head>
-            <body>
-                <h2 style="text-align:center;">BÁO CÁO KIỂM KÊ THIẾT BỊ CNS/ATM</h2>
-                <p style="text-align:center;"><i>TP. Hồ Chí Minh, ${dateStr}</i></p>
-                <table>
-                    <thead><tr><th>STT</th><th>Tên thiết bị</th><th>S/N</th><th>Trạng thái</th><th>Ngày kiểm</th><th>Vị trí</th></tr></thead>
-                    <tbody>${tableRows}</tbody>
-                </table>
-            </body></html>`);
-        reportWin.document.close();
     }
 
     function doPrint(type) {
@@ -436,13 +428,9 @@
         reportWin.document.close();
     }
 
-    // Placeholder sync cloud
-    function syncCloud() {
-        alert("Bắt đầu đồng bộ Cloud...");
-        // Logic thực tế fetch(WEB_APP_URL, ...)
-    }
+    function syncCloud() { alert("Đang kết nối API..."); }
+    function exportToWord() { alert("Tính năng này yêu cầu cấu hình docx."); }
 
-    function exportToWord() { alert("Tính năng File Word yêu cầu cấu hình Document Section phức tạp hơn."); }
 </script>
 </body>
 </html>
