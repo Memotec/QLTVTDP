@@ -8,16 +8,11 @@
     <style>
         :root { --p: #4338ca; --bg: #f8fafc; --success: #10b981; --warning: #f59e0b; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        
         .card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; }
         .section-title { font-size: 14px; font-weight: 800; color: var(--p); text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-        
-        /* Form nhập liệu khớp với các cột của anh */
         .grid-form { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
         .full-width { grid-column: span 2; }
         input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid #e2e8f0; font-size: 14px; box-sizing: border-box; }
-        
-        /* Nút bấm theo phong cách image.png */
         .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         button { border: none; border-radius: 10px; padding: 12px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13px; }
         .btn-add { background: var(--p); grid-column: span 2; margin-bottom: 5px; }
@@ -25,40 +20,40 @@
         .btn-excel { background: #166534; }
         .btn-label { background: var(--warning); }
         .btn-exit { background: #ef4444; }
-
-        /* Bảng hiển thị khớp cột file Thống kê VTDP */
         .table-wrap { overflow-x: auto; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th { background: #f1f5f9; padding: 12px; font-size: 11px; color: #475569; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
         td { padding: 12px; font-size: 13px; border-bottom: 1px solid #f1f5f9; text-align: center; color: #1e293b; }
         .name-col { text-align: left; font-weight: 600; width: 250px; }
         .badge { padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 11px; background: #e0e7ff; color: var(--p); }
+        /* Hiệu ứng loading cho nút đồng bộ */
+        .loading { opacity: 0.7; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <div id="app">
     <div class="card">
-        <div class="section-title">📦 CẬP NHẬT VẬT TƯ DỰ PHÒNG</div>
+        <div class="section-title">📦 CẬP NHẬT VẬT TƯ DỰ PHÒNG - ĐỘI THÔNG TIN</div>
         <div class="grid-form">
-            <input type="text" id="inName" class="full-width" placeholder="Tên thiết bị (Ví dụ: Module VCCS)">
-            <input type="text" id="inPN" placeholder="P/N (Mã hiệu)">
-            <input type="text" id="inSN" placeholder="S/N (Số sê-ri)">
-            <input type="text" id="inCode" placeholder="Mã CCDC">
-            <input type="text" id="inWarehouse" placeholder="Mã Kho">
+            <input type="text" id="inName" class="full-width" placeholder="Tên thiết bị (Ví dụ: Module VCCS M800IP)">
+            <input type="text" id="inPN" placeholder="P/N (Part Number)">
+            <input type="text" id="inSN" placeholder="S/N (Serial Number)">
+            <input type="text" id="inCode" placeholder="Mã CCDC (Nếu có)">
+            <input type="text" id="inWarehouse" placeholder="Mã Kho (Ví dụ: MN07.7)">
             <input type="number" id="inQty" value="1" placeholder="Số lượng">
-            <input type="text" id="inLoc" placeholder="Vị trí lắp đặt">
+            <input type="text" id="inLoc" placeholder="Vị trí chi tiết (Kệ/Ngăn)">
         </div>
         <button class="btn-add" onclick="addItem()">➕ THÊM THIẾT BỊ MỚI</button>
         
-        <div class="section-title" style="margin-top:20px;">🔍 CÔNG CỤ HỆ THỐNG</div>
-        <input type="text" id="search" oninput="render()" placeholder="Tìm nhanh theo tên, S/N hoặc mã kho..." style="margin-bottom:15px;">
+        <div class="section-title" style="margin-top:20px;">🔍 TRA CỨU NHANH</div>
+        <input type="text" id="search" oninput="render()" placeholder="Tìm theo tên, S/N, P/N hoặc mã kho..." style="margin-bottom:15px;">
         
         <div class="btn-group">
             <button class="btn-sync" onclick="syncCloud()">🔄 ĐỒNG BỘ CLOUD</button>
             <button class="btn-excel" onclick="exportExcel()">📊 XUẤT EXCEL</button>
-            <button class="btn-label" onclick="alert('Tính năng in nhãn đang mở...')">🏷️ IN NHÃN DÁN</button>
-            <button class="btn-exit" onclick="location.reload()">THOÁT</button>
+            <button class="btn-label" onclick="printLabels()">🏷️ IN NHÃN DÁN</button>
+            <button class="btn-exit" onclick="logout()">THOÁT</button>
         </div>
     </div>
 
@@ -74,6 +69,7 @@
                         <th>Kho</th>
                         <th>SL</th>
                         <th>Vị trí</th>
+                        <th>Xử lý</th>
                     </tr>
                 </thead>
                 <tbody id="inventoryBody"></tbody>
@@ -83,25 +79,51 @@
 </div>
 
 <script>
-    // URL Web App anh Trường lấy từ Google Apps Script
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOhq-bmhvxGeFz1oCaXoiJRJTpTtckexhNxSTNT4BmcuxtfEUENqHZrPNpxTD_xuXJ/exec";
     
     let db = JSON.parse(localStorage.getItem('vtdp_data')) || [];
 
+    // Tự động lấy dữ liệu từ Cloud khi khởi động (nếu có mạng)
+    window.onload = async () => {
+        render();
+        await fetchCloudData();
+    };
+
+    async function fetchCloudData() {
+        try {
+            const response = await fetch(WEB_APP_URL);
+            const cloudData = await response.json();
+            if (cloudData && cloudData.length > 0) {
+                db = cloudData;
+                save(false); // Lưu vào local nhưng không cần render lại ngay vì fetch chạy ngầm
+            }
+        } catch (e) {
+            console.log("Sử dụng dữ liệu Offline.");
+        }
+    }
+
     function addItem() {
         const item = {
-            name: document.getElementById('inName').value,
-            pn: document.getElementById('inPN').value,
-            sn: document.getElementById('inSN').value,
-            code: document.getElementById('inCode').value,
-            warehouse: document.getElementById('inWarehouse').value,
+            name: document.getElementById('inName').value.trim(),
+            pn: document.getElementById('inPN').value.trim(),
+            sn: document.getElementById('inSN').value.trim(),
+            code: document.getElementById('inCode').value.trim(),
+            warehouse: document.getElementById('inWarehouse').value.trim(),
             qty: document.getElementById('inQty').value,
-            loc: document.getElementById('inLoc').value
+            loc: document.getElementById('inLoc').value.trim()
         };
-        if(!item.name || !item.sn) return alert("Vui lòng nhập ít nhất Tên và S/N!");
-        db.push(item);
+        if(!item.name || !item.sn) return alert("Vui lòng nhập ít nhất Tên thiết bị và S/N!");
+        
+        db.unshift(item); // Thêm lên đầu danh sách
         save();
-        document.querySelectorAll('input').forEach(i => i.id !== 'inQty' ? i.value = '' : i.value = 1);
+        resetForm();
+    }
+
+    function deleteItem(index) {
+        if(confirm("Xác nhận xóa thiết bị này khỏi danh sách?")) {
+            db.splice(index, 1);
+            save();
+        }
     }
 
     function render() {
@@ -109,48 +131,74 @@
         const q = document.getElementById('search').value.toLowerCase();
         tbody.innerHTML = '';
         
-        db.filter(i => i.name.toLowerCase().includes(q) || i.sn.toLowerCase().includes(q) || i.warehouse.toLowerCase().includes(q))
-          .forEach((i, idx) => {
+        const filtered = db.filter(i => 
+            i.name?.toLowerCase().includes(q) || 
+            i.sn?.toLowerCase().includes(q) || 
+            i.pn?.toLowerCase().includes(q) ||
+            i.warehouse?.toLowerCase().includes(q)
+        );
+
+        filtered.forEach((i, idx) => {
             tbody.innerHTML += `
                 <tr>
                     <td>${idx + 1}</td>
                     <td class="name-col">${i.name}</td>
-                    <td>${i.pn}<br><small style="color:blue">${i.sn}</small></td>
+                    <td>${i.pn || '-'}<br><small style="color:blue; font-weight:bold">${i.sn}</small></td>
                     <td>${i.code || '-'}</td>
-                    <td><span class="badge">${i.warehouse}</span></td>
+                    <td><span class="badge">${i.warehouse || 'KHO'}</span></td>
                     <td><b>${i.qty}</b></td>
-                    <td style="font-size:11px">${i.loc}</td>
+                    <td style="font-size:11px">${i.loc || '-'}</td>
+                    <td><button onclick="deleteItem(${idx})" style="background:none; color:red; cursor:pointer; font-size:16px">🗑️</button></td>
                 </tr>`;
         });
     }
 
-    function save() {
+    function save(shouldRender = true) {
         localStorage.setItem('vtdp_data', JSON.stringify(db));
-        render();
+        if(shouldRender) render();
+    }
+
+    function resetForm() {
+        document.querySelectorAll('input').forEach(i => i.id !== 'inQty' ? i.value = '' : i.value = 1);
+        document.getElementById('inName').focus();
     }
 
     async function syncCloud() {
         const btn = document.querySelector('.btn-sync');
+        btn.classList.add('loading');
         btn.innerText = "⏳ ĐANG ĐỒNG BỘ...";
+        
         try {
+            // Gửi dữ liệu lên Google Sheets
             await fetch(WEB_APP_URL, {
                 method: "POST",
                 mode: "no-cors",
                 body: JSON.stringify(db)
             });
-            alert("✅ Đã gửi dữ liệu lên file Thống kê VTDP thành công!");
-        } catch(e) { alert("❌ Lỗi kết nối!"); }
-        btn.innerText = "🔄 ĐỒNG BỘ CLOUD";
+            alert("✅ Đã đồng bộ thành công lên Google Sheets!");
+        } catch(e) { 
+            alert("❌ Lỗi kết nối! Kiểm tra lại URL Web App."); 
+        } finally {
+            btn.classList.remove('loading');
+            btn.innerText = "🔄 ĐỒNG BỘ CLOUD";
+        }
     }
 
     function exportExcel() {
+        if(db.length === 0) return alert("Không có dữ liệu để xuất!");
         const ws = XLSX.utils.json_to_sheet(db);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "VTDP");
-        XLSX.writeFile(wb, "Thong_ke_VTDP_DoiThongTin.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "VTDP_ThongTin");
+        XLSX.writeFile(wb, `VTDP_DoiThongTin_${new Date().toLocaleDateString()}.xlsx`);
     }
 
-    render(); // Chạy lần đầu
+    function printLabels() {
+        alert("Chức năng đang kết nối với mẫu in nhãn QR Code...");
+    }
+
+    function logout() {
+        if(confirm("Bạn muốn thoát hệ thống?")) location.reload();
+    }
 </script>
 </body>
 </html>
