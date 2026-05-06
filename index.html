@@ -13,7 +13,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
         
-        /* UI Elements */
+        /* UI & Login */
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center; width: 400px; border: 1px solid #e2e8f0; }
         .login-box input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1.5px solid #e2e8f0; border-radius: 10px; outline: none; }
@@ -36,12 +36,18 @@
         th { background: #f8fafc; padding: 16px; font-size: 11px; font-weight: 800; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; }
         td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 14px; }
         
+        /* Sync Status Indicator */
+        #syncStatus { position: fixed; bottom: 20px; right: 20px; padding: 8px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; z-index: 10001; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
+        .sync-loading { background: #fef08a; color: #854d0e; border: 1px solid #facc15; }
+        .sync-online { background: #dcfce7; color: #166534; border: 1px solid #4ade80; }
+        .sync-offline { background: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
+
         /* Modal Audit */
         #auditModal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); }
         .audit-box { background: white; width: 400px; padding: 25px; border-radius: 16px; }
 
         /* PRINT STYLES */
-        #printLabelArea, #printQrOnlyArea { display: none; }
+        #printLabelArea { display: none; }
         @media print {
             body * { visibility: hidden; }
             .no-print { display: none !important; }
@@ -53,6 +59,8 @@
     </style>
 </head>
 <body>
+
+<div id="syncStatus"></div>
 
 <div id="loginOverlay">
     <div class="login-box">
@@ -78,7 +86,7 @@
             <div class="half input-group"><label>Số lượng</label><input type="number" id="inQty" value="1"></div>
         </div>
         <div class="btn-group">
-            <button id="btnAdd" style="background:var(--p)" onclick="addItem()">➕ Thêm thiết bị</button>
+            <button id="btnAdd" style="background:var(--p)" onclick="addItem()">➕ Thêm vật tư</button>
             <button id="btnUpdate" style="background:var(--edit); display:none;" onclick="updateItem()">💾 Lưu thay đổi</button>
             <button style="background:#94a3b8" onclick="clearForm()">Làm mới</button>
         </div>
@@ -105,7 +113,7 @@
                     <th style="text-align:left">Tên thiết bị</th>
                     <th>P/N</th>
                     <th>S/N</th>
-                    <th>Mã CCDC</th>
+                    <th>Mã TS</th>
                     <th>Kho</th>
                     <th>SL</th>
                     <th>Vị trí</th>
@@ -120,15 +128,14 @@
 
 <div id="auditModal">
     <div class="audit-box">
-        <h3>Kiểm kê thiết bị nhanh</h3>
-        <br>
-        <input type="text" id="auditSN" placeholder="Quét hoặc nhập S/N..." style="width:100%; padding:10px; margin-bottom:15px;">
+        <h3>Kiểm kê thiết bị nhanh</h3><br>
+        <input type="text" id="auditSN" placeholder="Quét S/N..." style="width:100%; padding:10px; margin-bottom:15px;">
         <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <label><input type="radio" name="auditStatus" value="OK" checked> Đang hoạt động</label>
-            <label><input type="radio" name="auditStatus" value="MISSING"> Thiếu hụt</label>
+            <label><input type="radio" name="auditStatus" value="OK" checked> OK</label>
+            <label><input type="radio" name="auditStatus" value="MISSING"> MISSING</label>
         </div>
         <input type="date" id="auditDate" style="width:100%; padding:10px; margin-bottom:15px;">
-        <button onclick="processAudit()" style="background:var(--success); width:100%;">CẬP NHẬT TRẠNG THÁI</button>
+        <button onclick="processAudit()" style="background:var(--success); width:100%;">CẬP NHẬT</button>
         <button onclick="closeAuditModal()" style="background:#94a3b8; width:100%; margin-top:10px;">ĐÓNG</button>
     </div>
 </div>
@@ -137,9 +144,11 @@
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0p5dZFCAuvA4Bzc-XVpFCBO2zlFbUaOs1xoHr3wihErsLhO0IcuRUKhJQMFWu6Fbr/exec";
-    let inventory = JSON.parse(localStorage.getItem('cns_data_v26_final')) || [];
+    const STORAGE_KEY = 'cns_data_v26_final';
+    let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let role = null;
 
+    // LOGIN & INITIAL SYNC
     function checkLogin() {
         const u = document.getElementById('user').value.toLowerCase().trim();
         const p = document.getElementById('pass').value;
@@ -148,91 +157,76 @@
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             if(role === 'admin') document.getElementById('adminArea').style.display = 'block';
-            render();
-            fetchCloudData(true);
-        } else alert("Sai tài khoản hoặc mật khẩu!");
+            initCloudFirstSync();
+        } else alert("Sai mật khẩu!");
     }
 
-    async function fetchCloudData(isSilent = false) {
+    async function initCloudFirstSync() {
+        const statusEl = document.getElementById('syncStatus');
+        statusEl.style.display = 'block';
+        statusEl.className = 'sync-loading';
+        statusEl.innerText = "🟡 Đang sync từ cloud...";
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         try {
-            const res = await fetch(WEB_APP_URL);
-            const data = await res.json();
-            if (data && data.length > 0) {
-                inventory = data;
-                save();
-                if(!isSilent) alert("Đã cập nhật dữ liệu mới nhất!");
+            const res = await fetch(WEB_APP_URL, { signal: controller.signal });
+            const cloudData = await res.json();
+            if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
+                inventory = cloudData;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
+                statusEl.className = 'sync-online';
+                statusEl.innerText = "🟢 Đã đồng bộ (Cloud)";
+            } else throw new Error();
+        } catch (e) {
+            statusEl.className = 'sync-offline';
+            statusEl.innerText = "🔴 Offline (Dùng Local)";
+        }
+        clearTimeout(timeoutId);
+        render();
+    }
+
+    // CORE FUNCTIONS
+    function render() {
+        const tbody = document.getElementById('inventoryBody');
+        const printArea = document.getElementById('printLabelArea');
+        const q = document.getElementById('searchInput').value.trim().toLowerCase();
+        tbody.innerHTML = ''; printArea.innerHTML = '';
+
+        inventory.forEach((item, idx) => {
+            if (Object.values(item).some(v => String(v).toLowerCase().includes(q))) {
+                let badge = '-';
+                if(item.auditStatus === 'OK') badge = `<small style="color:green">OK (${item.auditDate})</small>`;
+                if(item.auditStatus === 'MISSING') badge = `<small style="color:red">MISSING (${item.auditDate})</small>`;
+
+                tbody.innerHTML += `<tr><td>${idx+1}</td><td style="text-align:left;font-weight:600">${item.name}</td><td>${item.pn||'-'}</td><td style="font-weight:700">${item.sn}</td><td>${item.code||'-'}</td><td>${item.warehouse||'-'}</td><td>${item.qty}</td><td>${item.loc||'-'}</td><td>${badge}</td><td><button style="background:var(--edit);padding:4px 8px;font-size:11px;" onclick="editItem(${idx})">Sửa</button></td></tr>`;
+                
+                printArea.innerHTML += `<div class="label-item"><div class="header-print">ĐỘI THÔNG TIN - TT BĐKT HCM</div><div style="font-size:7pt;line-height:1.2"><b style="font-size:8pt;text-transform:uppercase">${item.name}</b><br>P/N: ${item.pn||'-'}<br>S/N: ${item.sn}<br>CCDC: ${item.code||'-'}</div></div>`;
             }
-        } catch (e) { console.log("Offline mode"); }
+        });
     }
 
     async function syncCloud() {
         const btn = document.getElementById('btnSync');
-        btn.innerText = "⏳ Đang đồng bộ...";
-        btn.disabled = true;
+        btn.innerText = "⏳ Đang đẩy dữ liệu..."; btn.disabled = true;
         try {
             const params = new URLSearchParams();
             params.append('data', JSON.stringify(inventory));
             await fetch(WEB_APP_URL, { method: "POST", mode: "no-cors", body: params });
             await new Promise(r => setTimeout(r, 2000));
-            await fetchCloudData(true);
-            alert("✅ Đồng bộ 2 chiều thành công!");
+            await initCloudFirstSync();
+            alert("✅ Đồng bộ hoàn tất!");
         } catch (e) { alert("Lỗi kết nối!"); }
-        btn.innerText = "🔄 ĐỒNG BỘ 2 CHIỀU";
-        btn.disabled = false;
-    }
-
-    function render() {
-        const tbody = document.getElementById('inventoryBody');
-        const printArea = document.getElementById('printLabelArea');
-        const q = document.getElementById('searchInput').value.trim().toLowerCase();
-        
-        tbody.innerHTML = '';
-        printArea.innerHTML = '';
-
-        inventory.forEach((item, idx) => {
-            if (Object.values(item).some(val => String(val).toLowerCase().includes(q))) {
-                // Render Table
-                let auditBadge = '-';
-                if(item.auditStatus === 'OK') auditBadge = `<small style="color:green">OK (${item.auditDate})</small>`;
-                if(item.auditStatus === 'MISSING') auditBadge = `<small style="color:red">MISSING (${item.auditDate})</small>`;
-
-                tbody.innerHTML += `<tr>
-                    <td>${idx+1}</td>
-                    <td style="text-align:left; font-weight:600">${item.name}</td>
-                    <td>${item.pn || '-'}</td>
-                    <td style="font-weight:700">${item.sn}</td>
-                    <td>${item.code || '-'}</td>
-                    <td>${item.warehouse || '-'}</td>
-                    <td>${item.qty}</td>
-                    <td>${item.loc || '-'}</td>
-                    <td>${auditBadge}</td>
-                    <td>
-                        <button style="background:var(--edit); padding:4px 8px; font-size:11px;" onclick="editItem(${idx})">Sửa</button>
-                    </td>
-                </tr>`;
-
-                // Render Labels for printing
-                printArea.innerHTML += `
-                    <div class="label-item">
-                        <div class="header-print">ĐỘI THÔNG TIN - TT BĐKT HCM</div>
-                        <div style="font-size:7pt; line-height:1.2">
-                            <b style="font-size:8pt; text-transform:uppercase">${item.name}</b><br>
-                            P/N: ${item.pn || '-'}<br>
-                            S/N: ${item.sn}<br>
-                            CCDC: ${item.code || '-'}
-                        </div>
-                    </div>`;
-            }
-        });
+        btn.innerText = "🔄 ĐỒNG BỘ 2 CHIỀU"; btn.disabled = false;
     }
 
     function addItem() {
         const name = document.getElementById('inName').value.trim();
         const sn = document.getElementById('inSN').value.trim();
-        if(!name || !sn) return alert("Cần nhập Tên và Serial!");
+        if(!name || !sn) return alert("Thiếu Tên hoặc S/N!");
         inventory.push({
-            name, sn,
-            pn: document.getElementById('inPN').value.trim(),
+            name, sn, pn: document.getElementById('inPN').value.trim(),
             code: document.getElementById('inCode').value.trim(),
             warehouse: document.getElementById('inWarehouse').value.trim(),
             qty: document.getElementById('inQty').value,
@@ -243,7 +237,7 @@
     }
 
     function editItem(idx) {
-        if(role !== 'admin') return alert("Chỉ admin mới có quyền sửa!");
+        if(role !== 'admin') return alert("Quyền Admin!");
         const item = inventory[idx];
         document.getElementById('editIndex').value = idx;
         document.getElementById('inName').value = item.name;
@@ -261,45 +255,39 @@
     function updateItem() {
         const idx = document.getElementById('editIndex').value;
         inventory[idx] = { ...inventory[idx], 
-            name: document.getElementById('inName').value,
-            pn: document.getElementById('inPN').value,
-            sn: document.getElementById('inSN').value,
-            code: document.getElementById('inCode').value,
-            warehouse: document.getElementById('inWarehouse').value,
-            qty: document.getElementById('inQty').value,
+            name: document.getElementById('inName').value, pn: document.getElementById('inPN').value,
+            sn: document.getElementById('inSN').value, code: document.getElementById('inCode').value,
+            warehouse: document.getElementById('inWarehouse').value, qty: document.getElementById('inQty').value,
             loc: document.getElementById('inLoc').value
         };
         save(); clearForm();
     }
 
-    function openAuditModal() { 
-        document.getElementById('auditModal').style.display='flex'; 
-        document.getElementById('auditDate').valueAsDate = new Date();
-    }
-    function closeAuditModal() { document.getElementById('auditModal').style.display='none'; }
     function processAudit() {
         const sn = document.getElementById('auditSN').value.trim();
         const idx = inventory.findIndex(i => i.sn === sn);
-        if(idx === -1) return alert("Không tìm thấy S/N!");
+        if(idx === -1) return alert("Không thấy S/N!");
         inventory[idx].auditStatus = document.querySelector('input[name="auditStatus"]:checked').value;
         inventory[idx].auditDate = document.getElementById('auditDate').value;
-        save(); alert("Đã cập nhật kiểm kê!");
+        save(); alert("Đã kiểm kê!");
     }
 
     function exportInventoryReport() {
         const now = new Date().toLocaleDateString('vi-VN');
-        let rows = inventory.map((i,idx) => `<tr><td border="1">${idx+1}</td><td>${i.name}</td><td>${i.pn}</td><td>${i.sn}</td><td>${i.qty}</td><td>${i.loc}</td></tr>`).join('');
+        let rows = inventory.map((i,idx) => `<tr><td>${idx+1}</td><td>${i.name}</td><td>${i.pn}</td><td>${i.sn}</td><td>${i.qty}</td><td>${i.loc}</td></tr>`).join('');
         const win = window.open('','_blank');
-        win.document.write(`<html><head><style>table{width:100%;border-collapse:collapse;} td,th{border:1px solid #000;padding:5px;}</style></head><body><h2 style="text-align:center">BÁO CÁO TỒN KHO THIẾT BỊ CNS/ATM</h2><p style="text-align:center">Ngày lập: ${now}</p><table><tr><th>STT</th><th>Tên thiết bị</th><th>P/N</th><th>S/N</th><th>SL</th><th>Vị trí</th></tr>${rows}</table></body></html>`);
+        win.document.write(`<html><head><style>table{width:100%;border-collapse:collapse;} td,th{border:1px solid #000;padding:5px;}</style></head><body><h2 style="text-align:center">BÁO CÁO TỒN KHO CNS/ATM</h2><p style="text-align:center">Ngày: ${now}</p><table><tr><th>STT</th><th>Thiết bị</th><th>P/N</th><th>S/N</th><th>SL</th><th>Vị trí</th></tr>${rows}</table></body></html>`);
         win.document.close();
     }
 
-    function save() { localStorage.setItem('cns_data_v26_final', JSON.stringify(inventory)); render(); }
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); render(); }
     function clearForm() { 
         document.querySelectorAll('.form-grid input').forEach(i => i.value = i.id==='inQty'?'1':''); 
         document.getElementById('btnAdd').style.display='inline-block'; 
         document.getElementById('btnUpdate').style.display='none'; 
     }
+    function openAuditModal() { document.getElementById('auditModal').style.display='flex'; document.getElementById('auditDate').valueAsDate = new Date(); }
+    function closeAuditModal() { document.getElementById('auditModal').style.display='none'; }
     function exportToExcel() {
         const ws = XLSX.utils.json_to_sheet(inventory);
         const wb = XLSX.utils.book_new();
