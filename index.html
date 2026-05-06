@@ -1,397 +1,437 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QUẢN LÝ THIẾT BỊ CNS/ATM</title>
+    <title>QUẢN LÝ THIẾT BỊ CNS/ATM - ĐỘI THÔNG TIN</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/kjua@0.9.0/dist/kjua.min.js"></script>
+    <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
-        :root { --p: #4338ca; --bg: #f5f7fb; --txt: #1e293b; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 10px; color: var(--txt); }
+        :root { --p: #4338ca; --bg: #f1f5f9; --txt: #1e293b; --word: #2b579a; --edit: #0ea5e9; --danger: #ef4444; --success: #10b981; --excel: #1d6f42; --report: #6366f1; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
         
-        /* Card Style theo ảnh */
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .section-title { font-size: 14px; font-weight: bold; color: #4338ca; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .login-box { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center; width: 400px; border: 1px solid #e2e8f0; }
+        .login-box input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1.5px solid #e2e8f0; border-radius: 10px; outline: none; }
 
-        /* Search Input */
-        input#search { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 14px; outline: none; margin-bottom: 15px; }
-
-        /* Nút bấm khớp màu ảnh */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { border: none; border-radius: 8px; padding: 12px; color: white; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-audit { background: #8b5cf6; } /* Tím */
-        .btn-sync { background: #10b981; }  /* Xanh lá */
-        .btn-word { background: #3b82f6; }  /* Xanh dương */
-        .btn-excel { background: #15803d; } /* Xanh đậm */
-        .btn-report { background: #6366f1; grid-column: span 2; } /* Xanh tím */
-        .btn-label { background: #f59e0b; } /* Cam */
-        .btn-exit { background: #ef4444; }  /* Đỏ */
-
-        /* Bảng dữ liệu */
-        .table-card { background: white; border-radius: 20px 20px 0 0; padding: 15px; border-bottom: 1px solid #eee; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th { font-size: 11px; color: #64748b; padding: 10px; text-align: center; border-bottom: 2px solid #f1f5f9; }
-        td { padding: 12px 10px; font-size: 13px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-        .btn-edit { background: #0ea5e9; padding: 5px 15px; font-size: 12px; border-radius: 6px; }
+        .container { max-width: 1400px; margin: 0 auto; display: none; }
+        .card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        .section-title { font-size: 14px; font-weight: 700; color: var(--p); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; }
         
-        /* Login Overlay */
-        #login { position: fixed; inset: 0; background: #f5f7fb; z-index: 1000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+        .full { grid-column: span 4; }
+        .half { grid-column: span 2; }
+        .input-group { display: flex; flex-direction: column; gap: 6px; }
+        .input-group label { font-size: 12px; font-weight: 600; color: #64748b; }
+        .input-group input { padding: 12px 15px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; background: #f8fafc; }
+
+        .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        button { padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 14px; display: flex; align-items: center; gap: 8px; justify-content: center; transition: 0.2s; }
+        button:hover { opacity: 0.85; transform: translateY(-1px); }
+
+        input#searchInput { width: 100%; padding: 16px 20px; border-radius: 12px; border: 2px solid #e2e8f0; margin-bottom: 20px; font-size: 16px; transition: 0.3s; }
+        input#searchInput:focus { border-color: var(--p); outline: none; }
+
+        .table-wrap { overflow-x: auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { background: #f8fafc; padding: 16px; font-size: 11px; font-weight: 800; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.05em; }
+        td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 14px; color: #1e293b; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #f1f5f9; }
+        
+        .stt-col { color: #64748b; font-weight: 700; background: #f8fafc; width: 50px; }
+        .name-col { text-align: left !important; font-weight: 600; color: #0f172a; max-width: 300px; }
+        .badge-warehouse { background: #e0e7ff; color: #4338ca; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 12px; }
+        .badge-qty { background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-weight: 700; }
+
+        /* --- CSS KIỂM KÊ --- */
+        #auditModal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); }
+        .audit-box { background: white; width: 450px; padding: 25px; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .audit-grid { display: flex; flex-direction: column; gap: 15px; margin-top: 15px; }
+        .audit-status-group { display: flex; gap: 15px; background: #f1f5f9; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; }
+        .audit-radio { display: flex; align-items: center; gap: 6px; font-size: 14px; cursor: pointer; font-weight: 600; }
+        .badge-ok { background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
+        .badge-missing { background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
+
+        #printLabelArea, #printQrOnlyArea { display: none; }
+        @media print {
+            .no-print { display: none !important; }
+            body.printing-labels #printLabelArea { display: grid !important; grid-template-columns: repeat(3, 62mm); gap: 2mm; padding: 5mm; }
+            body.printing-qrs #printQrOnlyArea { display: grid !important; grid-template-columns: repeat(6, 30mm); gap: 5mm; padding: 10mm; }
+            .label-item { width: 62mm; height: 30mm; border: 0.5pt solid #000; padding: 1.5mm; display: flex; flex-direction: column; page-break-inside: avoid; }
+            .qr-only-item { width: 30mm; text-align: center; border: 0.5pt dashed #ccc; padding: 2mm; page-break-inside: avoid; }
+            .header-print { font-size:6.5pt; font-weight:bold; text-align:center; border-bottom:0.5pt solid #000; margin-bottom:1mm; padding-bottom:0.5mm; }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .full, .half { grid-column: span 1; }
+            .login-box { width: 90%; padding: 25px; }
+            button { width: 100%; }
+            .section-title { font-size: 12px; }
+            .btn-group { flex-direction: column; }
+            .btn-group button { margin-left: 0 !important; }
+        }
     </style>
 </head>
 <body>
 
-<div id="login">
-    <h2 style="color: #4338ca; margin-bottom: 20px;">CNS/ATM LOGIN</h2>
-    <input type="password" id="pass" placeholder="Nhập mật khẩu..." style="padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 10px;">
-    <button onclick="login()" style="background: #4338ca; width: 150px;">VÀO HỆ THỐNG</button>
+<div id="loginOverlay">
+    <div class="login-box">
+        <h1 style="color: var(--p); margin-bottom: 5px; font-size: 24px;">CNS/ATM SYSTEM</h1>
+        <p style="font-size: 12px; margin-bottom: 30px; color:#64748b;">ĐỘI THÔNG TIN - TT BĐKT HCM</p>
+        <input type="text" id="user" placeholder="Tên đăng nhập">
+        <input type="password" id="pass" placeholder="Mật khẩu">
+        <button onclick="checkLogin()" style="background:var(--p); width:100%;">ĐĂNG NHẬP</button>
+    </div>
 </div>
 
-<div id="app" style="display:none;">
-    <div class="card">
-        <div class="section-title">🔍 TRA CỨU & TRÍCH XUẤT</div>
-        <input type="text" id="search" oninput="render()" placeholder="Tìm kiếm nhanh thiết bị, số serial, mã tài sản...">
-        
-        <div class="btn-grid">
-            <button class="btn-audit">📋 KIỂM KÊ MỚI</button>
-            <button class="btn-sync" onclick="fetchData()">🔄 Đồng bộ</button>
-            <button class="btn-word">📝 File Word</button>
-            <button class="btn-excel" onclick="exportExcel()">📊 File Excel</button>
-            <button class="btn-report">📄 BÁO CÁO TỒN KHO</button>
-            <button class="btn-label">🏷️ IN NHÃN DÁN</button>
-            <button class="btn-exit" onclick="location.reload()">Thoát</button>
+<div class="container no-print" id="mainApp">
+    <div class="card" id="adminArea" style="display:none;">
+        <div class="section-title">📦 Cập nhật thông tin thiết bị</div>
+        <div class="form-grid">
+            <input type="hidden" id="editIndex" value="-1">
+            <div class="full input-group"><label>Tên thiết bị / Model</label><input type="text" id="inName"></div>
+            <div class="input-group"><label>Part Number (P/N)</label><input type="text" id="inPN"></div>
+            <div class="input-group"><label>Serial Number (S/N)</label><input type="text" id="inSN"></div>
+            <div class="input-group"><label>Mã Tài Sản</label><input type="text" id="inCode"></div>
+            <div class="input-group"><label>Mã Kho</label><input type="text" id="inWarehouse"></div>
+            <div class="half input-group"><label>Vị trí lắp đặt</label><input type="text" id="inLoc"></div>
+            <div class="half input-group"><label>Số lượng</label><input type="number" id="inQty" value="1"></div>
+        </div>
+        <div class="btn-group">
+            <button id="btnAdd" style="background:var(--p); min-width: 150px;" onclick="addItem()">➕ Thêm mới</button>
+            <button id="btnUpdate" style="background:var(--edit); min-width: 150px; display:none;" onclick="updateItem()">💾 Lưu thay đổi</button>
+            <button style="background:#94a3b8" onclick="clearForm()">Làm mới</button>
         </div>
     </div>
 
-    <div class="table-card">
-        <div class="section-title">📋 DANH MỤC THIẾT BỊ HIỆN TẠI</div>
+    <div class="card">
+        <div class="section-title">🔍 Tra cứu & Trích xuất</div>
+        <input type="text" id="searchInput" oninput="render()" placeholder="Tìm kiếm nhanh thiết bị, số serial, mã tài sản...">
+        <div class="btn-group">
+            <button style="background:var(--success)" onclick="syncCloud()">🔄 Đồng bộ Cloud</button>
+            <button style="background:var(--word)" onclick="exportToWord()">📝 File Word</button>
+            <button style="background:var(--excel)" onclick="exportToExcel()">📊 File Excel</button>
+            <button style="background:var(--report)" onclick="exportInventoryReport()">📄 BÁO CÁO TỒN KHO</button>
+            
+            <!-- NÚT KIỂM KÊ MỚI -->
+            <button style="background:#8b5cf6" onclick="openAuditModal()">📋 KIỂM KÊ</button>
+            <button style="background:#ec4899" onclick="exportAuditReport()">📑 BÁO CÁO KIỂM KÊ</button>
+
+            <button style="background:#f59e0b" onclick="doPrint('labels')">🏷️ IN NHÃN DÁN</button>
+            <button style="background:var(--p)" onclick="doPrint('qrs')">📱 IN MÃ QR CODE</button>
+            <button style="background:var(--danger); margin-left: auto;" onclick="location.reload()">Thoát</button>
+        </div>
     </div>
-    
-    <div style="background: white; overflow-x: auto;">
+
+    <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>MÃ KHO</th>
+                    <th style="width: 60px;">STT</th>
+                    <th style="text-align:left">Tên thiết bị / Model</th>
+                    <th>Part Number</th>
+                    <th>Serial Number</th>
+                    <th>Mã Tài Sản</th>
+                    <th>Mã Kho</th>
                     <th>SL</th>
-                    <th>VỊ TRÍ LẮP ĐẶT</th>
-                    <th>THAO TÁC</th>
+                    <th>Vị trí</th>
+                    <th>Kiểm kê</th>
+                    <th>Thao tác</th>
                 </tr>
             </thead>
-            <tbody id="list"></tbody>
+            <tbody id="inventoryBody"></tbody>
         </table>
     </div>
 </div>
 
-<script>
-    const API = "<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QUẢN LÝ THIẾT BỊ CNS/ATM</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        :root { --p: #4338ca; --bg: #f5f7fb; --txt: #1e293b; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 10px; color: var(--txt); }
-        
-        /* Card Style theo ảnh */
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .section-title { font-size: 14px; font-weight: bold; color: #4338ca; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-
-        /* Search Input */
-        input#search { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 14px; outline: none; margin-bottom: 15px; }
-
-        /* Nút bấm khớp màu ảnh */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { border: none; border-radius: 8px; padding: 12px; color: white; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-audit { background: #8b5cf6; } /* Tím */
-        .btn-sync { background: #10b981; }  /* Xanh lá */
-        .btn-word { background: #3b82f6; }  /* Xanh dương */
-        .btn-excel { background: #15803d; } /* Xanh đậm */
-        .btn-report { background: #6366f1; grid-column: span 2; } /* Xanh tím */
-        .btn-label { background: #f59e0b; } /* Cam */
-        .btn-exit { background: #ef4444; }  /* Đỏ */
-
-        /* Bảng dữ liệu */
-        .table-card { background: white; border-radius: 20px 20px 0 0; padding: 15px; border-bottom: 1px solid #eee; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th { font-size: 11px; color: #64748b; padding: 10px; text-align: center; border-bottom: 2px solid #f1f5f9; }
-        td { padding: 12px 10px; font-size: 13px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-        .btn-edit { background: #0ea5e9; padding: 5px 15px; font-size: 12px; border-radius: 6px; }
-        
-        /* Login Overlay */
-        #login { position: fixed; inset: 0; background: #f5f7fb; z-index: 1000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-    </style>
-</head>
-<body>
-
-<div id="login">
-    <h2 style="color: #4338ca; margin-bottom: 20px;">CNS/ATM LOGIN</h2>
-    <input type="password" id="pass" placeholder="Nhập mật khẩu..." style="padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 10px;">
-    <button onclick="login()" style="background: #4338ca; width: 150px;">VÀO HỆ THỐNG</button>
-</div>
-
-<div id="app" style="display:none;">
-    <div class="card">
-        <div class="section-title">🔍 TRA CỨU & TRÍCH XUẤT</div>
-        <input type="text" id="search" oninput="render()" placeholder="Tìm kiếm nhanh thiết bị, số serial, mã tài sản...">
-        
-        <div class="btn-grid">
-            <button class="btn-audit">📋 KIỂM KÊ MỚI</button>
-            <button class="btn-sync" onclick="fetchData()">🔄 Đồng bộ</button>
-            <button class="btn-word">📝 File Word</button>
-            <button class="btn-excel" onclick="exportExcel()">📊 File Excel</button>
-            <button class="btn-report">📄 BÁO CÁO TỒN KHO</button>
-            <button class="btn-label">🏷️ IN NHÃN DÁN</button>
-            <button class="btn-exit" onclick="location.reload()">Thoát</button>
+<!-- MODAL KIỂM KÊ -->
+<div id="auditModal">
+    <div class="audit-box">
+        <div class="section-title">📋 PHIẾU KIỂM KÊ THIẾT BỊ</div>
+        <div class="audit-grid">
+            <div class="input-group"><label>Mã kho đối soát</label><input type="text" id="auditWarehouse" placeholder="Nhập mã kho..."></div>
+            <div class="input-group"><label>Ngày kiểm kê</label><input type="date" id="auditDate"></div>
+            <div class="audit-status-group">
+                <label class="audit-radio" style="color:var(--success)"><input type="radio" name="auditStatus" value="OK" checked> Tồn tại</label>
+                <label class="audit-radio" style="color:var(--danger)"><input type="radio" name="auditStatus" value="MISSING"> Không tồn tại</label>
+            </div>
+            <div class="input-group">
+                <label>Serial Number (Scan hoặc nhập tay)</label>
+                <input type="text" id="auditSN" placeholder="Focus vào đây để Scan QR..." style="border: 2px solid var(--p);">
+            </div>
+            <div class="btn-group">
+                <button style="background:var(--p); flex: 1;" onclick="processAudit()">XÁC NHẬN</button>
+                <button style="background:#94a3b8; width: 100px;" onclick="closeAuditModal()">THOÁT</button>
+            </div>
         </div>
     </div>
-
-    <div class="table-card">
-        <div class="section-title">📋 DANH MỤC THIẾT BỊ HIỆN TẠI</div>
-    </div>
-    
-    <div style="background: white; overflow-x: auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>MÃ KHO</th>
-                    <th>SL</th>
-                    <th>VỊ TRÍ LẮP ĐẶT</th>
-                    <th>THAO TÁC</th>
-                </tr>
-            </thead>
-            <tbody id="list"></tbody>
-        </table>
-    </div>
 </div>
+
+<div id="printLabelArea"></div>
+<div id="printQrOnlyArea"></div>
 
 <script>
-    const API = "<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QUẢN LÝ THIẾT BỊ CNS/ATM</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        :root { --p: #4338ca; --bg: #f5f7fb; --txt: #1e293b; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); padding: 10px; color: var(--txt); }
-        
-        /* Card Style theo ảnh */
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .section-title { font-size: 14px; font-weight: bold; color: #4338ca; text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzOhq-bmhvxGeFz1oCaXoiJRJTpTtckexhNxSTNT4BmcuxtfEUENqHZrPNpxTD_xuXJ/exec"; 
+    let inventory = JSON.parse(localStorage.getItem('cns_data_v26_final')) || [];
+    let role = null;
 
-        /* Search Input */
-        input#search { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 14px; outline: none; margin-bottom: 15px; }
-
-        /* Nút bấm khớp màu ảnh */
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { border: none; border-radius: 8px; padding: 12px; color: white; font-weight: bold; font-size: 13px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
-        .btn-audit { background: #8b5cf6; } /* Tím */
-        .btn-sync { background: #10b981; }  /* Xanh lá */
-        .btn-word { background: #3b82f6; }  /* Xanh dương */
-        .btn-excel { background: #15803d; } /* Xanh đậm */
-        .btn-report { background: #6366f1; grid-column: span 2; } /* Xanh tím */
-        .btn-label { background: #f59e0b; } /* Cam */
-        .btn-exit { background: #ef4444; }  /* Đỏ */
-
-        /* Bảng dữ liệu */
-        .table-card { background: white; border-radius: 20px 20px 0 0; padding: 15px; border-bottom: 1px solid #eee; }
-        table { width: 100%; border-collapse: collapse; background: white; }
-        th { font-size: 11px; color: #64748b; padding: 10px; text-align: center; border-bottom: 2px solid #f1f5f9; }
-        td { padding: 12px 10px; font-size: 13px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-        .btn-edit { background: #0ea5e9; padding: 5px 15px; font-size: 12px; border-radius: 6px; }
-        
-        /* Login Overlay */
-        #login { position: fixed; inset: 0; background: #f5f7fb; z-index: 1000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-    </style>
-</head>
-<body>
-
-<div id="login">
-    <h2 style="color: #4338ca; margin-bottom: 20px;">CNS/ATM LOGIN</h2>
-    <input type="password" id="pass" placeholder="Nhập mật khẩu..." style="padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 10px;">
-    <button onclick="login()" style="background: #4338ca; width: 150px;">VÀO HỆ THỐNG</button>
-</div>
-
-<div id="app" style="display:none;">
-    <div class="card">
-        <div class="section-title">🔍 TRA CỨU & TRÍCH XUẤT</div>
-        <input type="text" id="search" oninput="render()" placeholder="Tìm kiếm nhanh thiết bị, số serial, mã tài sản...">
-        
-        <div class="btn-grid">
-            <button class="btn-audit">📋 KIỂM KÊ MỚI</button>
-            <button class="btn-sync" onclick="fetchData()">🔄 Đồng bộ</button>
-            <button class="btn-word">📝 File Word</button>
-            <button class="btn-excel" onclick="exportExcel()">📊 File Excel</button>
-            <button class="btn-report">📄 BÁO CÁO TỒN KHO</button>
-            <button class="btn-label">🏷️ IN NHÃN DÁN</button>
-            <button class="btn-exit" onclick="location.reload()">Thoát</button>
-        </div>
-    </div>
-
-    <div class="table-card">
-        <div class="section-title">📋 DANH MỤC THIẾT BỊ HIỆN TẠI</div>
-    </div>
-    
-    <div style="background: white; overflow-x: auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>MÃ KHO</th>
-                    <th>SL</th>
-                    <th>VỊ TRÍ LẮP ĐẶT</th>
-                    <th>THAO TÁC</th>
-                </tr>
-            </thead>
-            <tbody id="list"></tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-    const API = "https://script.google.com/macros/s/AKfycbyd23OJzE57Sw1_m0kyj4Ot9qiFYBdvdIlT-Sxc3p0jPma-pUqCIz0WtLsDlHZyYiDc/exec";
-    let db = [];
-
-    function login() {
-        if(document.getElementById('pass').value === '123') {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            fetchData();
-        } else alert("Sai mật khẩu!");
-    }
-
-    async function fetchData() {
-        try {
-            const res = await fetch(API);
-            const json = await res.json();
-            if(json.status === "ok") {
-                db = json.data;
-                render();
-            }
-        } catch(e) { alert("Lỗi kết nối dữ liệu!"); }
+    function checkLogin() {
+        const u = document.getElementById('user').value.toLowerCase().trim();
+        const p = document.getElementById('pass').value;
+        if ((u === 'admin' && p === 'admin') || (u === 'guest' && p === '123456')) {
+            role = u;
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            if(role === 'admin') document.getElementById('adminArea').style.display = 'block';
+            render();
+        } else alert("Sai thông tin đăng nhập!");
     }
 
     function render() {
-        const tbody = document.getElementById('list');
-        const q = document.getElementById('search').value.toLowerCase();
-        tbody.innerHTML = '';
+        const tbody = document.getElementById('inventoryBody');
+        const lblArea = document.getElementById('printLabelArea');
+        const qrArea = document.getElementById('printQrOnlyArea');
+        const q = document.getElementById('searchInput').value.trim().toLowerCase();
         
-        db.forEach((item, i) => {
-            if(item.name?.toLowerCase().includes(q) || item.sn?.toLowerCase().includes(q) || item.warehouse?.toLowerCase().includes(q)) {
-                tbody.innerHTML += `
-                <tr>
-                    <td style="color:#475569; font-weight:bold; font-size:11px;">${item.warehouse || '-'}</td>
-                    <td>${item.qty || 1}</td>
-                    <td style="text-align:left; font-size:11px; color:#64748b;">${item.loc || '-'}</td>
-                    <td><button class="btn-edit" onclick="edit(${i})">Sửa</button></td>
+        tbody.innerHTML = ''; lblArea.innerHTML = ''; qrArea.innerHTML = '';
+
+        inventory.forEach((item, idx) => {
+            const match = Object.values(item).some(val => String(val).toLowerCase().includes(q));
+            
+            if (match) {
+                // Logic hiển thị trạng thái kiểm kê
+                let auditBadge = '-';
+                if (item.auditStatus === 'OK') auditBadge = `<span class="badge-ok">OK (${item.auditDate})</span>`;
+                else if (item.auditStatus === 'MISSING') auditBadge = `<span class="badge-missing">MISSING (${item.auditDate})</span>`;
+
+                tbody.innerHTML += `<tr>
+                    <td class="stt-col">${idx+1}</td>
+                    <td class="name-col">${item.name}</td>
+                    <td style="color: #64748b; font-family: monospace;">${item.pn}</td>
+                    <td style="font-weight: 600;">${item.sn}</td>
+                    <td>${item.code || '-'}</td>
+                    <td><span class="badge-warehouse">${item.warehouse || '-'}</span></td>
+                    <td><span class="badge-qty">${item.qty}</span></td>
+                    <td style="font-size: 13px; color: #475569;">${item.loc}</td>
+                    <td>${auditBadge}</td>
+                    <td><button style="background:var(--edit); padding: 6px 15px; font-size:12px;" onclick="editItem(${idx})">Sửa</button></td>
                 </tr>`;
+
+                lblArea.innerHTML += `
+                    <div class="label-item">
+                        <div class="header-print">ĐỘI THÔNG TIN - TT BĐKT HCM</div>
+                        <div style="font-size:6.5pt; line-height:1.15">
+                            <b style="font-size:7pt; display:block; margin-bottom:0.5mm; text-transform:uppercase">${item.name.substring(0,45)}</b>
+                            <b>P/N:</b> ${item.pn}<br><b>S/N:</b> ${item.sn}<br><b>Mã TS:</b> ${item.code}<br><b>Mã Kho:</b> ${item.warehouse || '-'}
+                        </div>
+                    </div>`;
+
+                const qid = `qr-only-${idx}`;
+                qrArea.innerHTML += `<div class="qr-only-item"><div id="${qid}"></div><div style="font-size:7pt; font-weight:bold; margin-top:2px;">SN: ${item.sn}</div></div>`;
+
+                const qrContent = `Tên: ${item.name}\nPN: ${item.pn}\nSN: ${item.sn}\nCode: ${item.code}`;
+
+                setTimeout(() => {
+                    const qEl = document.getElementById(qid);
+                    if(qEl && qEl.innerHTML === "") { 
+                        qEl.appendChild(kjua({render:'image', size:120, text: qrContent, quiet:1}));
+                    }
+                }, 100);
             }
         });
     }
 
-    function exportExcel() {
-        const ws = XLSX.utils.json_to_sheet(db);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-        XLSX.writeFile(wb, "CNS_ATM_Report.xlsx");
-    }
-</script>
-</body>
-</html>";
-    let db = [];
-
-    function login() {
-        if(document.getElementById('pass').value === '123') {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            fetchData();
-        } else alert("Sai mật khẩu!");
+    // --- LOGIC KIỂM KÊ ---
+    function openAuditModal() {
+        document.getElementById('auditModal').style.display = 'flex';
+        document.getElementById('auditDate').valueAsDate = new Date();
+        document.getElementById('auditSN').focus();
     }
 
-    async function fetchData() {
-        try {
-            const res = await fetch(API);
-            const json = await res.json();
-            if(json.status === "ok") {
-                db = json.data;
-                render();
-            }
-        } catch(e) { alert("Lỗi kết nối dữ liệu!"); }
+    function closeAuditModal() {
+        document.getElementById('auditModal').style.display = 'none';
+        document.getElementById('auditSN').value = '';
     }
 
-    function render() {
-        const tbody = document.getElementById('list');
-        const q = document.getElementById('search').value.toLowerCase();
-        tbody.innerHTML = '';
+    function processAudit() {
+        const wh = document.getElementById('auditWarehouse').value.trim();
+        const sn = document.getElementById('auditSN').value.trim();
+        const date = document.getElementById('auditDate').value;
+        const status = document.querySelector('input[name="auditStatus"]:checked').value;
+
+        if (!wh) return alert("Vui lòng nhập Mã kho!");
         
-        db.forEach((item, i) => {
-            if(item.name?.toLowerCase().includes(q) || item.sn?.toLowerCase().includes(q) || item.warehouse?.toLowerCase().includes(q)) {
-                tbody.innerHTML += `
-                <tr>
-                    <td style="color:#475569; font-weight:bold; font-size:11px;">${item.warehouse || '-'}</td>
-                    <td>${item.qty || 1}</td>
-                    <td style="text-align:left; font-size:11px; color:#64748b;">${item.loc || '-'}</td>
-                    <td><button class="btn-edit" onclick="edit(${i})">Sửa</button></td>
-                </tr>`;
+        // CASE 1: Kiểm tra mã kho tồn tại
+        const warehouseExists = inventory.some(item => item.warehouse === wh);
+        if (!warehouseExists) return alert("Mã kho không hợp lệ!");
+
+        // CASE 2: Kiểm tra Serial (không bắt buộc nhưng nếu nhập phải đúng)
+        if (sn) {
+            const itemIndex = inventory.findIndex(item => item.sn === sn);
+            if (itemIndex === -1) {
+                return alert("Thiết bị không tồn tại trong hệ thống!");
             }
-        });
+            // CASE 3: Cập nhật thiết bị cụ thể
+            inventory[itemIndex].auditStatus = status;
+            inventory[itemIndex].auditDate = date;
+            alert(`Đã kiểm kê thiết bị: ${inventory[itemIndex].name} - Trạng thái: ${status}`);
+        } else {
+            alert("Vui lòng nhập Serial Number để xác định thiết bị!");
+            return;
+        }
+
+        save();
+        document.getElementById('auditSN').value = '';
+        document.getElementById('auditSN').focus();
     }
 
-    function exportExcel() {
-        const ws = XLSX.utils.json_to_sheet(db);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-        XLSX.writeFile(wb, "CNS_ATM_Report.xlsx");
-    }
-</script>
-</body>
-</html>";
-    let db = [];
-
-    function login() {
-        if(document.getElementById('pass').value === '123') {
-            document.getElementById('login').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            fetchData();
-        } else alert("Sai mật khẩu!");
-    }
-
-    async function fetchData() {
-        try {
-            const res = await fetch(API);
-            const json = await res.json();
-            if(json.status === "ok") {
-                db = json.data;
-                render();
-            }
-        } catch(e) { alert("Lỗi kết nối dữ liệu!"); }
-    }
-
-    function render() {
-        const tbody = document.getElementById('list');
-        const q = document.getElementById('search').value.toLowerCase();
-        tbody.innerHTML = '';
+    function exportAuditReport() {
+        if (inventory.length === 0) return alert("Không có dữ liệu!");
+        const now = new Date();
+        const dateStr = `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
         
-        db.forEach((item, i) => {
-            if(item.name?.toLowerCase().includes(q) || item.sn?.toLowerCase().includes(q) || item.warehouse?.toLowerCase().includes(q)) {
-                tbody.innerHTML += `
-                <tr>
-                    <td style="color:#475569; font-weight:bold; font-size:11px;">${item.warehouse || '-'}</td>
-                    <td>${item.qty || 1}</td>
-                    <td style="text-align:left; font-size:11px; color:#64748b;">${item.loc || '-'}</td>
-                    <td><button class="btn-edit" onclick="edit(${i})">Sửa</button></td>
-                </tr>`;
-            }
-        });
+        let tableRows = inventory.map((item, idx) => `
+            <tr>
+                <td style="border:1px solid black; text-align:center;">${idx + 1}</td>
+                <td style="border:1px solid black; padding:5px;">${item.name}</td>
+                <td style="border:1px solid black; padding:5px;">${item.sn}</td>
+                <td style="border:1px solid black; padding:5px; text-align:center; font-weight:bold; color:${item.auditStatus==='OK'?'green':'red'}">${item.auditStatus === 'OK' ? 'TỒN TẠI' : (item.auditStatus === 'MISSING' ? 'KHÔNG TỒN TẠI' : '-')}</td>
+                <td style="border:1px solid black; padding:5px; text-align:center;">${item.auditDate || '-'}</td>
+                <td style="border:1px solid black; padding:5px;">${item.loc}</td>
+            </tr>`).join('');
+
+        const reportWin = window.open('', '_blank');
+        reportWin.document.write(`
+            <html><head><title>Báo cáo kiểm kê</title>
+            <style>body{font-family:"Times New Roman";padding:40px;} table{width:100%;border-collapse:collapse;margin-top:20px;} th,td{border:1px solid black;padding:8px; font-size:14px;}</style>
+            </head><body>
+                <h2 style="text-align:center;">BÁO CÁO KIỂM KÊ THIẾT BỊ CNS/ATM</h2>
+                <p style="text-align:center;"><i>TP. Hồ Chí Minh, ${dateStr}</i></p>
+                <table>
+                    <thead><tr><th>STT</th><th>Tên thiết bị</th><th>S/N</th><th>Trạng thái kiểm kê</th><th>Ngày kiểm kê</th><th>Vị trí lắp đặt</th></tr></thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                <div style="margin-top:50px; display:grid; grid-template-columns: 1fr 1fr; text-align:center;">
+                    <div><b>ĐỘI TRƯỞNG</b></div><div><b>NGƯỜI KIỂM KÊ</b></div>
+                </div>
+            </body></html>`);
+        reportWin.document.close();
     }
 
-    function exportExcel() {
-        const ws = XLSX.utils.json_to_sheet(db);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-        XLSX.writeFile(wb, "CNS_ATM_Report.xlsx");
+    // --- CÁC HÀM SẴN CÓ ---
+    function addItem() {
+        const name = document.getElementById('inName').value.trim();
+        const sn = document.getElementById('inSN').value.trim();
+        if (!name || !sn) return alert("Vui lòng nhập Tên và Serial Number!");
+        inventory.push({
+            name, sn, 
+            pn: document.getElementById('inPN').value.trim(),
+            code: document.getElementById('inCode').value.trim(),
+            warehouse: document.getElementById('inWarehouse').value.trim(),
+            qty: document.getElementById('inQty').value,
+            loc: document.getElementById('inLoc').value.trim(),
+            auditStatus: null, auditDate: null
+        });
+        save(); clearForm();
     }
+
+    function editItem(idx) {
+        if(role !== 'admin') return alert("Chỉ Admin mới có quyền sửa!");
+        const item = inventory[idx];
+        document.getElementById('editIndex').value = idx;
+        document.getElementById('inName').value = item.name;
+        document.getElementById('inPN').value = item.pn;
+        document.getElementById('inSN').value = item.sn;
+        document.getElementById('inCode').value = item.code;
+        document.getElementById('inWarehouse').value = item.warehouse;
+        document.getElementById('inQty').value = item.qty;
+        document.getElementById('inLoc').value = item.loc;
+        document.getElementById('btnAdd').style.display = 'none';
+        document.getElementById('btnUpdate').style.display = 'block';
+        window.scrollTo(0,0);
+    }
+
+    function updateItem() {
+        const idx = document.getElementById('editIndex').value;
+        inventory[idx] = {...inventory[idx],
+            name: document.getElementById('inName').value, pn: document.getElementById('inPN').value,
+            sn: document.getElementById('inSN').value, code: document.getElementById('inCode').value,
+            warehouse: document.getElementById('inWarehouse').value, qty: document.getElementById('inQty').value,
+            loc: document.getElementById('inLoc').value
+        };
+        save(); clearForm();
+    }
+
+    function save() {
+        localStorage.setItem('cns_data_v26_final', JSON.stringify(inventory));
+        render();
+    }
+
+    function clearForm() { 
+        document.querySelectorAll('.form-grid input').forEach(i => i.value = i.id==='inQty'?'1':''); 
+        document.getElementById('btnAdd').style.display='block'; 
+        document.getElementById('btnUpdate').style.display='none'; 
+    }
+
+    function doPrint(type) {
+        document.body.className = type === 'labels' ? 'printing-labels' : 'printing-qrs';
+        window.print();
+    }
+
+    function exportToExcel() {
+        const worksheet = XLSX.utils.json_to_sheet(inventory);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
+        XLSX.writeFile(workbook, "Inventory_CNS_ATM.xlsx");
+    }
+
+    function exportInventoryReport() {
+        if (inventory.length === 0) return alert("Không có dữ liệu!");
+        const now = new Date();
+        const dateStr = `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
+        let tableRows = inventory.map((item, idx) => `
+            <tr>
+                <td style="border:1px solid black; text-align:center;">${idx + 1}</td>
+                <td style="border:1px solid black; padding:5px;">${item.name}</td>
+                <td style="border:1px solid black; padding:5px;">${item.pn}</td>
+                <td style="border:1px solid black; padding:5px;">${item.sn}</td>
+                <td style="border:1px solid black; text-align:center;">${item.qty}</td>
+                <td style="border:1px solid black; padding:5px;">${item.loc}</td>
+            </tr>`).join('');
+
+        const reportWin = window.open('', '_blank');
+        reportWin.document.write(`
+            <html><head><title>Báo cáo</title><style>
+                body { font-family: "Times New Roman"; padding: 40px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th { border: 1px solid black; background: #eee; padding: 8px; }
+            </style></head>
+            <body>
+                <div style="display:flex; justify-content:space-between; text-align:center;">
+                    <div><b>CÔNG TY QUẢN LÝ BAY MIỀN NAM</b><br><u>TRUNG TÂM BẢO ĐẢM KỶ THUÂT <br>ĐỘI THÔNG TIN</u></div>
+                    <div><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><u>Độc lập - Tự do - Hạnh phúc</u></div>
+                </div>
+                <h2 style="text-align:center; margin-top:30px;">BÁO CÁO TỒN KHO THIẾT BỊ CNS/ATM</h2>
+                <p style="text-align:center;"><i>TP. Hồ Chí Minh, ${dateStr}</i></p>
+                <table>
+                    <thead><tr><th>STT</th><th>Tên thiết bị</th><th>P/N</th><th>S/N</th><th>SL</th><th>Vị trí</th></tr></thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+            </body></html>`);
+        reportWin.document.close();
+    }
+
+    function syncCloud() { alert("Đang kết nối API..."); }
+    function exportToWord() { alert("Tính năng này yêu cầu cấu hình docx."); }
+
 </script>
 </body>
 </html>
