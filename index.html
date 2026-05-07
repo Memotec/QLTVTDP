@@ -13,18 +13,16 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: var(--txt); padding: 15px; }
         
-        /* Status & Sync Indicator */
+        /* UI Components */
         #syncStatus { position: fixed; bottom: 20px; right: 20px; padding: 8px 15px; border-radius: 20px; font-size: 12px; font-weight: bold; z-index: 10001; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
         .sync-loading { background: #fef08a; color: #854d0e; border: 1px solid #facc15; }
         .sync-online { background: #dcfce7; color: #166534; border: 1px solid #4ade80; }
         .sync-offline { background: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
 
-        /* Login UI */
         #loginOverlay { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
         .login-box { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); text-align: center; width: 400px; border: 1px solid #e2e8f0; }
         .login-box input { width: 100%; padding: 14px; margin-bottom: 15px; border: 1.5px solid #e2e8f0; border-radius: 10px; outline: none; }
 
-        /* Main Layout */
         .container { max-width: 1450px; margin: 0 auto; display: none; }
         .card { background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
         .section-title { font-size: 13px; font-weight: 800; color: var(--p); margin-bottom: 20px; text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
@@ -38,27 +36,32 @@
         
         .btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
         button { padding: 12px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; color: white; font-size: 13px; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
         
         input#searchInput { width: 100%; padding: 15px 20px; border-radius: 12px; border: 2px solid #e2e8f0; margin-bottom: 15px; font-size: 16px; outline: none; }
-        input#searchInput:focus { border-color: var(--p); box-shadow: 0 0 0 4px rgba(67, 56, 202, 0.1); }
 
         .table-wrap { overflow-x: auto; background: white; border-radius: 12px; border: 1px solid #e2e8f0; }
         table { width: 100%; border-collapse: collapse; min-width: 1200px; }
         th { background: #f8fafc; padding: 14px; font-size: 11px; font-weight: 800; color: #475569; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; }
         td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; text-align: center; font-size: 13px; }
         
-        /* Modal Audit */
+        /* Modals */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); }
-        .modal-box { background: white; width: 450px; padding: 25px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+        .modal-box { background: white; width: 450px; padding: 25px; border-radius: 16px; }
 
-        /* Print Labels */
-        #printLabelArea { display: none; }
+        /* PRINT QR - 6 Columns A4 */
+        #printQRArea { display: none; }
         @media print {
             body * { visibility: hidden; }
-            #printLabelArea, #printLabelArea * { visibility: visible; display: grid !important; }
-            #printLabelArea { position: absolute; left: 0; top: 0; width: 100%; grid-template-columns: 1fr; gap: 2mm; }
-            .label-item { border: 0.5pt solid #000; padding: 2mm; width: 80mm; height: 35mm; page-break-inside: avoid; display: flex; flex-direction: column; justify-content: space-between; }
+            .no-print, .card, .table-wrap, #syncStatus, button, input { display: none !important; }
+            #printQRArea, #printQRArea * { visibility: visible; }
+            #printQRArea {
+                position: absolute; left: 0; top: 0; width: 210mm;
+                display: grid !important; grid-template-columns: repeat(6, 1fr);
+                gap: 5mm; padding: 10mm; background: white;
+            }
+            .qr-item { width: 30mm; height: 40mm; display: flex; flex-direction: column; align-items: center; page-break-inside: avoid; }
+            .qr-item canvas { width: 30mm !important; height: 30mm !important; }
+            .qr-text { font-size: 8pt; font-weight: bold; margin-top: 2mm; text-align: center; text-transform: uppercase; }
         }
     </style>
 </head>
@@ -82,11 +85,11 @@
         <div class="form-grid">
             <input type="hidden" id="editIndex" value="-1">
             <div class="full input-group"><label>Tên thiết bị / Model</label><input type="text" id="inName"></div>
-            <div class="input-group"><label>Part Number (P/N)</label><input type="text" id="inPN"></div>
-            <div class="input-group"><label>Serial Number (S/N)</label><input type="text" id="inSN"></div>
-            <div class="input-group"><label>Mã tài sản / CCDC</label><input type="text" id="inCode"></div>
-            <div class="input-group"><label>Mã Kho / Tủ</label><input type="text" id="inWarehouse"></div>
-            <div class="half input-group"><label>Vị trí chi tiết</label><input type="text" id="inLoc"></div>
+            <div class="input-group"><label>P/N</label><input type="text" id="inPN"></div>
+            <div class="input-group"><label>S/N</label><input type="text" id="inSN"></div>
+            <div class="input-group"><label>Mã tài sản</label><input type="text" id="inCode"></div>
+            <div class="input-group"><label>Mã Kho</label><input type="text" id="inWarehouse"></div>
+            <div class="half input-group"><label>Vị trí</label><input type="text" id="inLoc"></div>
             <div class="half input-group"><label>Số lượng</label><input type="number" id="inQty" value="1"></div>
         </div>
         <div class="btn-group">
@@ -97,14 +100,14 @@
     </div>
 
     <div class="card">
-        <div class="section-title">🛠️ Công cụ quản trị & Kiểm kê</div>
-        <input type="text" id="searchInput" oninput="render()" placeholder="Tìm nhanh theo Tên, S/N, P/N hoặc Mã Kho...">
+        <div class="section-title">🛠️ Công cụ quản trị</div>
+        <input type="text" id="searchInput" oninput="render()" placeholder="Tìm nhanh Tên, S/N, P/N hoặc Mã Kho...">
         <div class="btn-group">
             <button id="btnSync" style="background:var(--success)" onclick="syncCloud()">🔄 ĐỒNG BỘ CLOUD</button>
             <button style="background:#475569" onclick="openAdvAuditModal()">📋 KIỂM KÊ (KHO/SN)</button>
-            <button style="background:var(--report)" onclick="exportProfessionalAuditReport()">📑 XUẤT PHIẾU KIỂM KÊ</button>
+            <button style="background:var(--report)" onclick="exportProfessionalAuditReport()">📑 PHIẾU KIỂM KÊ</button>
             <button style="background:var(--excel)" onclick="exportToExcel()">📊 XUẤT EXCEL</button>
-            <button style="background:#000" onclick="window.print()">🖨️ IN NHÃN QR</button>
+            <button style="background:#000" onclick="printQRCodeOnly()">🖨️ IN NHÃN QR (MÃ KHO)</button>
             <button style="background:var(--danger); margin-left: auto;" onclick="location.reload()">THOÁT</button>
         </div>
     </div>
@@ -132,18 +135,18 @@
 
 <div id="advAuditModal" class="modal-overlay">
     <div class="modal-box">
-        <h3 style="color: var(--p); margin-bottom: 15px;">📋 Kiểm kê nội bộ</h3>
+        <h3 style="color: var(--p); margin-bottom: 15px;">📋 Kiểm kê thiết bị</h3>
         <div class="input-group" style="margin-bottom: 12px;">
             <label>MÃ KHO (KIỂM HÀNG LOẠT)</label>
             <input type="text" id="audWarehouse" placeholder="Nhập mã kho ưu tiên...">
         </div>
         <div class="input-group" style="margin-bottom: 12px;">
             <label>SERIAL NUMBER (KIỂM LẺ)</label>
-            <input type="text" id="audSN" placeholder="Hoặc nhập Serial...">
+            <input type="text" id="audSN" placeholder="Nhập Serial...">
         </div>
         <div class="input-group" style="margin-bottom: 15px;">
             <label>GHI CHÚ HIỆN TRƯỜNG</label>
-            <textarea id="audNote" placeholder="Tình trạng kỹ thuật, hư hỏng..."></textarea>
+            <textarea id="audNote" placeholder="Tình trạng hư hỏng, thiếu phụ kiện..."></textarea>
         </div>
         <div style="display:flex; gap:20px; margin-bottom: 20px; background: #f8fafc; padding: 12px; border-radius: 8px;">
             <label style="cursor:pointer; display:flex; align-items:center; gap:6px; color: green; font-weight:bold;">
@@ -154,13 +157,13 @@
             </label>
         </div>
         <div style="display: flex; gap: 10px;">
-            <button onclick="processAdvancedAudit()" style="background:var(--success); flex: 2; justify-content: center;">✅ XÁC NHẬN</button>
+            <button onclick="processAdvancedAudit()" style="background:var(--success); flex: 2; justify-content: center;">XÁC NHẬN</button>
             <button onclick="closeAdvAuditModal()" style="background:#94a3b8; flex: 1; justify-content: center;">HỦY</button>
         </div>
     </div>
 </div>
 
-<div id="printLabelArea"></div>
+<div id="printQRArea"></div>
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby0p5dZFCAuvA4Bzc-XVpFCBO2zlFbUaOs1xoHr3wihErsLhO0IcuRUKhJQMFWu6Fbr/exec";
@@ -168,71 +171,54 @@
     let inventory = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     let role = null;
 
-    // --- 1. LOGIN & SYNC LOGIC ---
+    // --- Core Sync ---
     function checkLogin() {
         const u = document.getElementById('user').value.toLowerCase().trim();
         const p = document.getElementById('pass').value;
         if ((u === 'admin' && p === 'admin') || (u === 'guest' && p === '123456')) {
-            role = u;
-            document.getElementById('loginOverlay').style.display = 'none';
+            role = u; document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
             if(role === 'admin') document.getElementById('adminArea').style.display = 'block';
             initCloudFirstSync();
-        } else alert("Sai mật khẩu truy cập!");
+        } else alert("Sai thông tin!");
     }
 
     async function initCloudFirstSync() {
         const statusEl = document.getElementById('syncStatus');
-        statusEl.style.display = 'block';
-        statusEl.className = 'sync-loading';
-        statusEl.innerText = "🟡 Đang đồng bộ Cloud...";
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
+        statusEl.style.display = 'block'; statusEl.className = 'sync-loading'; statusEl.innerText = "🟡 Syncing Cloud...";
         try {
-            const res = await fetch(WEB_APP_URL, { signal: controller.signal });
+            const res = await fetch(WEB_APP_URL);
             const cloudData = await res.json();
-            if (cloudData && Array.isArray(cloudData) && cloudData.length > 0) {
+            if (cloudData && Array.isArray(cloudData)) {
                 inventory = cloudData;
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory));
-                statusEl.className = 'sync-online';
-                statusEl.innerText = "🟢 Online (Google Sheet)";
-            } else throw new Error();
-        } catch (e) {
-            statusEl.className = 'sync-offline';
-            statusEl.innerText = "🔴 Offline (Dùng Local)";
-        }
-        clearTimeout(timeoutId);
+                statusEl.className = 'sync-online'; statusEl.innerText = "🟢 Online (G-Sheet)";
+            }
+        } catch (e) { statusEl.className = 'sync-offline'; statusEl.innerText = "🔴 Offline Mode"; }
         render();
     }
 
     async function syncCloud() {
-        const btn = document.getElementById('btnSync');
-        btn.innerText = "⏳ Đang đồng bộ..."; btn.disabled = true;
+        const btn = document.getElementById('btnSync'); btn.innerText = "⏳ Sending..."; btn.disabled = true;
         try {
-            const params = new URLSearchParams();
-            params.append('data', JSON.stringify(inventory));
+            const params = new URLSearchParams(); params.append('data', JSON.stringify(inventory));
             await fetch(WEB_APP_URL, { method: "POST", mode: "no-cors", body: params });
             await new Promise(r => setTimeout(r, 2000));
-            await initCloudFirstSync();
-            alert("✅ Đồng bộ thành công!");
-        } catch (e) { alert("Lỗi kết nối mạng!"); }
+            initCloudFirstSync(); alert("✅ Đồng bộ thành công!");
+        } catch (e) { alert("Lỗi kết nối!"); }
         btn.innerText = "🔄 ĐỒNG BỘ CLOUD"; btn.disabled = false;
     }
 
-    // --- 2. RENDER & UI ---
+    // --- Logic Render ---
     function render() {
         const tbody = document.getElementById('inventoryBody');
-        const printArea = document.getElementById('printLabelArea');
         const q = document.getElementById('searchInput').value.trim().toLowerCase();
-        tbody.innerHTML = ''; printArea.innerHTML = '';
-
+        tbody.innerHTML = '';
         inventory.forEach((item, idx) => {
             if (Object.values(item).some(v => String(v).toLowerCase().includes(q))) {
                 let badge = '<span style="color:#94a3b8">⚪</span>';
-                if(item.auditStatus === 'OK') badge = `<span title="${item.auditNote||''}" style="color:green;cursor:help;font-weight:bold">🟢 OK</span><br><small style="font-size:9px">${item.auditDate}</small>`;
-                if(item.auditStatus === 'MISSING') badge = `<span title="${item.auditNote||''}" style="color:red;cursor:help;font-weight:bold">🔴 THIẾU</span><br><small style="font-size:9px">${item.auditDate}</small>`;
+                if(item.auditStatus === 'OK') badge = `<span title="${item.auditNote||''}" style="color:green;font-weight:bold">🟢 OK</span><br><small style="font-size:9px">${item.auditDate}</small>`;
+                if(item.auditStatus === 'MISSING') badge = `<span title="${item.auditNote||''}" style="color:red;font-weight:bold">🔴 THIẾU</span><br><small style="font-size:9px">${item.auditDate}</small>`;
 
                 tbody.innerHTML += `<tr>
                     <td>${idx+1}</td>
@@ -241,25 +227,16 @@
                     <td style="font-weight:700">${item.sn}</td>
                     <td>${item.code||'-'}</td>
                     <td><span style="background:#e0e7ff;color:#4338ca;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:bold">${item.warehouse||'-'}</span></td>
-                    <td><b>${item.qty}</b></td>
+                    <td>${item.qty}</td>
                     <td>${item.loc||'-'}</td>
                     <td>${badge}</td>
                     <td><button style="background:var(--edit);padding:5px 10px;font-size:11px;" onclick="editItem(${idx})">Sửa</button></td>
                 </tr>`;
-
-                printArea.innerHTML += `
-                    <div class="label-item">
-                        <div style="font-size:7pt;font-weight:bold;border-bottom:0.5pt solid #000;padding-bottom:1mm">ĐỘI THÔNG TIN - TRUNG TÂM BĐKT MIỀN NAM</div>
-                        <div style="font-size:7pt; line-height:1.2; margin-top:1mm">
-                            <b style="font-size:8pt; text-transform:uppercase; display:block">${item.name}</b>
-                            P/N: ${item.pn||'-'}<br>S/N: ${item.sn}<br>CCDC: ${item.code||'-'}<br>KHO: ${item.warehouse||'-'}
-                        </div>
-                    </div>`;
             }
         });
     }
 
-    // --- 3. AUDIT LOGIC ---
+    // --- Audit Logic ---
     function openAdvAuditModal() { document.getElementById('advAuditModal').style.display='flex'; document.getElementById('audWarehouse').focus(); }
     function closeAdvAuditModal() { document.getElementById('advAuditModal').style.display='none'; }
     function processAdvancedAudit() {
@@ -276,103 +253,66 @@
                 item.auditStatus = st; item.auditDate = dt; item.auditNote = nt; count++;
             }
         });
-
-        if(count > 0) { save(); alert(`Đã cập nhật kiểm kê cho ${count} thiết bị.`); closeAdvAuditModal(); }
-        else alert("Không tìm thấy dữ liệu trùng khớp!");
+        if(count > 0) { save(); alert(`Cập nhật ${count} mục.`); closeAdvAuditModal(); }
+        else alert("Không tìm thấy!");
     }
 
-    // --- 4. PROFESSIONAL REPORT ---
+    // --- Professional Report ---
     function exportProfessionalAuditReport() {
-        if (inventory.length === 0) return;
         const audited = inventory.filter(i => i.auditStatus).length;
-        const missing = inventory.filter(i => i.auditStatus === 'MISSING').length;
-        const exist = inventory.filter(i => i.auditStatus === 'OK').length;
-        const completion = ((audited/inventory.length)*100).toFixed(1);
-        const now = new Date();
-        const dateStr = `Ngày ${now.getDate()} tháng ${now.getMonth() + 1} năm ${now.getFullYear()}`;
-
         const win = window.open('','_blank');
         win.document.write(`
-            <html><head><title>Phiếu kiểm kê</title><style>
-                body { font-family: "Times New Roman", serif; padding: 40px; line-height: 1.5; }
-                .header { display: flex; justify-content: space-between; text-align: center; }
-                .title { text-align: center; margin: 40px 0; }
-                .title h2 { text-transform: uppercase; font-size: 16pt; margin: 0; }
-                table { width: 100%; border-collapse: collapse; font-size: 10pt; margin: 20px 0; }
-                th, td { border: 1px solid #000; padding: 6px; text-align: center; }
-                th { background: #eee; }
-                .footer { display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; font-weight: bold; margin-top: 50px; }
-            </style></head><body>
-                <div class="header">
-                    <div><b>CÔNG TY QUẢN LÝ BAY MIỀN NAM</b><br>TRUNG TÂM BẢO ĐẢM KỸ THUẬT<br><u>ĐỘI THÔNG TIN</u></div>
-                    <div><b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b><u>Độc lập - Tự do - Hạnh phúc</u></b><br><i style="font-weight:normal">TP.HCM, ${dateStr}</i></div>
-                </div>
-                <div class="title"><h2>PHIẾU KIỂM KÊ THIẾT BỊ CNS/ATM</h2><i>(Lưu hồ sơ quản lý kỹ thuật)</i></div>
-                <div style="font-size:12pt">• Tổng số: <b>${inventory.length}</b> | Đã kiểm: <b>${audited}</b> (${completion}%) | OK: <b>${exist}</b> | Thiếu: <b>${missing}</b></div>
-                <table><thead><tr><th>STT</th><th>Tên thiết bị</th><th>P/N</th><th>S/N</th><th>Kho</th><th>SL</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead><tbody>
-                    ${inventory.map((item, idx) => `<tr><td>${idx+1}</td><td style="text-align:left">${item.name}</td><td>${item.pn||'-'}</td><td>${item.sn}</td><td>${item.warehouse||'-'}</td><td>${item.qty}</td><td>${item.auditStatus||'Chưa kiểm'}</td><td>${item.auditNote||''}</td></tr>`).join('')}
-                </tbody></table>
-                <div class="footer"><div>NGƯỜI KIỂM KÊ<br><br><br><br>...</div><div>ĐỘI TRƯỞNG<br><br><br><br>...</div><div>XÁC NHẬN TRUNG TÂM<br><br><br><br>...</div></div>
-                <script>window.onload = () => { window.print(); }</` + `script>
-            </body></html>
-        `);
+            <html><head><style>body{font-family:"Times New Roman",serif;padding:40px;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #000;padding:6px;text-align:center;} th{background:#eee;}</style></head>
+            <body><h2 style="text-align:center">PHIẾU KIỂM KÊ THIẾT BỊ CNS/ATM</h2>
+            <p>Tổng số: ${inventory.length} | Đã kiểm: ${audited}</p>
+            <table><thead><tr><th>STT</th><th>Tên thiết bị</th><th>S/N</th><th>Kho</th><th>Trạng thái</th><th>Ghi chú</th></tr></thead>
+            <tbody>${inventory.map((i,x) => `<tr><td>${x+1}</td><td>${i.name}</td><td>${i.sn}</td><td>${i.warehouse}</td><td>${i.auditStatus||'-'}</td><td>${i.auditNote||'-'}</td></tr>`).join('')}</tbody></table>
+            <script>window.onload=()=>window.print()</` + `script></body></html>`);
         win.document.close();
     }
 
-    // --- 5. DATA MANAGEMENT ---
+    // --- QR PRINT SPECIAL ---
+    function printQRCodeOnly() {
+        const area = document.getElementById('printQRArea'); area.innerHTML = '';
+        const items = inventory.filter(i => i.warehouse);
+        if(items.length === 0) return alert("Không có Mã Kho!");
+        items.forEach(item => {
+            const div = document.createElement('div'); div.className = 'qr-item';
+            const qr = kjua({ render: 'canvas', size: 200, text: item.warehouse, fill: '#000', back: '#fff', quiet: 1 });
+            const txt = document.createElement('div'); txt.className = 'qr-text'; txt.innerText = `KHO: ${item.warehouse}`;
+            div.appendChild(qr); div.appendChild(txt); area.appendChild(div);
+        });
+        setTimeout(() => window.print(), 500);
+    }
+
+    // --- Data Mgmt ---
     function addItem() {
         const name = document.getElementById('inName').value.trim();
         const sn = document.getElementById('inSN').value.trim();
-        if(!name || !sn) return alert("Cần nhập Tên và Serial!");
-        inventory.push({
-            name, sn, pn: document.getElementById('inPN').value.trim(),
-            code: document.getElementById('inCode').value.trim(),
-            warehouse: document.getElementById('inWarehouse').value.trim(),
-            qty: document.getElementById('inQty').value,
-            loc: document.getElementById('inLoc').value.trim(),
-            auditStatus: null, auditDate: null, auditNote: ""
-        });
+        if(!name || !sn) return alert("Thiếu Tên/SN!");
+        inventory.push({ name, sn, pn: document.getElementById('inPN').value.trim(), code: document.getElementById('inCode').value.trim(), warehouse: document.getElementById('inWarehouse').value.trim(), qty: document.getElementById('inQty').value, loc: document.getElementById('inLoc').value.trim(), auditStatus: null, auditDate: null, auditNote: "" });
         save(); clearForm();
     }
 
     function editItem(idx) {
-        if(role !== 'admin') return alert("Chỉ Admin mới có quyền sửa!");
-        const item = inventory[idx];
-        document.getElementById('editIndex').value = idx;
-        document.getElementById('inName').value = item.name;
-        document.getElementById('inPN').value = item.pn;
-        document.getElementById('inSN').value = item.sn;
-        document.getElementById('inCode').value = item.code;
-        document.getElementById('inWarehouse').value = item.warehouse;
-        document.getElementById('inQty').value = item.qty;
-        document.getElementById('inLoc').value = item.loc;
-        document.getElementById('btnAdd').style.display = 'none';
-        document.getElementById('btnUpdate').style.display = 'inline-block';
-        window.scrollTo(0,0);
+        if(role !== 'admin') return alert("Quyền Admin!");
+        const i = inventory[idx]; document.getElementById('editIndex').value = idx;
+        document.getElementById('inName').value = i.name; document.getElementById('inSN').value = i.sn;
+        document.getElementById('inPN').value = i.pn; document.getElementById('inCode').value = i.code;
+        document.getElementById('inWarehouse').value = i.warehouse; document.getElementById('inQty').value = i.qty;
+        document.getElementById('inLoc').value = i.loc; document.getElementById('btnAdd').style.display = 'none';
+        document.getElementById('btnUpdate').style.display = 'inline-block'; window.scrollTo(0,0);
     }
 
     function updateItem() {
         const idx = document.getElementById('editIndex').value;
-        inventory[idx] = { ...inventory[idx], 
-            name: document.getElementById('inName').value, pn: document.getElementById('inPN').value,
-            sn: document.getElementById('inSN').value, code: document.getElementById('inCode').value,
-            warehouse: document.getElementById('inWarehouse').value, qty: document.getElementById('inQty').value,
-            loc: document.getElementById('inLoc').value
-        };
+        inventory[idx] = { ...inventory[idx], name: document.getElementById('inName').value, sn: document.getElementById('inSN').value, pn: document.getElementById('inPN').value, code: document.getElementById('inCode').value, warehouse: document.getElementById('inWarehouse').value, qty: document.getElementById('inQty').value, loc: document.getElementById('inLoc').value };
         save(); clearForm();
     }
 
     function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(inventory)); render(); }
-    function clearForm() { 
-        document.querySelectorAll('.form-grid input').forEach(i => i.value = i.id==='inQty'?'1':''); 
-        document.getElementById('btnAdd').style.display='inline-block'; document.getElementById('btnUpdate').style.display='none'; 
-    }
-    function exportToExcel() {
-        const ws = XLSX.utils.json_to_sheet(inventory);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-        XLSX.writeFile(wb, "CNS_ATM_Full_Data.xlsx");
-    }
+    function clearForm() { document.querySelectorAll('.form-grid input').forEach(i => i.value = i.id==='inQty'?'1':''); document.getElementById('btnAdd').style.display='inline-block'; document.getElementById('btnUpdate').style.display='none'; }
+    function exportToExcel() { const ws = XLSX.utils.json_to_sheet(inventory); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data"); XLSX.writeFile(wb, "CNS_ATM_Inventory.xlsx"); }
 </script>
 </body>
 </html>
